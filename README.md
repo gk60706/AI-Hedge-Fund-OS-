@@ -1,123 +1,96 @@
-# AI Hedge Fund OS
+# AI Hedge Fund OS V0.1
 
-> 版本 v0.1.0 · Python 3.11+ · FastAPI · LangGraph · OpenAI Responses API · AkShare
+AI 股票研究与量化基础设施 MVP（研究 / 模拟用途）。
 
-AI Hedge Fund OS 是一套面向 A 股的**研究型**开源系统，当前版本只提供三大能力：
-
-| 能力 | 说明 | 技术栈 |
-| --- | --- | --- |
-| 行情获取 | 日线历史行情、实时快照、个股基本信息 | AkShare |
-| AI 研究 | 基于行情数据的结构化研究报告生成 | LangGraph + OpenAI Responses API |
-| 研究报告 | 报告落盘、列表与检索 | FastAPI + Markdown 文件 |
-
-## 安全边界（重要）
-
-- **禁止自动实盘交易**：本系统不包含任何下单、撤单、账户、持仓或资金接口，也不对接任何券商/交易所交易通道。
-- **API Key 只从 `.env` 读取**：代码中不硬编码任何密钥；`.env` 已被 `.gitignore` 排除，**严禁提交到 GitHub**。
-- 行情数据仅用于研究与展示，不构成投资建议。
+当前版本只允许：**行情获取 → AI 研究 → 研究报告**。**不包含任何自动实盘交易接口。**
 
 ## 技术栈
 
 - Python 3.11+
-- [FastAPI](https://fastapi.tiangolo.com/) —— Web 服务
-- [LangGraph](https://langchain-ai.github.io/langgraph/) —— 研究流程编排（有向图）
-- [OpenAI Responses API](https://platform.openai.com/docs/api-reference/responses) —— AI 文本生成
-- [AkShare](https://akshare.akfamily.xyz/) —— A 股行情数据
+- FastAPI（Web API）
+- LangGraph（Agent 工作流）
+- OpenAI Responses API（`client.responses.create`）
+- AkShare（A 股实时行情）
 
-## 目录结构
+## 项目结构
 
 ```
 AI-Hedge-Fund-OS/
-├── app/
-│   ├── main.py              # FastAPI 入口
-│   ├── core/                # 配置（.env 读取）与日志
-│   ├── market/              # 行情获取（AkShare 封装 + 响应模型）
-│   ├── ai/                  # AI 研究（OpenAI 客户端 / LangGraph 图 / 节点 / 提示词）
-│   ├── reports/             # 研究报告存储服务
-│   └── api/routes/          # REST 路由：market / research / reports
-├── tests/                   # pytest 测试（数据源与 LLM 全部 mock）
+├── agents/
+│   ├── __init__.py
+│   ├── cio_agent.py        # CIO Agent：基于行情快照生成研究分析
+│   └── workflow.py         # LangGraph 工作流：行情 → CIO → 保存报告
+├── backend/
+│   ├── __init__.py
+│   ├── config.py           # 配置（所有 API Key 只从 .env 读取）
+│   └── main.py             # FastAPI 入口 + CLI
+├── tools/
+│   ├── __init__.py
+│   └── market_tool.py      # AkShare 行情封装
+├── tests/
+│   └── test_market_tool.py
+├── reports/                # 生成的 Markdown 研究报告（不提交）
+│   └── .gitkeep
+├── docs/
+│   └── architecture.md
+├── .env.example            # 密钥模板（占位值）
+├── .gitignore              # .env 永不提交
 ├── requirements.txt
-├── pyproject.toml
-├── .env.example             # 环境变量示例（复制为 .env 使用）
-└── .gitignore
+└── README.md
 ```
 
 ## 快速开始
 
-### 1. 环境准备
-
-```bash
-# Python 3.11+
+```powershell
+# 1. 创建并激活虚拟环境
 python -m venv .venv
-# Windows
-.venv\Scripts\activate
-# macOS / Linux
-source .venv/bin/activate
+.\.venv\Scripts\activate
 
+# 2. 安装依赖
 pip install -r requirements.txt
-```
 
-### 2. 配置密钥
+# 3. 配置密钥（只在本机，绝不提交）
+copy .env.example .env
+# 编辑 .env，填入新的 OPENAI_API_KEY
 
-```bash
-cp .env.example .env
-# 编辑 .env，填入真实 OPENAI_API_KEY
-```
-
-> `.env` 不会、也不允许被提交到 GitHub（见 `.gitignore`）。
-
-### 3. 启动服务
-
-```bash
-uvicorn app.main:app --reload --port 8000
-```
-
-浏览器打开 <http://127.0.0.1:8000/docs> 查看交互式 API 文档。
-
-### 4. 运行测试
-
-```bash
+# 4. 运行测试
 pytest
+
+# 5. CLI 模式：对 300394（天孚通信）生成研究报告
+python -m backend.main --code 300394
+
+# 6. API 模式
+uvicorn backend.main:app --reload
+# 打开 http://127.0.0.1:8000/docs
 ```
 
-## API 一览
+## API
 
 | 方法 | 路径 | 说明 |
 | --- | --- | --- |
 | GET | `/health` | 健康检查 |
-| GET | `/api/v1/market/history?symbol=000001&adjust=qfq` | 日线历史行情 |
-| GET | `/api/v1/market/quote?symbol=000001` | 实时快照行情 |
-| POST | `/api/v1/research/analyze` | 运行研究流程并生成报告 |
-| GET | `/api/v1/reports` | 报告列表 |
-| GET | `/api/v1/reports/{report_id}` | 报告内容 |
+| GET | `/api/v1/market/{code}` | 获取 A 股实时行情（AkShare） |
+| GET | `/api/v1/research/{code}` | 运行 LangGraph 研究工作流并生成报告 |
 
-### 示例：生成研究报告
-
-```bash
-curl -X POST http://127.0.0.1:8000/api/v1/research/analyze \
-  -H "Content-Type: application/json" \
-  -d '{"symbol": "000001", "focus": "综合"}'
-```
-
-## 研究流程（LangGraph）
+## 工作流
 
 ```
-START → fetch_market_data → generate_report → END
+AkShare → Market Tool → CIO Agent → LangGraph → AI 股票研究报告
 ```
 
-1. `fetch_market_data`：通过 AkShare 获取日线历史与公司信息；
-2. `generate_report`：将数据摘要组装为提示词，调用 OpenAI Responses API 生成 Markdown 报告；
-3. 报告自动落盘到 `reports/` 目录，可通过 REST 接口检索。
+生成的报告保存在 `reports/{code}_{timestamp}.md`。
 
-## 开发规划（后续版本）
+## 安全
 
-- 多标的研究对比、行业轮动研究
-- 报告导出（PDF / 网页）
-- 技术指标计算（MA / MACD / RSI）
-- 研究任务异步化与任务队列
+- 所有 API Key 只能从 `.env` 读取，`.env` 已被 `.gitignore` 排除，**绝不能提交 GitHub**。
+- 仓库中只提交 `.env.example`（占位值）。
+- 泄露过的 Key 应立即废弃并重新生成。
 
-> 交易类能力（模拟盘/实盘）不在本仓库当前规划内，保持研究工具属性。
+## 路线图
 
-## 免责声明
+- V0.1（当前）：行情 + AI 研究 + 研究报告
+- V0.2：Research / Quant / Risk / CIO 多 Agent + 股票评分
+- V0.3：选股 + 回测 + 模拟交易
+- 之后：模拟盘 + 严格风控 + QMT / 券商接口
 
-本项目仅用于学习与研究，不构成任何投资建议。股市有风险，投资需谨慎。
+**注意**：本项目仅用于研究与模拟，不构成投资建议。

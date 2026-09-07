@@ -1,80 +1,65 @@
-"""API 集成测试（TestClient + mock 数据源，不触网、不调用真实 LLM）。"""
 from __future__ import annotations
 
 from fastapi.testclient import TestClient
 
-from app.main import create_app
+from backend.main import app
+from tools.market_tool import MarketDataError
 
 
 def test_health():
-    client = TestClient(create_app())
+    client = TestClient(app)
     resp = client.get("/health")
     assert resp.status_code == 200
-    body = resp.json()
-    assert body["status"] == "ok"
-    assert body["version"] == "0.1.0"
+    assert resp.json() == {
+        "status": "ok",
+        "service": "ai-hedge-fund-os",
+        "version": "0.1.0",
+    }
 
 
-def test_market_history_endpoint(monkeypatch, fake_daily_df):
-    monkeypatch.setattr("app.market.provider.ak.stock_zh_a_hist", lambda **kwargs: fake_daily_df)
-    client = TestClient(create_app())
-
-    resp = client.get("/api/v1/market/history", params={"symbol": "000001"})
-    assert resp.status_code == 200
-    data = resp.json()
-    assert data["symbol"] == "000001"
-    assert data["total"] == 2
-    assert data["bars"][0]["close"] == 10.2
-
-
-def test_market_history_invalid_symbol():
-    client = TestClient(create_app())
-    resp = client.get("/api/v1/market/history", params={"symbol": "ABC"})
-    assert resp.status_code == 422
-
-
-def test_research_analyze_endpoint(
-    monkeypatch,
-    fake_daily_df,
-    fake_company_info_df,
-    isolated_reports,
-):
-    """端到端：POST /api/v1/research/analyze 返回报告并落盘。"""
-
-    class FakeOpenAIClient:
-        def __init__(self, *args, **kwargs) -> None:  # noqa: ANN002, ANN003
-            pass
-
-        def complete(self, *, prompt: str, system: str | None = None, temperature: float = 0.3) -> str:
-            return "# 报告\n\nAPI 集成测试内容。"
-
-    monkeypatch.setattr("app.market.provider.ak.stock_zh_a_hist", lambda **kwargs: fake_daily_df)
+def test_market_endpoint_success(monkeypatch):
     monkeypatch.setattr(
-        "app.market.provider.ak.stock_individual_info_em",
-        lambda **kwargs: fake_company_info_df,
+        "backend.main.get_a_share_quote",
+        lambda code: {"code": code, "name": "天孚通信", "latest_price": 88.5},
     )
-    monkeypatch.setattr("app.ai.nodes.OpenAIClient", FakeOpenAIClient)
-
-    client = TestClient(create_app())
-    resp = client.post("/api/v1/research/analyze", json={"symbol": "000001", "focus": "综合"})
+    client = TestClient(app)
+    resp = client.get("/api/v1/market/300394")
     assert resp.status_code == 200
-    body = resp.json()
-    assert body["report_id"]
-    assert "API 集成测试内容" in body["report"]
+    assert resp.json()["code"] == "300394"
+    assert resp.json()["name"] == "天孚通信"
 
-    # 报告应已写入隔离目录
-    saved = isolated_reports.dir / f"{body['report_id']}.md"
-    assert saved.exists()
-    assert "API 集成测试内容" in saved.read_text(encoding="utf-8")
 
-    # 列表与读取接口可用
-    list_resp = client.get("/api/v1/reports")
-    assert list_resp.status_code == 200
-    assert list_resp.json()["total"] >= 1
+def test_market_endpoint_error(monkeypatch):
+    def boom(code: str):
+        raise MarketDataError("AkShare 数据源不可用")
 
-    get_resp = client.get(f"/api/v1/reports/{body['report_id']}")
-    assert get_resp.status_code == 200
-    assert "API 集成测试内容" in get_resp.json()["content"]
+    monkeypatch.setattr("backend.main.get_a_share_quote", boom)
+    client = TestClient(app)
+    resp = client.get("/api/v1/market/300394")
+    assert resp.status_code == 502
+    assert "AkShare" in resp.json()["detail"]
 
-    missing = client.get("/api/v1/reports/not_exist_id")
-    assert missing.status_code == 404
+
+def test_research_endpoint_success(monkeypatch):
+    monkeypatch.setattr(
+        "backend.main.run_research",
+        lambda code: {
+            "code": code,
+            "report": "## 分析结论\n测试报告",
+            "report_path": "reports/300394_test.md",
+        },
+    )
+    client = TestClient(app)
+    resp = client.get("/api/v1/research/300394")
+    assert resp.status_code == 200
+    assert resp.json()["report_path"].startswith("reports/")
+
+
+def test_research_endpoint_error(monkeypatch):
+    def boom(code: str):
+        raise RuntimeError("OPENAI_API_KEY 未配置")
+
+    monkeypatch.setattr("backend.main.run_research", boom)
+    client = TestClient(app)
+    resp = client.get("/api/v1/research/300394")
+    assert resp.status_code == 502

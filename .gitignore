@@ -1,30 +1,33 @@
-# ===== 密钥与敏感配置 =====
-# .env 包含真实 API Key，严禁提交到 GitHub！
-.env
-.env.*
-!.env.example
-
-# ===== Python =====
+# ---- Python ----
 __pycache__/
 *.py[cod]
 *.egg-info/
-.venv/
-venv/
+.eggs/
 build/
 dist/
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
-.coverage
-htmlcov/
 
-# ===== 运行产物 =====
-reports/
-logs/
-*.log
+# ---- 虚拟环境 ----
+.venv/
+venv/
+env/
 
-# ===== IDE / 系统 =====
+# ---- IDE / 编辑器 ----
 .idea/
 .vscode/
+*.swp
+
+# ---- 操作系统 ----
 .DS_Store
 Thumbs.db
+
+# ---- 密钥：.env 绝不能提交 GitHub ----
+.env
+
+# ---- 生成的报告（保留 .gitkeep）----
+reports/*.md
+!reports/.gitkeep
+
+# ---- 测试 / 缓存 ----
+.pytest_cache/
+.coverage
+htmlcov/
