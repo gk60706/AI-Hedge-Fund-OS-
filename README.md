@@ -26,7 +26,7 @@ AI-Hedge-Fund-OS/
 │   └── main.py             # FastAPI 入口 + CLI
 ├── tools/
 │   ├── __init__.py
-│   └── market_tool.py      # 行情封装（AkShare/东财 push2 单股实时接口）
+│   └── market_tool.py      # 行情封装（东财/腾讯/新浪多源容灾，字段一致）
 ├── tests/
 │   └── test_market_tool.py
 ├── reports/                # 生成的 Markdown 研究报告（不提交）
@@ -71,8 +71,11 @@ uvicorn backend.main:app --reload
   或用 `AUTO_SYSTEM_PROXY=0` 关闭自动继承并自行设置 `HTTPS_PROXY`。
 - **东方财富行情**：行情接口（push2）直连更稳定，默认绕过代理；
   如需走代理，设置 `EASTMONEY_USE_PROXY=1`。
-- 东方财富 WAF 会对同一 IP 的突发请求临时重置连接，`market_tool` 已内置
-  指数退避重试（最多 5 次），正常单次调用即可成功。
+- **多源容灾**：行情获取按 **东财 push2 → 腾讯 qt.gtimg.cn → 新浪 hq.sinajs.cn**
+  自动降级（输出字段一致，`source` 字段标明实际数据源）。
+  东财 WAF 会对同一 IP 的突发请求临时重置连接（全市场快照最易触发），
+  单股接口 + 浏览器头 + 编号子域轮换 + 指数退避重试已内置，
+  且任一条源被限流时自动切换到可用源，正常单次调用即可成功。
 - 模型默认 `gpt-5`（`OPENAI_MODEL` 在 `.env` 中配置）。gpt-5 的 Responses API
   不支持 `temperature` 参数，程序调用时已按该模型规范处理。
 
