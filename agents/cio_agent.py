@@ -66,7 +66,6 @@ def generate_cio_report(market_data: dict[str, Any]) -> str:
         model=settings.openai_model,
         instructions=SYSTEM_PROMPT,
         input=prompt,
-        temperature=0.2,
         max_output_tokens=3000,
     )
     return response.output_text.strip()

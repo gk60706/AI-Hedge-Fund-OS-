@@ -26,7 +26,7 @@ AI-Hedge-Fund-OS/
 │   └── main.py             # FastAPI 入口 + CLI
 ├── tools/
 │   ├── __init__.py
-│   └── market_tool.py      # AkShare 行情封装
+│   └── market_tool.py      # 行情封装（AkShare/东财 push2 单股实时接口）
 ├── tests/
 │   └── test_market_tool.py
 ├── reports/                # 生成的 Markdown 研究报告（不提交）
@@ -63,6 +63,18 @@ python -m backend.main --code 300394
 uvicorn backend.main:app --reload
 # 打开 http://127.0.0.1:8000/docs
 ```
+
+## 网络说明（重要）
+
+- **OpenAI**：本机检测到系统代理（Clash 等）时会自动继承（`backend/config.py` 读取
+  WinINET 代理），无需手动设置；若无法访问 `api.openai.com`，请先确认代理可用，
+  或用 `AUTO_SYSTEM_PROXY=0` 关闭自动继承并自行设置 `HTTPS_PROXY`。
+- **东方财富行情**：行情接口（push2）直连更稳定，默认绕过代理；
+  如需走代理，设置 `EASTMONEY_USE_PROXY=1`。
+- 东方财富 WAF 会对同一 IP 的突发请求临时重置连接，`market_tool` 已内置
+  指数退避重试（最多 5 次），正常单次调用即可成功。
+- 模型默认 `gpt-5`（`OPENAI_MODEL` 在 `.env` 中配置）。gpt-5 的 Responses API
+  不支持 `temperature` 参数，程序调用时已按该模型规范处理。
 
 ## API
 

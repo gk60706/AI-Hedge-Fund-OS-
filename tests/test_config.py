@@ -8,7 +8,7 @@ def test_settings_defaults():
     assert settings.app_name == "AI Hedge Fund OS"
     assert settings.app_env == "development"
     assert settings.log_level == "INFO"
-    assert settings.openai_model == "gpt-5.5"
+    assert settings.openai_model == "gpt-5"
     assert settings.openai_api_key == ""
 
 

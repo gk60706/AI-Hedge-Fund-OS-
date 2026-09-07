@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import sys
 
 from fastapi import FastAPI, HTTPException
 
@@ -43,7 +44,14 @@ def main():
     parser = argparse.ArgumentParser(description="AI Hedge Fund OS CLI")
     parser.add_argument("--code", default="300394", help="A股股票代码，例如300394")
     args = parser.parse_args()
-    result = run_research(args.code)
+    try:
+        result = run_research(args.code)
+    except MarketDataError as exc:
+        print(
+            f"行情获取失败（数据源可能临时限流，请稍后重试或检查网络）: {exc}",
+            file=sys.stderr,
+        )
+        raise SystemExit(2) from exc
     print(result["report"])
     if result.get("report_path"):
         print(f"\n报告已保存: {result['report_path']}")
