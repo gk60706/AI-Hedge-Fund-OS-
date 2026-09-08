@@ -20,3 +20,5 @@ scikit-learn>=1.5,<2
 scipy>=1.13,<2
 optuna>=4,<5
 matplotlib>=3.9,<4
+# V0.8 实时行情系统
+websockets>=13,<16
