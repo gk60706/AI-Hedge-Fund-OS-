@@ -13,7 +13,7 @@ def test_health():
     assert resp.json() == {
         "status": "ok",
         "service": "ai-hedge-fund-os",
-        "version": "0.1.0",
+        "version": "0.4.0",
     }
 
 

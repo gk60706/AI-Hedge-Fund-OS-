@@ -343,3 +343,40 @@ def get_a_share_quote(code: str) -> dict[str, Any]:
     result = _MAPPERS[source](code, raw)
     result["source"] = _SOURCE_LABELS[source]
     return result
+
+
+# ---------------------------------------------------------------- V0.2 兼容接口
+# 供 agents/workflow.py（V0.2 多 Agent 工作流）使用，schema 与 ChatGPT V0.2 定义一致，
+# 但内部复用多源容灾通道，避免 AkShare 全市场快照触发东财 WAF。
+
+def get_stock_price(code: str) -> dict[str, Any]:
+    """V0.2 行情接口：{code, name, price, change, volume, amount, turnover}."""
+    quote = get_a_share_quote(code)
+    return {
+        "code": quote["code"],
+        "name": quote["name"],
+        "price": quote["latest_price"],
+        "change": quote["change_pct"],
+        "volume": quote["volume_lots"],
+        "amount": quote["amount_yuan"],
+        "turnover": quote["turnover_pct"],
+    }
+
+
+def get_history(code: str, limit: int = 120) -> pd.DataFrame:
+    """V0.2 历史行情接口：AkShare 前复权日线，返回含「收盘」列的 DataFrame.
+
+    数据源不可用时返回空 DataFrame（列结构保持），由调用方按缺失数据处理。
+    """
+    import akshare as ak
+
+    try:
+        df = ak.stock_zh_a_hist(
+            symbol=code, period="daily", adjust="qfq"
+        )
+        if df is None or df.empty:
+            return pd.DataFrame(columns=["收盘"])
+        df["收盘"] = pd.to_numeric(df["收盘"], errors="coerce")
+        return df.tail(limit).reset_index(drop=True)
+    except Exception:
+        return pd.DataFrame(columns=["收盘"])

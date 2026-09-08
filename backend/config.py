@@ -58,6 +58,7 @@ class Settings(BaseModel):
     log_level: str = Field(default="INFO")
     openai_api_key: str = Field(default="")
     openai_model: str = Field(default="gpt-5")
+    max_position: float = Field(default=0.2)
 
 
 @lru_cache
@@ -68,4 +69,9 @@ def get_settings() -> Settings:
         log_level=os.getenv("LOG_LEVEL", "INFO"),
         openai_api_key=os.getenv("OPENAI_API_KEY", ""),
         openai_model=os.getenv("OPENAI_MODEL", "gpt-5"),
+        max_position=float(os.getenv("MAX_POSITION", "0.2")),
     )
+
+
+# 模块级单例：兼容 `from backend.config import settings` 的调用方式
+settings = get_settings()

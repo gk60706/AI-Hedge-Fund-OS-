@@ -7,4 +7,5 @@ pandas>=2.2,<3
 numpy>=2,<3
 python-dotenv>=1.0,<2
 pydantic>=2.10,<3
+pypdf>=4,<7
 pytest>=8,<9
