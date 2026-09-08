@@ -113,10 +113,11 @@ class TestLangGraphWorkflow:
 
 
 class TestMemory:
-    def test_chromadb_optional(self):
-        chromadb = pytest.importorskip("chromadb", reason="Python 3.14 无预编译 wheel，跳过")
-        from brain.memory import collection, save_memory, search_memory
+    def test_memory_save_search(self):
+        # chromadb 可用时走 ChromaDB，缺失时自动降级本地 JSON，接口一致
+        from brain.memory import save_memory, search_memory
 
         save_memory("今日买入300394")
         out = search_memory("300394")
         assert out is not None
+        assert "documents" in out

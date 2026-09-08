@@ -56,11 +56,12 @@ def test_pdf_loader_importable():
 
 
 def test_chromadb_vector_store():
-    chromadb = pytest.importorskip("chromadb", reason="Python 3.14 无预编译 wheel，跳过")
+    # chromadb 可用时走 ChromaDB，缺失时自动降级本地 JSON，接口一致
     import rag.vector_store as vs
     vs.add_document("AI产业增长")
     result = vs.search("AI产业")
     assert result is not None
+    assert "documents" in result
 
 
 def test_strategy_evaluator_keep_and_drop():
