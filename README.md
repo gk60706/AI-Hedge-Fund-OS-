@@ -12,6 +12,7 @@ AI 股票研究与量化基础设施（研究 / 模拟用途）。
 - **V0.4**：AI 基本面研究中心（财报 / 新闻 / 行业 / 护城河 / 巴菲特估值）+ AI 投资报告
 - **V0.5**：AI 量化回测引擎 + Alpha 因子系统——动量 / 价值 / 主力资金因子、因子融合引擎、Backtrader 回测、最大回撤 / 夏普指标、AI 策略评价（KEEP/DROP）、Optuna 参数优化接口
 - **V0.6**：AI 多策略交易引擎（模拟）——多策略资金池（动量 / 价值 / 资金）、多因子融合 Alpha、Markowitz 组合优化、风险模型（HIGH/NORMAL）、风险预算分配、动态调仓（BUY/SELL）、AI 基金经理 Agent、多策略组合入口
+- **V0.7**：模拟盘交易系统（Paper Trading Engine）——虚拟资金账户、订单系统、持仓管理、模拟券商（PaperBroker）、SQLite 交易记录、交易执行引擎、AI 交易 Agent、盈亏统计、组合快照、`POST /api/v1/trade` 模拟交易 API（QMT 接口预留，不接实盘）
 - **V0.8**：实时交易系统（盘中模拟）——WebSocket 实时行情客户端、Tick 引擎、分钟 K 线生成、实时资金流监控、涨停检测、自动止盈止损（20%/8%）、T+0 模拟策略、盘中 AI 决策 Agent（BUY/HOLD/SELL）、实时风险预警、实时交易循环
 - **V0.9**：AI 交易大脑（LLM Trader Brain）——LangGraph Agent 框架、GPT 交易决策 Agent、市场环境 Agent、新闻分析 Agent、Quant Agent、AI CIO 基金经理、AI 长期记忆（ChromaDB）、AI 每日复盘、AI 交易日志、MCP 工具接口预留（OpenAI Responses API）
 - **V1.0**：AI 自主投资基金系统 MVP——研究委员会（基本面 / 量化 / 新闻）→ CIO 决策 → 风险委员会 → 组合管理 → 晨报 / 复盘
@@ -95,6 +96,18 @@ AI-Hedge-Fund-OS/
 │   ├── value_strategy.py         # 价值策略评分
 │   ├── capital_strategy.py       # 主力资金策略评分
 │   └── multi_factor.py           # 多因子融合（40/30/30）
+├── trading/                      # V0.7 模拟盘交易系统
+│   ├── __init__.py
+│   ├── account.py                # 虚拟资金账户
+│   ├── order.py                  # 订单系统
+│   ├── position.py               # 持仓管理
+│   ├── broker.py                 # 模拟券商（PaperBroker）
+│   ├── execution.py              # 交易执行引擎
+│   ├── performance.py            # 盈亏统计
+│   └── portfolio.py              # 组合快照
+├── database/                     # V0.7 交易记录数据库
+│   ├── __init__.py
+│   └── trade_db.py               # SQLite 模拟成交记录
 ├── realtime/                     # V0.8 实时行情
 │   ├── __init__.py
 │   ├── websocket_client.py       # WebSocket 行情客户端（模拟源）

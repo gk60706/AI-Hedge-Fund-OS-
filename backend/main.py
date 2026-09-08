@@ -76,6 +76,17 @@ def ai_selection() -> dict:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
 
 
+@app.post("/api/v1/trade")
+def trade(signal: dict) -> dict:
+    """V0.7 模拟交易：信号 → 模拟订单 → PaperBroker 成交（不接实盘）。"""
+    from trading.execution import execute_trade
+
+    try:
+        return execute_trade(signal)
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+
 def main():
     parser = argparse.ArgumentParser(description="AI Hedge Fund OS CLI")
     parser.add_argument("--code", default="300394", help="A股股票代码，例如300394")
