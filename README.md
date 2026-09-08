@@ -13,6 +13,7 @@ AI 股票研究与量化基础设施（研究 / 模拟用途）。
 - **V0.5**：AI 量化回测引擎 + Alpha 因子系统——动量 / 价值 / 主力资金因子、因子融合引擎、Backtrader 回测、最大回撤 / 夏普指标、AI 策略评价（KEEP/DROP）、Optuna 参数优化接口
 - **V0.6**：AI 多策略交易引擎（模拟）——多策略资金池（动量 / 价值 / 资金）、多因子融合 Alpha、Markowitz 组合优化、风险模型（HIGH/NORMAL）、风险预算分配、动态调仓（BUY/SELL）、AI 基金经理 Agent、多策略组合入口
 - **V0.8**：实时交易系统（盘中模拟）——WebSocket 实时行情客户端、Tick 引擎、分钟 K 线生成、实时资金流监控、涨停检测、自动止盈止损（20%/8%）、T+0 模拟策略、盘中 AI 决策 Agent（BUY/HOLD/SELL）、实时风险预警、实时交易循环
+- **V0.9**：AI 交易大脑（LLM Trader Brain）——LangGraph Agent 框架、GPT 交易决策 Agent、市场环境 Agent、新闻分析 Agent、Quant Agent、AI CIO 基金经理、AI 长期记忆（ChromaDB）、AI 每日复盘、AI 交易日志、MCP 工具接口预留（OpenAI Responses API）
 - **V1.0**：AI 自主投资基金系统 MVP——研究委员会（基本面 / 量化 / 新闻）→ CIO 决策 → 风险委员会 → 组合管理 → 晨报 / 复盘
 - **V1.1**：自主投资 Agent 升级版——LangGraph 正式多 Agent 图 + MCP 工具系统 + RAG 投资知识库 + PDF 财报读取 + AI 策略生成 / 评价 / 进化（策略淘汰）
 
@@ -110,6 +111,21 @@ AI-Hedge-Fund-OS/
 ├── risk/                         # V0.8 风险预警
 │   ├── __init__.py
 │   └── alert.py                  # 实时风险预警（跌破止损）
+├── config/                       # V0.9 全局配置
+│   ├── __init__.py
+│   └── settings.py               # API Key 只从 .env 读取
+├── brain/                        # V0.9 AI 交易大脑
+│   ├── __init__.py
+│   ├── llm_agent.py              # OpenAI Responses API 统一封装
+│   ├── market_agent.py           # 市场环境 Agent（BULL/NORMAL）
+│   ├── news_agent.py             # 新闻分析 Agent
+│   ├── quant_agent.py            # Quant Agent（量化信号）
+│   ├── cio_agent.py              # AI CIO 基金经理
+│   ├── memory.py                 # AI 长期记忆（ChromaDB）
+│   └── trader_brain.py           # AI 交易决策总入口
+├── workflow/                     # V0.9 LangGraph 工作流
+│   ├── __init__.py
+│   └── graph.py                  # market → research → decision
 ├── core/                        # V1.0 Agent 基础框架
 │   ├── __init__.py
 │   ├── agent.py                 # BaseAgent 抽象基类

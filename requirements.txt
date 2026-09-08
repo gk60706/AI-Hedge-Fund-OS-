@@ -22,3 +22,5 @@ optuna>=4,<5
 matplotlib>=3.9,<4
 # V0.8 实时行情系统
 websockets>=13,<16
+# V0.9 AI 交易大脑
+tiktoken>=0.8,<1
