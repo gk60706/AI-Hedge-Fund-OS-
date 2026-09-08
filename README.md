@@ -1,8 +1,8 @@
-# AI Hedge Fund OS V0.4
+# AI Hedge Fund OS V1.1
 
 AI 股票研究与量化基础设施（研究 / 模拟用途）。
 
-当前版本只允许：**行情获取 → AI 研究 → 研究报告 / AI 选股研究**。**不包含任何自动实盘交易接口。**
+当前版本只允许：**行情获取 → AI 研究 → 研究报告 / AI 选股研究 / AI 策略研究**。**不包含任何自动实盘交易接口。**
 
 ## 版本能力
 
@@ -10,6 +10,8 @@ AI 股票研究与量化基础设施（研究 / 模拟用途）。
 - **V0.2**：LangGraph 多 Agent（Research / Quant / Risk / Decision）+ 综合评分 + 仓位建议
 - **V0.3**：主力资金雷达 + A 股全市场扫描（五档盘口 / 资金评分 / 机会排序）
 - **V0.4**：AI 基本面研究中心（财报 / 新闻 / 行业 / 护城河 / 巴菲特估值）+ AI 投资报告
+- **V1.0**：AI 自主投资基金系统 MVP——研究委员会（基本面 / 量化 / 新闻）→ CIO 决策 → 风险委员会 → 组合管理 → 晨报 / 复盘
+- **V1.1**：自主投资 Agent 升级版——LangGraph 正式多 Agent 图 + MCP 工具系统 + RAG 投资知识库 + PDF 财报读取 + AI 策略生成 / 评价 / 进化（策略淘汰）
 
 ## 技术栈
 
@@ -18,6 +20,7 @@ AI 股票研究与量化基础设施（研究 / 模拟用途）。
 - LangGraph（Agent 工作流）
 - OpenAI Responses API（`client.responses.create`）
 - AkShare（A 股实时行情 / 财务数据）
+- ChromaDB（投资知识向量库，V1.1；Python 3.14 无预编译 wheel，建议 3.11-3.13 安装）
 
 ## 项目结构
 
@@ -29,11 +32,13 @@ AI-Hedge-Fund-OS/
 │   ├── common.py            # OpenAI Responses API 统一调用
 │   ├── cio_agent.py         # CIO Agent：基于行情快照生成研究分析（V0.1）
 │   ├── research_agent.py    # Research Agent：基本面研究（V0.2）
-│   ├── quant_agent.py       # Quant Agent：技术分析（V0.2）
+│   ├── quant_agent.py       # Quant Agent：技术分析（V0.2）+ V1.0 Alpha 因子版
 │   ├── risk_agent.py        # Risk Agent：风险控制（V0.2）
 │   ├── decision_agent.py    # Decision Agent：多 Agent 综合决策（V0.2）
 │   ├── fund_agent.py        # 主力资金 Agent（V0.3）
 │   ├── opportunity_agent.py # 机会发现 Agent（V0.3）
+│   ├── fundamental_agent.py # 基本面 Agent（V1.0，委员会版）
+│   ├── news_agent.py        # 新闻 Agent（V1.0，委员会版）
 │   └── workflow.py          # LangGraph 工作流：CIO 流 + V0.2 多 Agent 流
 ├── backend/
 │   ├── __init__.py
@@ -63,9 +68,45 @@ AI-Hedge-Fund-OS/
 ├── pipeline/
 │   ├── __init__.py
 │   └── fundamental_pipeline.py  # V0.3 机会池 → V0.4 基本面 → AI 选股排序
+├── core/                        # V1.0 Agent 基础框架
+│   ├── __init__.py
+│   ├── agent.py                 # BaseAgent 抽象基类
+│   └── config.py                # .env 读取（OPENAI_API_KEY / OPENAI_MODEL）+ 代理自动继承
+├── committee/                   # V1.0 投资委员会
+│   ├── __init__.py
+│   ├── research_committee.py    # AI 研究委员会：多 Agent 综合评分
+│   ├── cio.py                   # CIO 基金经理：研究评分 → BUY/WATCH/PASS + 仓位
+│   └── risk_committee.py        # 风险委员会：组合波动 → RED/NORMAL
+├── agent_core/                  # V1.1 LangGraph 核心
+│   ├── __init__.py
+│   ├── state.py                 # FundState（TypedDict）
+│   └── graph.py                 # Research → Quant → Risk → Decision 图
+├── mcp/                         # MCP 工具层（V1.0 / V1.1）
+│   ├── __init__.py
+│   ├── market_tool.py           # 行情工具（V1.0 演示版）
+│   ├── report_tool.py           # 报告工具（V1.0 演示版）
+│   ├── tools.py                 # V1.1 工具系统（Market/News）
+│   └── server.py                # V1.1 MCP 统一管理
+├── portfolio/                   # V1.0 组合管理
+│   ├── __init__.py
+│   └── manager.py               # AI 自动调仓
+├── rag/                         # V1.1 RAG 投资知识库
+│   ├── __init__.py
+│   ├── document_loader.py       # PDF 财报读取（pypdf）
+│   ├── vector_store.py          # ChromaDB 向量库
+│   └── retriever.py             # AI 投资记忆检索
+├── strategy_lab/                # V1.1 策略实验室
+│   ├── __init__.py
+│   ├── generator.py             # AI 策略自动生成（OpenAI Responses API）
+│   ├── evaluator.py             # 策略评价：回测指标 → KEEP/DROP
+│   └── evolution.py             # 策略进化：淘汰低分策略
+├── main.py                      # V1.0 主程序（委员会 → CIO）
+├── main_v11.py                  # V1.1 启动入口（LangGraph 图）
 ├── reports/
 │   ├── __init__.py
-│   ├── report_generator.py  # AI 投资报告生成（V0.4）
+│   ├── report_generator.py      # AI 投资报告生成（V0.4）
+│   ├── morning_report.py        # 每日晨报（V1.0）
+│   ├── evening_report.py        # 晚间复盘（V1.0）
 │   └── .gitkeep
 ├── tests/
 │   ├── test_market_tool.py
@@ -74,7 +115,9 @@ AI-Hedge-Fund-OS/
 │   ├── test_config.py
 │   ├── test_agents_v02.py
 │   ├── test_scanners.py
-│   └── test_fundamental.py
+│   ├── test_fundamental.py
+│   ├── test_v10.py              # V1.0 委员会流程
+│   └── test_v11.py              # V1.1 LangGraph/MCP/RAG/策略实验室
 ├── docs/
 │   └── architecture.md
 ├── .env.example            # 密钥模板（占位值）
@@ -106,6 +149,12 @@ python -m backend.main --code 300394
 # 6. API 模式
 uvicorn backend.main:app --reload
 # 打开 http://127.0.0.1:8000/docs
+
+# 7. V1.0 MVP 演示（研究委员会 → CIO 决策）
+python main.py
+
+# 8. V1.1 LangGraph 工作流演示
+python main_v11.py
 ```
 
 ## API
@@ -121,9 +170,9 @@ uvicorn backend.main:app --reload
 
 ## 网络说明（重要）
 
-- **OpenAI**：本机检测到系统代理（Clash 等）时会自动继承（`backend/config.py` 读取
-  WinINET 代理），无需手动设置；若无法访问 `api.openai.com`，请先确认代理可用，
-  或用 `AUTO_SYSTEM_PROXY=0` 关闭自动继承并自行设置 `HTTPS_PROXY`。
+- **OpenAI**：本机检测到系统代理（Clash 等）时会自动继承（`backend/config.py` 与
+  `core/config.py` 均读取 WinINET 代理），无需手动设置；若无法访问 `api.openai.com`，
+  请先确认代理可用，或用 `AUTO_SYSTEM_PROXY=0` 关闭自动继承并自行设置 `HTTPS_PROXY`。
 - **东方财富行情**：行情接口（push2）直连更稳定，默认绕过代理；
   如需走代理，设置 `EASTMONEY_USE_PROXY=1`。
 - **多源容灾**：行情获取按 **东财 push2 → 腾讯 qt.gtimg.cn → 新浪 hq.sinajs.cn**
@@ -135,6 +184,8 @@ uvicorn backend.main:app --reload
   属于重负载操作，且依赖东财/新浪当前限流状态；限流时返回空结果并提示稍后重试。
 - 模型默认 `gpt-5`（`OPENAI_MODEL` 在 `.env` 中配置）。gpt-5 的 Responses API
   不支持 `temperature` 参数，程序调用时已按该模型规范处理。
+- **V1.1 strategy_lab**：策略生成器统一使用 OpenAI Responses API，模型名与
+  API Key 从 `.env` 读取（`core/config.py`）。
 
 ## 工作流
 
@@ -143,6 +194,8 @@ V0.1  CIO 研究：  AkShare → Market Tool → CIO Agent → LangGraph → 报
 V0.2  多 Agent：  AkShare → Research/Quant/Risk → Decision → BUY/HOLD/AVOID + 仓位
 V0.3  资金雷达：  股票池(5000) → 五档盘口/资金评分 → 机会排序 → TOP50
 V0.4  基本面：    TOP50 → 财报/新闻/行业/护城河/估值 → AI 投资报告 → 排序
+V1.0  委员会：    基本面/量化/新闻 → 研究委员会 → CIO → 风险委员会 → 组合 → 晨报/复盘
+V1.1  自主进化：  LangGraph 图 → MCP 工具 → RAG 记忆 → 策略生成/回测评价/淘汰
 ```
 
 生成的 CIO 报告保存在 `reports/{code}_{timestamp}.md`。
@@ -155,10 +208,9 @@ V0.4  基本面：    TOP50 → 财报/新闻/行业/护城河/估值 → AI 投
 
 ## 路线图
 
-- V0.1（已发布）：行情 + AI 研究 + 研究报告
-- V0.2（已发布）：Research / Quant / Risk / Decision 多 Agent + 综合评分
-- V0.3（已发布）：主力资金雷达 + 全市场扫描 + 机会排序
-- V0.4（当前）：AI 基本面研究中心 + AI 投资报告
-- V0.5（规划）：AI 量化回测引擎 + 因子系统
+- V0.1-V0.4（已发布）：行情 / 多 Agent 研究 / 资金雷达 / 基本面中心
+- V1.0（已发布）：AI 自主投资基金 MVP（研究委员会 + CIO + 风控 + 组合 + 晨晚报）
+- V1.1（当前）：自主投资 Agent 升级版（LangGraph 正式图 + MCP + RAG + 策略进化）
+- V1.2（规划）：Self-Evolving AI Hedge Fund Agent（自动进化基金）
 
 **注意**：本项目仅用于研究与模拟，不构成投资建议。禁止接入真实交易接口。

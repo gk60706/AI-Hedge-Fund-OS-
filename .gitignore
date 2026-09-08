@@ -31,3 +31,6 @@ reports/*.md
 .pytest_cache/
 .coverage
 htmlcov/
+
+# ---- V1.1 ChromaDB 本地向量库（运行时生成，不入库）----
+memory/
