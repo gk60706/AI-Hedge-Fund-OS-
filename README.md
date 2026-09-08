@@ -10,6 +10,7 @@ AI 股票研究与量化基础设施（研究 / 模拟用途）。
 - **V0.2**：LangGraph 多 Agent（Research / Quant / Risk / Decision）+ 综合评分 + 仓位建议
 - **V0.3**：主力资金雷达 + A 股全市场扫描（五档盘口 / 资金评分 / 机会排序）
 - **V0.4**：AI 基本面研究中心（财报 / 新闻 / 行业 / 护城河 / 巴菲特估值）+ AI 投资报告
+- **V0.5**：AI 量化回测引擎 + Alpha 因子系统——动量 / 价值 / 主力资金因子、因子融合引擎、Backtrader 回测、最大回撤 / 夏普指标、AI 策略评价（KEEP/DROP）、Optuna 参数优化接口
 - **V1.0**：AI 自主投资基金系统 MVP——研究委员会（基本面 / 量化 / 新闻）→ CIO 决策 → 风险委员会 → 组合管理 → 晨报 / 复盘
 - **V1.1**：自主投资 Agent 升级版——LangGraph 正式多 Agent 图 + MCP 工具系统 + RAG 投资知识库 + PDF 财报读取 + AI 策略生成 / 评价 / 进化（策略淘汰）
 
@@ -20,6 +21,7 @@ AI 股票研究与量化基础设施（研究 / 模拟用途）。
 - LangGraph（Agent 工作流）
 - OpenAI Responses API（`client.responses.create`）
 - AkShare（A 股实时行情 / 财务数据）
+- Backtrader（历史回测，V0.5）+ Optuna（策略参数优化，V0.5）+ scikit-learn / scipy / matplotlib
 - ChromaDB（投资知识向量库，V1.1；Python 3.14 无预编译 wheel，建议 3.11-3.13 安装）
 
 ## 项目结构
@@ -68,6 +70,21 @@ AI-Hedge-Fund-OS/
 ├── pipeline/
 │   ├── __init__.py
 │   └── fundamental_pipeline.py  # V0.3 机会池 → V0.4 基本面 → AI 选股排序
+├── factors/                      # V0.5 Alpha 因子系统
+│   ├── __init__.py
+│   ├── momentum.py               # 20 日动量因子
+│   ├── value.py                  # PE 估值因子
+│   ├── capital.py                # 主力资金因子
+│   └── factor_engine.py          # 因子融合引擎（Alpha 评分 + 股票排序）
+├── backtest/                     # V0.5 回测引擎
+│   ├── __init__.py
+│   ├── strategy.py               # AlphaStrategy（买入 + 回撤止损）
+│   ├── engine.py                 # Backtrader 封装回测入口
+│   └── metrics.py                # 最大回撤 / 夏普比率
+├── ai/                           # V0.5 AI 策略研究
+│   ├── __init__.py
+│   ├── strategy_agent.py         # AI 策略评价 Agent（KEEP/DROP）
+│   └── optimizer.py              # Optuna 自动参数搜索
 ├── core/                        # V1.0 Agent 基础框架
 │   ├── __init__.py
 │   ├── agent.py                 # BaseAgent 抽象基类

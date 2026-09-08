@@ -34,3 +34,6 @@ htmlcov/
 
 # ---- V1.1 ChromaDB 本地向量库（运行时生成，不入库）----
 memory/
+
+# ---- uiautomation 调试日志（本机监控工具产生）----
+@AutomationLog.txt
