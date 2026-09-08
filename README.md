@@ -11,6 +11,7 @@ AI 股票研究与量化基础设施（研究 / 模拟用途）。
 - **V0.3**：主力资金雷达 + A 股全市场扫描（五档盘口 / 资金评分 / 机会排序）
 - **V0.4**：AI 基本面研究中心（财报 / 新闻 / 行业 / 护城河 / 巴菲特估值）+ AI 投资报告
 - **V0.5**：AI 量化回测引擎 + Alpha 因子系统——动量 / 价值 / 主力资金因子、因子融合引擎、Backtrader 回测、最大回撤 / 夏普指标、AI 策略评价（KEEP/DROP）、Optuna 参数优化接口
+- **V0.6**：AI 多策略交易引擎（模拟）——多策略资金池（动量 / 价值 / 资金）、多因子融合 Alpha、Markowitz 组合优化、风险模型（HIGH/NORMAL）、风险预算分配、动态调仓（BUY/SELL）、AI 基金经理 Agent、多策略组合入口
 - **V1.0**：AI 自主投资基金系统 MVP——研究委员会（基本面 / 量化 / 新闻）→ CIO 决策 → 风险委员会 → 组合管理 → 晨报 / 复盘
 - **V1.1**：自主投资 Agent 升级版——LangGraph 正式多 Agent 图 + MCP 工具系统 + RAG 投资知识库 + PDF 财报读取 + AI 策略生成 / 评价 / 进化（策略淘汰）
 
@@ -41,6 +42,7 @@ AI-Hedge-Fund-OS/
 │   ├── opportunity_agent.py # 机会发现 Agent（V0.3）
 │   ├── fundamental_agent.py # 基本面 Agent（V1.0，委员会版）
 │   ├── news_agent.py        # 新闻 Agent（V1.0，委员会版）
+│   ├── portfolio_agent.py   # AI 基金经理 Agent（V0.6）
 │   └── workflow.py          # LangGraph 工作流：CIO 流 + V0.2 多 Agent 流
 ├── backend/
 │   ├── __init__.py
@@ -85,6 +87,12 @@ AI-Hedge-Fund-OS/
 │   ├── __init__.py
 │   ├── strategy_agent.py         # AI 策略评价 Agent（KEEP/DROP）
 │   └── optimizer.py              # Optuna 自动参数搜索
+├── strategies/                   # V0.6 多策略资金池
+│   ├── __init__.py
+│   ├── momentum_strategy.py      # 动量策略评分
+│   ├── value_strategy.py         # 价值策略评分
+│   ├── capital_strategy.py       # 主力资金策略评分
+│   └── multi_factor.py           # 多因子融合（40/30/30）
 ├── core/                        # V1.0 Agent 基础框架
 │   ├── __init__.py
 │   ├── agent.py                 # BaseAgent 抽象基类
@@ -104,9 +112,14 @@ AI-Hedge-Fund-OS/
 │   ├── report_tool.py           # 报告工具（V1.0 演示版）
 │   ├── tools.py                 # V1.1 工具系统（Market/News）
 │   └── server.py                # V1.1 MCP 统一管理
-├── portfolio/                   # V1.0 组合管理
+├── portfolio/                   # V0.6 + V1.0 组合管理
 │   ├── __init__.py
-│   └── manager.py               # AI 自动调仓
+│   ├── optimizer.py              # Markowitz 组合优化（V0.6）
+│   ├── risk_model.py             # 组合风险模型（V0.6）
+│   ├── allocator.py              # 风险预算分配（V0.6）
+│   ├── rebalance.py              # 动态调仓 BUY/SELL（V0.6）
+│   ├── main_engine.py            # 多策略组合入口（V0.6）
+│   └── manager.py                # AI 自动调仓（V1.0）
 ├── rag/                         # V1.1 RAG 投资知识库
 │   ├── __init__.py
 │   ├── document_loader.py       # PDF 财报读取（pypdf）
