@@ -24,3 +24,8 @@ matplotlib>=3.9,<4
 websockets>=13,<16
 # V0.9 AI 交易大脑
 tiktoken>=0.8,<1
+# V1.4 自动交易生产系统
+tushare>=1.4,<2
+pymysql>=1.1,<2
+sqlalchemy>=2.0,<3
+apscheduler>=3.10,<4

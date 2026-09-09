@@ -1,4 +1,4 @@
-# AI Hedge Fund OS V1.3
+# AI Hedge Fund OS V1.4
 
 AI 股票研究与量化基础设施（研究 / 模拟用途）。
 
@@ -19,6 +19,7 @@ AI 股票研究与量化基础设施（研究 / 模拟用途）。
 - **V1.1**：自主投资 Agent 升级版——LangGraph 正式多 Agent 图 + MCP 工具系统 + RAG 投资知识库 + PDF 财报读取 + AI 策略生成 / 评价 / 进化（策略淘汰）
 - **V1.2**：Self-Evolving AI Hedge Fund Agent（自动进化型量化研究实验室）——AI 自动发现 Alpha 因子（AlphaAgent）、AI 策略生成（StrategyAgent）、AI 代码生成（CodeAgent，OpenAI Responses API）、AI 自动回测（BacktestEngine 逐行引擎 + 回测评价 evaluate）、AI 参数优化（optimizer 网格搜索）、策略基因数据库（SQLite）、策略进化引擎（淘汰 + 变异）、总进化流程 `run_evolution.py`（研究用途，无实盘交易）
 - **V1.3**：策略竞技场 + 多 Agent 基金委员会——多投资风格 Agent（价值 / 趋势 / 量化 / 宏观）、策略竞技场（StrategyArena）、策略排名（StrategyRanking）、AI 投票委员会（VotingSystem）、CIO 投资委员会（InvestmentCommittee）、风险委员会（RiskAgent）、资金自动分配（CapitalAllocator）、策略冠军上线（ChampionStrategy）、冠军历史库（ChampionDB）、`main_v13.py` 完整运行入口（研究/模拟，无实盘交易）
+- **V1.4**：自动交易生产系统（Production MVP）——AkShare 行情接口（data/akshare_client.py）、行情服务（data/market_service.py）、MySQL 数据仓库（database/，连接信息全部 .env 读取）、5000 股票扫描器（scanner/stock_scanner.py + ranking.py）、模拟交易券商（trading/，V0.7 execute 与 V1.4 buy/sell 双接口并存）、持仓管理（PositionManager）、自动调仓（RebalanceEngine）、定时任务（scheduler/ APScheduler 8:30 扫描 / 15:30 复盘）、AI 每日投资日报（reports/daily_report.py）、邮件推送（notification/，未配置 SMTP 时模拟）、Docker 部署（docker/Dockerfile）、`main_v14.py` 主入口（模拟交易，无实盘接口）
 
 ## 技术栈
 
@@ -66,9 +67,11 @@ AI-Hedge-Fund-OS/
 │   ├── order_book.py        # 新浪五档盘口（V0.3）
 │   ├── capital_flow.py      # 主力资金评分模型（V0.3）
 │   └── scanner.py           # 全市场扫描器（V0.3）
-├── data/
+├── data/                          # 行情数据（V0.4 + V1.4）
 │   ├── __init__.py
-│   └── financial_api.py     # 财务数据接口（V0.4）
+│   ├── financial_api.py           # 财务数据接口（V0.4）
+│   ├── akshare_client.py          # V1.4 AkShare 行情接口
+│   └── market_service.py          # V1.4 行情服务（最新快照）
 ├── fundamental/
 │   ├── __init__.py
 │   ├── financial_agent.py   # 财报分析 Agent（V0.4）
@@ -102,18 +105,33 @@ AI-Hedge-Fund-OS/
 │   ├── value_strategy.py         # 价值策略评分
 │   ├── capital_strategy.py       # 主力资金策略评分
 │   └── multi_factor.py           # 多因子融合（40/30/30）
-├── trading/                      # V0.7 模拟盘交易系统
+├── trading/                      # V0.7 模拟盘交易系统 + V1.4 扩展
 │   ├── __init__.py
 │   ├── account.py                # 虚拟资金账户
 │   ├── order.py                  # 订单系统
-│   ├── position.py               # 持仓管理
-│   ├── broker.py                 # 模拟券商（PaperBroker）
+│   ├── position.py               # 持仓管理（Position + V1.4 PositionManager）
+│   ├── broker.py                 # 模拟券商（PaperBroker，execute/buy/sell 双接口）
 │   ├── execution.py              # 交易执行引擎
 │   ├── performance.py            # 盈亏统计
-│   └── portfolio.py              # 组合快照
-├── database/                     # V0.7 交易记录数据库
+│   ├── portfolio.py              # 组合快照
+│   └── rebalance.py              # V1.4 自动调仓系统
+├── database/                     # V0.7 交易记录数据库 + V1.4 MySQL
 │   ├── __init__.py
-│   └── trade_db.py               # SQLite 模拟成交记录
+│   ├── trade_db.py               # SQLite 模拟成交记录
+│   ├── mysql.py                  # V1.4 MySQL 连接（.env 读取）
+│   └── models.py                 # V1.4 SQLAlchemy ORM 模型
+├── scanner/                      # V1.4 股票扫描器
+│   ├── __init__.py
+│   ├── stock_scanner.py          # AI 团队批量扫描打分
+│   └── ranking.py                # AI 精选股票池
+├── scheduler/                    # V1.4 定时任务
+│   ├── __init__.py
+│   └── jobs.py                   # APScheduler 每日扫描/复盘
+├── notification/                 # V1.4 通知推送
+│   ├── __init__.py
+│   └── email.py                  # 邮件推送（SMTP 未配置时模拟）
+├── docker/                       # V1.4 部署
+│   └── Dockerfile                # python:3.11 镜像
 ├── realtime/                     # V0.8 实时行情
 │   ├── __init__.py
 │   ├── websocket_client.py       # WebSocket 行情客户端（模拟源）
@@ -212,11 +230,14 @@ AI-Hedge-Fund-OS/
 ├── main_v13.py                  # V1.3 完整运行入口（团队→投委会→竞技场→冠军→资金分配）
 ├── main.py                      # V1.0 主程序（委员会 → CIO）
 ├── main_v11.py                  # V1.1 启动入口（LangGraph 图）
+├── main_v13.py                  # V1.3 策略竞技场入口
+├── main_v14.py                  # V1.4 生产系统入口（扫描 → 精选 → 模拟持仓）
 ├── reports/
 │   ├── __init__.py
 │   ├── report_generator.py      # AI 投资报告生成（V0.4）
 │   ├── morning_report.py        # 每日晨报（V1.0）
 │   ├── evening_report.py        # 晚间复盘（V1.0）
+│   ├── daily_report.py          # V1.4 AI 每日投资日报
 │   └── .gitkeep
 ├── tests/
 │   ├── test_market_tool.py
@@ -271,6 +292,9 @@ python run_evolution.py
 
 # 10. V1.3 策略竞技场演示（AI 基金团队 → 投委会 → 冠军 → 资金分配）
 python main_v13.py
+
+# 11. V1.4 生产系统演示（AI 扫描 → 股票池 → 模拟持仓）
+python main_v14.py
 ```
 
 ## API
@@ -314,6 +338,7 @@ V1.0  委员会：    基本面/量化/新闻 → 研究委员会 → CIO → �
 V1.1  自主进化：  LangGraph 图 → MCP 工具 → RAG 记忆 → 策略生成/回测评价/淘汰
 V1.2  自动进化：  发现因子 → 生成策略 → 代码生成 → 自动回测 → 参数优化 → 淘汰/变异 → 基因库
 V1.3  竞技场：    AI 基金团队 → 竞技场竞争 → 排名 → 投委会投票 → 冠军上线 → 资金自动分配
+V1.4  生产系统：  AkShare 行情 → 股票扫描 → AI 分析 → 股票池 → 模拟交易 → 组合管理 → 日报推送 → AI 复盘
 ```
 
 生成的 CIO 报告保存在 `reports/{code}_{timestamp}.md`。
@@ -330,7 +355,8 @@ V1.3  竞技场：    AI 基金团队 → 竞技场竞争 → 排名 → 投委�
 - V1.0（已发布）：AI 自主投资基金 MVP（研究委员会 + CIO + 风控 + 组合 + 晨晚报）
 - V1.1（已发布）：自主投资 Agent 升级版（LangGraph 正式图 + MCP + RAG + 策略进化）
 - V1.2（已发布）：Self-Evolving AI Hedge Fund Agent（自动进化基金：因子发现 / 策略生成 / 代码生成 / 自动回测 / 参数优化 / 策略基因库 / 进化引擎）
-- V1.3（当前）：策略竞技场 + 多 Agent 基金委员会（牛市/熊市/价值/趋势/高频 Agent、多策略资金分配、AI 投票委员会、策略冠军自动上线）
-- V1.4（规划）：自动交易生产系统（AkShare/Tushare 实时行情、MySQL 数据仓库、实时扫描、自动模拟交易、晨晚报推送、Docker 部署、Web 管理后台）
+- V1.3（已发布）：策略竞技场 + 多 Agent 基金委员会（牛市/熊市/价值/趋势/高频 Agent、多策略资金分配、AI 投票委员会、策略冠军自动上线）
+- V1.4（当前）：自动交易生产系统（AkShare/Tushare 实时行情、MySQL 数据仓库、实时扫描、自动模拟交易、晨晚报推送、Docker 部署、Web 管理后台）
+- V1.5（规划）：实时盘中交易平台（WebSocket 实时行情、Level-5 五档盘口、主力资金流模型、分钟级 Alpha 因子、AI 盘中交易 Agent、自动 T+0 模拟、涨停板策略、龙虎榜 Agent、实时风控中心）
 
 **注意**：本项目仅用于研究与模拟，不构成投资建议。禁止接入真实交易接口。

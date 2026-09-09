@@ -27,3 +27,14 @@ class Position:
 
     def get_positions(self) -> dict:
         return self.positions
+
+
+class PositionManager:
+    """V1.4 持仓管理：汇总券商现金与持仓视图。"""
+
+    def summary(self, broker) -> dict:
+        return {
+            "cash": broker.cash,
+            "positions": broker.positions,
+        }
+
