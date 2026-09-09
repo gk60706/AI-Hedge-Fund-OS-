@@ -1,4 +1,4 @@
-# AI Hedge Fund OS V1.5
+# AI Hedge Fund OS V1.6
 
 AI 股票研究与量化基础设施（研究 / 模拟用途）。
 
@@ -21,6 +21,7 @@ AI 股票研究与量化基础设施（研究 / 模拟用途）。
 - **V1.3**：策略竞技场 + 多 Agent 基金委员会——多投资风格 Agent（价值 / 趋势 / 量化 / 宏观）、策略竞技场（StrategyArena）、策略排名（StrategyRanking）、AI 投票委员会（VotingSystem）、CIO 投资委员会（InvestmentCommittee）、风险委员会（RiskAgent）、资金自动分配（CapitalAllocator）、策略冠军上线（ChampionStrategy）、冠军历史库（ChampionDB）、`main_v13.py` 完整运行入口（研究/模拟，无实盘交易）
 - **V1.4**：自动交易生产系统（Production MVP）——AkShare 行情接口（data/akshare_client.py）、行情服务（data/market_service.py）、MySQL 数据仓库（database/，连接信息全部 .env 读取）、5000 股票扫描器（scanner/stock_scanner.py + ranking.py）、模拟交易券商（trading/，V0.7 execute 与 V1.4 buy/sell 双接口并存）、持仓管理（PositionManager）、自动调仓（RebalanceEngine）、定时任务（scheduler/ APScheduler 8:30 扫描 / 15:30 复盘）、AI 每日投资日报（reports/daily_report.py）、邮件推送（notification/，未配置 SMTP 时模拟）、Docker 部署（docker/Dockerfile）、`main_v14.py` 主入口（模拟交易，无实盘接口）
 - **V1.5**：实时盘中交易平台（Intraday Trading System）——WebSocket 实时行情（realtime/websocket.py）、Tick 实时数据流（tick_stream.py）、Level-5 五档盘口分析（orderbook.py，买卖压力强度）、主力资金雷达（capital/main_force.py，大单>50万评分）、分钟动量因子（intraday/momentum.py）、T+0 策略（intraday/t0_strategy.py，低吸/止盈）、AI 盘中交易 Agent（intraday/trader_agent.py，多信号加权决策）、涨停板策略（market/limit_strategy.py，≥9.8% 涨停检测）、龙虎榜 Agent（market/dragon_tiger.py，机构抢筹识别）、实时风控中心（risk/realtime_risk.py，亏损<-8% 卖出告警）、`main_v15.py` 实时交易循环（模拟决策，无实盘接口）
+- **V1.6**：机器学习交易引擎（Machine Learning Trading Engine）——数据特征工程（ml/feature_engineering.py：收益率/MA5/MA20/波动率/量比/次日涨跌标签）、XGBoost 涨跌预测（ml/xgboost_model.py，XGBClassifier）、LSTM 时间序列价格预测（ml/lstm_model.py，PyTorch）、Transformer 行情模型（ml/transformer_model.py，PyTorch 编码器）、数据集加载（dataset/loader.py，80/20 划分）、模型训练评价（ml/trainer.py）、AI 模型仓库自动选择最优（models/registry.py）、多模型融合预测（prediction/ensemble.py，XGBoost 50% + LSTM 30% + Transformer 20% → BUY/SELL/HOLD）、AI 交易信号 Agent（intraday/ml_trader.py，开仓/平仓/等待）、`main_v16.py` 运行入口（模拟预测，无实盘接口）
 
 ## 技术栈
 
@@ -248,6 +249,23 @@ AI-Hedge-Fund-OS/
 ├── main_v13.py                  # V1.3 策略竞技场入口
 ├── main_v14.py                  # V1.4 生产系统入口（扫描 → 精选 → 模拟持仓）
 ├── main_v15.py                  # V1.5 实时盘中交易入口（盘口 + 主力资金 → AI 决策）
+├── main_v16.py                  # V1.6 机器学习交易入口（多模型融合 → AI 交易信号）
+├── ml/                           # V1.6 机器学习交易引擎
+│   ├── __init__.py
+│   ├── feature_engineering.py    # 特征工程（收益率/均线/波动率/量比/标签）
+│   ├── xgboost_model.py          # XGBoost 涨跌预测
+│   ├── lstm_model.py             # LSTM 时间序列预测（PyTorch）
+│   ├── transformer_model.py      # Transformer 行情模型（PyTorch）
+│   └── trainer.py                # 模型训练与评价
+├── dataset/                      # V1.6 数据集加载
+│   ├── __init__.py
+│   └── loader.py                 # CSV 加载与 80/20 划分
+├── models/                       # V1.6 AI 模型仓库
+│   ├── __init__.py
+│   └── registry.py               # 模型注册与最优选择
+├── prediction/                   # V1.6 多模型融合预测
+│   ├── __init__.py
+│   └── ensemble.py               # XGBoost 50% + LSTM 30% + Transformer 20%
 ├── reports/
 │   ├── __init__.py
 │   ├── report_generator.py      # AI 投资报告生成（V0.4）
@@ -314,6 +332,9 @@ python main_v14.py
 
 # 12. V1.5 实时盘中交易演示（五档盘口 + 主力资金 → AI 盘中决策）
 python main_v15.py
+
+# 13. V1.6 机器学习交易演示（多模型融合预测 → AI 交易信号）
+python main_v16.py
 ```
 
 ## API
@@ -359,6 +380,7 @@ V1.2  自动进化：  发现因子 → 生成策略 → 代码生成 → 自动
 V1.3  竞技场：    AI 基金团队 → 竞技场竞争 → 排名 → 投委会投票 → 冠军上线 → 资金自动分配
 V1.4  生产系统：  AkShare 行情 → 股票扫描 → AI 分析 → 股票池 → 模拟交易 → 组合管理 → 日报推送 → AI 复盘
 V1.5  盘中交易：  WebSocket 行情 → 五档盘口 → 主力资金 → 分钟因子 → AI 盘中决策 → T+0/涨停/龙虎榜 → 实时风控
+V1.6  机器学习：  特征工程 → XGBoost/LSTM/Transformer → 模型融合 → AI 交易信号 → 开仓/平仓/等待
 ```
 
 生成的 CIO 报告保存在 `reports/{code}_{timestamp}.md`。
@@ -377,7 +399,8 @@ V1.5  盘中交易：  WebSocket 行情 → 五档盘口 → 主力资金 → �
 - V1.2（已发布）：Self-Evolving AI Hedge Fund Agent（自动进化基金：因子发现 / 策略生成 / 代码生成 / 自动回测 / 参数优化 / 策略基因库 / 进化引擎）
 - V1.3（已发布）：策略竞技场 + 多 Agent 基金委员会（牛市/熊市/价值/趋势/高频 Agent、多策略资金分配、AI 投票委员会、策略冠军自动上线）
 - V1.4（已发布）：自动交易生产系统（AkShare/Tushare 实时行情、MySQL 数据仓库、实时扫描、自动模拟交易、晨晚报推送、Docker 部署、Web 管理后台）
-- V1.5（当前）：实时盘中交易平台（WebSocket 实时行情、Level-5 五档盘口、主力资金流模型、分钟级 Alpha 因子、AI 盘中交易 Agent、自动 T+0 模拟、涨停板策略、龙虎榜 Agent、实时风控中心）
-- V1.6（规划）：机器学习交易引擎（XGBoost 涨跌预测、LSTM 时间序列、Transformer 行情模型、强化学习交易 Agent、自动因子挖掘、GPU 训练框架、自动模型选择、AI 预测+策略融合）
+- V1.5（已发布）：实时盘中交易平台（WebSocket 实时行情、Level-5 五档盘口、主力资金流模型、分钟级 Alpha 因子、AI 盘中交易 Agent、自动 T+0 模拟、涨停板策略、龙虎榜 Agent、实时风控中心）
+- V1.6（当前）：机器学习交易引擎（XGBoost 涨跌预测、LSTM 时间序列、Transformer 行情模型、特征工程、模型融合、模型仓库自动选择、AI 交易信号）
+- V1.7（规划）：强化学习交易 Agent（Deep RL、PPO 交易 Agent、DQN 买卖决策、AI 模拟百万次交易、自动仓位管理、风险收益优化、自主交易习惯、AI 交易人格）
 
 **注意**：本项目仅用于研究与模拟，不构成投资建议。禁止接入真实交易接口。
