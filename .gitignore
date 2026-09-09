@@ -41,3 +41,7 @@ memory/
 # ---- V0.7 SQLite 模拟交易记录（运行生成，不入库）----
 trade.db
 *.sqlite3
+
+# ---- V1.2 策略基因数据库（运行生成，不入库）----
+strategy.db
+*.db

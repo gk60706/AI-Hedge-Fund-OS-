@@ -25,3 +25,40 @@ def run_backtest(data) -> dict:
         "final": final,
         "return": (final / 100000 - 1),
     }
+
+
+class BacktestEngine:
+    """V1.2 回测引擎（升级版）：基于 pandas 逐行模拟。
+
+    与 V0.5 的 ``run_backtest``（Backtrader）并存，不删除已有功能。
+    用于 AI 自动回测：逐行调用策略函数，按 BUY/SELL 信号切换仓位。
+    """
+
+    def __init__(self, initial_capital: float = 1000000) -> None:
+        self.initial_capital = initial_capital
+
+    def run(self, data, strategy) -> dict:
+        """运行一次逐行回测。
+
+        :param data: 含 ``price`` 列的 DataFrame
+        :param strategy: 可调用对象，接收一行数据，返回
+                         ``"BUY"`` / ``"SELL"`` / 其它（不动作）
+        :return: ``{"capital": float, "return": float}``
+        """
+        capital = float(self.initial_capital)
+        position = 0
+        for _, row in data.iterrows():
+            signal = strategy(row)
+            if signal == "BUY":
+                position = capital / row["price"]
+            elif signal == "SELL":
+                capital = position * row["price"]
+                position = 0
+        # 收尾：仍持有仓位时按最后价格结算
+        if position > 0:
+            capital = position * data.iloc[-1]["price"]
+            position = 0
+        return {
+            "capital": capital,
+            "return": capital / self.initial_capital - 1,
+        }

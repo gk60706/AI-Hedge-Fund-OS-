@@ -26,3 +26,20 @@ def sharpe(returns) -> float:
     :param returns: 收益率序列（iterable of float）
     """
     return np.mean(returns) / np.std(returns)
+
+
+def evaluate(result: dict) -> dict:
+    """V1.2 回测评价：按收益率对回测结果评分。
+
+    :param result: 含 ``return`` 键的回测结果 dict
+    :return: ``{"return": float, "score": int}``，score 0-100
+    """
+    score = 0
+    ret = result["return"]
+    if ret > 0.2:
+        score += 50
+    elif ret > 0.1:
+        score += 30
+    if ret < 0:
+        score -= 50
+    return {"return": ret, "score": score}
