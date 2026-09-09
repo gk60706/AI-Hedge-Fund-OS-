@@ -1,4 +1,4 @@
-# AI Hedge Fund OS V1.2
+# AI Hedge Fund OS V1.3
 
 AI 股票研究与量化基础设施（研究 / 模拟用途）。
 
@@ -18,6 +18,7 @@ AI 股票研究与量化基础设施（研究 / 模拟用途）。
 - **V1.0**：AI 自主投资基金系统 MVP——研究委员会（基本面 / 量化 / 新闻）→ CIO 决策 → 风险委员会 → 组合管理 → 晨报 / 复盘
 - **V1.1**：自主投资 Agent 升级版——LangGraph 正式多 Agent 图 + MCP 工具系统 + RAG 投资知识库 + PDF 财报读取 + AI 策略生成 / 评价 / 进化（策略淘汰）
 - **V1.2**：Self-Evolving AI Hedge Fund Agent（自动进化型量化研究实验室）——AI 自动发现 Alpha 因子（AlphaAgent）、AI 策略生成（StrategyAgent）、AI 代码生成（CodeAgent，OpenAI Responses API）、AI 自动回测（BacktestEngine 逐行引擎 + 回测评价 evaluate）、AI 参数优化（optimizer 网格搜索）、策略基因数据库（SQLite）、策略进化引擎（淘汰 + 变异）、总进化流程 `run_evolution.py`（研究用途，无实盘交易）
+- **V1.3**：策略竞技场 + 多 Agent 基金委员会——多投资风格 Agent（价值 / 趋势 / 量化 / 宏观）、策略竞技场（StrategyArena）、策略排名（StrategyRanking）、AI 投票委员会（VotingSystem）、CIO 投资委员会（InvestmentCommittee）、风险委员会（RiskAgent）、资金自动分配（CapitalAllocator）、策略冠军上线（ChampionStrategy）、冠军历史库（ChampionDB）、`main_v13.py` 完整运行入口（研究/模拟，无实盘交易）
 
 ## 技术栈
 
@@ -39,7 +40,7 @@ AI-Hedge-Fund-OS/
 │   ├── common.py            # OpenAI Responses API 统一调用
 │   ├── cio_agent.py         # CIO Agent：基于行情快照生成研究分析（V0.1）
 │   ├── research_agent.py    # Research Agent：基本面研究（V0.2）
-│   ├── quant_agent.py       # Quant Agent：技术分析（V0.2）+ V1.0 Alpha 因子版
+│   ├── quant_agent.py       # Quant Agent：技术分析（V0.2）+ V1.0 Alpha 因子版 + V1.3 QuantAgent
 │   ├── risk_agent.py        # Risk Agent：风险控制（V0.2）
 │   ├── decision_agent.py    # Decision Agent：多 Agent 综合决策（V0.2）
 │   ├── fund_agent.py        # 主力资金 Agent（V0.3）
@@ -47,6 +48,10 @@ AI-Hedge-Fund-OS/
 │   ├── fundamental_agent.py # 基本面 Agent（V1.0，委员会版）
 │   ├── news_agent.py        # 新闻 Agent（V1.0，委员会版）
 │   ├── portfolio_agent.py   # AI 基金经理 Agent（V0.6）
+│   ├── base_manager.py      # 投资经理基础类（V1.3）
+│   ├── value_agent.py       # 价值投资 Agent（V1.3）
+│   ├── trend_agent.py       # 趋势交易 Agent（V1.3）
+│   ├── macro_agent.py       # 宏观 Agent（V1.3）
 │   └── workflow.py          # LangGraph 工作流：CIO 流 + V0.2 多 Agent 流
 ├── backend/
 │   ├── __init__.py
@@ -148,7 +153,21 @@ AI-Hedge-Fund-OS/
 │   ├── __init__.py
 │   ├── research_committee.py    # AI 研究委员会：多 Agent 综合评分
 │   ├── cio.py                   # CIO 基金经理：研究评分 → BUY/WATCH/PASS + 仓位
-│   └── risk_committee.py        # 风险委员会：组合波动 → RED/NORMAL
+│   ├── risk_committee.py        # 风险委员会：组合波动 → RED/NORMAL
+│   ├── voting.py                # AI 投票委员会（V1.3）
+│   ├── investment_committee.py  # CIO 投资委员会（V1.3）
+│   └── risk_agent.py            # 风险委员会 Agent（V1.3）
+├── arena/                       # V1.3 策略竞技场
+│   ├── __init__.py
+│   ├── battle.py                # StrategyArena 多经理竞争
+│   ├── ranking.py               # 策略排名系统
+│   └── champion.py              # 策略冠军上线（模拟）
+├── allocation/                  # V1.3 资金分配
+│   ├── __init__.py
+│   └── capital_allocator.py     # 按策略得分加权分配资金
+├── fund/                        # V1.3 AI 基金团队
+│   ├── __init__.py
+│   └── team.py                  # create_team 多基金经理组合
 ├── agent_core/                  # V1.1 LangGraph 核心
 │   ├── __init__.py
 │   ├── state.py                 # FundState（TypedDict）
@@ -190,6 +209,7 @@ AI-Hedge-Fund-OS/
 │   ├── __init__.py
 │   └── strategy_db.py           # 策略基因数据库（SQLite strategy.db）
 ├── run_evolution.py             # V1.2 总进化流程入口
+├── main_v13.py                  # V1.3 完整运行入口（团队→投委会→竞技场→冠军→资金分配）
 ├── main.py                      # V1.0 主程序（委员会 → CIO）
 ├── main_v11.py                  # V1.1 启动入口（LangGraph 图）
 ├── reports/
@@ -248,6 +268,9 @@ python main_v11.py
 
 # 9. V1.2 自动进化流程演示（发现因子 → 生成策略 → 存活判定）
 python run_evolution.py
+
+# 10. V1.3 策略竞技场演示（AI 基金团队 → 投委会 → 冠军 → 资金分配）
+python main_v13.py
 ```
 
 ## API
@@ -290,6 +313,7 @@ V0.4  基本面：    TOP50 → 财报/新闻/行业/护城河/估值 → AI 投
 V1.0  委员会：    基本面/量化/新闻 → 研究委员会 → CIO → 风险委员会 → 组合 → 晨报/复盘
 V1.1  自主进化：  LangGraph 图 → MCP 工具 → RAG 记忆 → 策略生成/回测评价/淘汰
 V1.2  自动进化：  发现因子 → 生成策略 → 代码生成 → 自动回测 → 参数优化 → 淘汰/变异 → 基因库
+V1.3  竞技场：    AI 基金团队 → 竞技场竞争 → 排名 → 投委会投票 → 冠军上线 → 资金自动分配
 ```
 
 生成的 CIO 报告保存在 `reports/{code}_{timestamp}.md`。
@@ -305,7 +329,8 @@ V1.2  自动进化：  发现因子 → 生成策略 → 代码生成 → 自动
 - V0.1-V0.4（已发布）：行情 / 多 Agent 研究 / 资金雷达 / 基本面中心
 - V1.0（已发布）：AI 自主投资基金 MVP（研究委员会 + CIO + 风控 + 组合 + 晨晚报）
 - V1.1（已发布）：自主投资 Agent 升级版（LangGraph 正式图 + MCP + RAG + 策略进化）
-- V1.2（当前）：Self-Evolving AI Hedge Fund Agent（自动进化基金：因子发现 / 策略生成 / 代码生成 / 自动回测 / 参数优化 / 策略基因库 / 进化引擎）
-- V1.3（规划）：策略竞技场 + 多 Agent 基金委员会（牛市/熊市/价值/趋势/高频 Agent、多策略资金分配、AI 投票委员会、策略冠军自动上线）
+- V1.2（已发布）：Self-Evolving AI Hedge Fund Agent（自动进化基金：因子发现 / 策略生成 / 代码生成 / 自动回测 / 参数优化 / 策略基因库 / 进化引擎）
+- V1.3（当前）：策略竞技场 + 多 Agent 基金委员会（牛市/熊市/价值/趋势/高频 Agent、多策略资金分配、AI 投票委员会、策略冠军自动上线）
+- V1.4（规划）：自动交易生产系统（AkShare/Tushare 实时行情、MySQL 数据仓库、实时扫描、自动模拟交易、晨晚报推送、Docker 部署、Web 管理后台）
 
 **注意**：本项目仅用于研究与模拟，不构成投资建议。禁止接入真实交易接口。
