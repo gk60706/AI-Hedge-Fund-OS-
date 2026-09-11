@@ -1,25 +1,29 @@
-"""V1.2 策略进化引擎：淘汰低分策略并对幸存策略进行变异。"""
+"""V1.9 策略进化引擎：创建种群 → 评价 → 选择 → 变异 → 下一代。"""
 
 
 class EvolutionEngine:
-    """策略进化引擎。
+    """串联生成器与优化器完成一代策略进化。"""
 
-    - ``evolve``：按分数淘汰（score >= 80 存活）
-    - ``mutate``：对策略参数进行变异（仓位放大 1.1 倍）
-    """
+    def __init__(self, generator, optimizer):
+        self.generator = generator
+        self.optimizer = optimizer
 
-    SURVIVE_SCORE = 80
+    def create_population(self, size: int) -> list:
+        """创建第一代策略种群。"""
+        return [self.generator.generate() for _ in range(size)]
 
-    def evolve(self, strategies: list) -> list:
-        """筛选出达到存活分数线的策略。"""
-        survivors = []
-        for s in strategies:
-            if s["score"] >= self.SURVIVE_SCORE:
-                survivors.append(s)
-        return survivors
+    def evolve(self, strategies: list, scores: list) -> list:
+        """选择精英并变异产生下一代。
 
-    def mutate(self, strategy: dict) -> dict:
-        """对策略做一次简单变异（调整仓位），返回新策略 dict。"""
-        strategy = dict(strategy)
-        strategy["position"] = strategy.get("position", 0.2) * 1.1
-        return strategy
+        Args:
+            strategies: 当前代策略。
+            scores: 对应得分。
+
+        Returns:
+            下一代策略列表。
+        """
+        best = self.optimizer.select(strategies, scores)
+        new = []
+        for strategy in best:
+            new.append(self.optimizer.mutate(strategy))
+        return new
