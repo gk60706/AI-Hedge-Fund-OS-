@@ -69,3 +69,28 @@ def generate_cio_report(market_data: dict[str, Any]) -> str:
         max_output_tokens=3000,
     )
     return response.output_text.strip()
+
+
+# ---------------------------------------------------------------------------
+# V2.0 CIO Agent（多智能体基金经理系统）：委员会投票后做最终决策。
+# 与 V0.3 generate_cio_report 函数并存，不删除已有功能。
+# ---------------------------------------------------------------------------
+class CIOAgent:
+    """V2.0 首席投资官 Agent。"""
+
+    def decide(self, state: dict) -> str:
+        """综合投票结果给出 BUY / HOLD。
+
+        Args:
+            state: FundState 或同结构 dict。
+
+        Returns:
+            最终决策。
+        """
+        votes = []
+        votes.append(state["quant_signal"])
+        votes.append("BUY" if "优秀" in state["research_report"] else "HOLD")
+        buy = votes.count("BUY")
+        if buy >= 2:
+            return "BUY"
+        return "HOLD"

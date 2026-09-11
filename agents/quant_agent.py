@@ -67,3 +67,34 @@ class QuantAgent(InvestmentManager):
             "score": alpha,
         }
 
+
+# ---------------------------------------------------------------------------
+# V2.0 量化策略 Agent（多智能体基金经理系统）：按技术指标/因子打分给出
+# BUY/SELL/HOLD。与 V0.2 的 quant_agent 函数、V1.0/V1.3 的 QuantAgent 类
+# 并存（旧 QuantAgent 接口为 run()/analyze(stock)，故 V2.0 版以
+# QuantAgentV20 命名，不破坏已有接口）。
+# ---------------------------------------------------------------------------
+class QuantAgentV20:
+    """V2.0 量化信号 Agent。"""
+
+    def analyze(self, features: dict) -> str:
+        """按因子打分给出 BUY / SELL / HOLD。
+
+        Args:
+            features: 含 momentum / volume / trend 的特征字典。
+
+        Returns:
+            交易信号。
+        """
+        score = 0
+        if features["momentum"] > 0:
+            score += 40
+        if features["volume"] > 1.5:
+            score += 30
+        if features["trend"] == "UP":
+            score += 30
+        if score >= 70:
+            return "BUY"
+        elif score <= 30:
+            return "SELL"
+        return "HOLD"
