@@ -137,16 +137,28 @@ AI-Hedge-Fund-OS/
 │   └── email.py                  # 邮件推送（SMTP 未配置时模拟）
 ├── docker/                       # V1.4 部署
 │   └── Dockerfile                # python:3.11 镜像
-├── realtime/                     # V0.8 实时行情 + V1.5 WebSocket 盘中行情
+├── realtime/                     # V0.8 实时行情 + V1.5 WebSocket 盘中行情 + V2.3 实时市场感知
 │   ├── __init__.py
-│   ├── websocket_client.py       # WebSocket 行情客户端（模拟源）
+│   ├── websocket_client.py       # WebSocket 行情客户端（V0.8 异步 MarketWebSocket + V2.3 同步 MarketWebSocketV23）
 │   ├── tick_engine.py            # Tick 数据引擎
 │   ├── kline_engine.py           # 分钟 K 线生成
 │   ├── capital_monitor.py        # 实时资金流 Agent
 │   ├── monitor.py                # 实时交易循环（模拟）
 │   ├── websocket.py              # V1.5 WebSocket 行情订阅分发
-│   ├── tick_stream.py            # V1.5 Tick 实时数据流缓存
-│   └── orderbook.py              # V1.5 Level-5 五档盘口分析
+│   ├── tick_stream.py            # V1.5 Tick 缓存 + V2.3 push/latest 序列
+│   ├── orderbook.py              # V1.5 Level-5 五档盘口分析
+│   ├── market_cache.py           # V2.3 Redis 实时行情缓存
+│   ├── radar/                    # V2.3 实时雷达层
+│   │   ├── __init__.py
+│   │   ├── capital_radar.py      # 主力资金雷达（CapitalRadar）
+│   │   ├── orderbook_analyzer.py # 五档盘口分析（OrderBookAnalyzer）
+│   │   └── anomaly_detector.py   # 盘中异动检测（AnomalyDetector）
+│   ├── trading/                  # V2.3 盘中交易层
+│   │   ├── __init__.py
+│   │   └── intraday_agent.py     # 盘中 AI 交易 Agent（IntradayTrader）
+│   └── risk/                     # V2.3 实时风控层
+│       ├── __init__.py
+│       └── realtime_risk.py      # 实时风控（RealTimeRisk）
 ├── capital/                      # V1.5 主力资金雷达
 │   ├── __init__.py
 │   └── main_force.py             # 大单（>50万）买卖力度评分
@@ -441,6 +453,9 @@ python main_v21.py
 
 # 19. V2.2 自动投资研究流水线演示（扫描 → 发现机会 → 委员会决策）
 python main_v22.py
+
+# 20. V2.3 实时市场感知演示（资金雷达 + 盘口分析 → 盘中交易决策）
+python main_v23.py
 ```
 
 ## API
@@ -493,6 +508,7 @@ V1.9  自主进化：  策略 DNA 生成 → 种群竞争 → 遗传算法选择
 V2.0  数字基金团队：CIO Agent 统管 → 研究员/量化/宏观/交易/风控多 Agent 分工 → LangGraph 协作流 → 投资委员会投票 → 晨报输出
 V2.1  研究智能层：  Agent → MCP 工具注册/调用 → 财报 PDF 阅读 / 新闻舆情 / 金融数据 → 向量记忆 → RAG 知识库 → AI 研报 → CIO 决策
 V2.2  自动流水线：  每日定时调度 → 市场扫描（动量/量能/资金流因子）→ 机会排名 → 委员会票决 → 晨报/晚报 → 股票池（观察/候选/重点/持仓）
+V2.3  实时感知：    WebSocket 实时行情 → Tick 数据流 → Redis 缓存 → 资金雷达/盘口分析/异动检测 → 盘中 AI 交易 → 实时风控 → 模拟盘
 ```
 
 生成的 CIO 报告保存在 `reports/{code}_{timestamp}.md`。
@@ -518,7 +534,8 @@ V2.2  自动流水线：  每日定时调度 → 市场扫描（动量/量能/�
 - V1.9（已发布）：AI 策略自动进化系统（Self-Evolving Strategy Engine：AI 自动生成策略、策略 DNA、因子自动发现、遗传算法优化、策略基因库、多策略竞争淘汰、Alpha 评分）
 - V2.0（已发布）：多智能体 AI 基金经理系统（Multi-Agent AI Fund Team：LangGraph 多 Agent 协作、AI 投资委员会投票、CIO 最终决策、研究员/量化/宏观/交易/风控 Agent、AI 每日晨会、长期投资记忆）
 - V2.1（已发布）：财报 + 新闻 + MCP 工具生态（Research Intelligence Layer：MCP 工具注册框架、财报 PDF 自动阅读 Agent、新闻舆情 Agent、金融数据 Agent、ChromaDB 向量长期记忆、RAG 知识库、AI 投资研究报告、CIO 工具化研究决策）
-- V2.2（当前）：自动投资研究流水线（Autonomous Research Pipeline：每日定时调度、A 股因子扫描、AI 机会排名、投资委员会票决、每日 AI 晨报/晚报、观察/候选/重点/持仓股票池）
-- V2.3（规划）：下一代（等 ChatGPT 会话输出后同步）
+- V2.2（已发布）：自动投资研究流水线（Autonomous Research Pipeline：每日定时调度、A 股因子扫描、AI 机会排名、投资委员会票决、每日 AI 晨报/晚报、观察/候选/重点/持仓股票池）
+- V2.3（当前）：实时市场感知系统（Real-Time Market Intelligence Engine：WebSocket 实时行情、Tick 级数据流、Redis 行情缓存、五档盘口分析、主力资金雷达、实时异动检测、盘中 AI 交易 Agent、实时风险控制）
+- V2.4（规划）：下一代（等 ChatGPT 会话输出后同步）
 
 **注意**：本项目仅用于研究与模拟，不构成投资建议。禁止接入真实交易接口。
