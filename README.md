@@ -175,10 +175,12 @@ AI-Hedge-Fund-OS/
 │   ├── __init__.py
 │   ├── limit_strategy.py         # 涨停板策略（≥9.8%）
 │   └── dragon_tiger.py           # 龙虎榜 Agent（机构抢筹）
-├── risk/                         # V0.8 风险预警 + V1.5 实时风控
+├── risk/                         # V0.8 风险预警 + V1.5 实时风控 + V2.4 仓位/止盈止损
 │   ├── __init__.py
 │   ├── alert.py                  # 实时风险预警（跌破止损）
-│   └── realtime_risk.py          # V1.5 实时风控中心（亏损<-8% 告警）
+│   ├── realtime_risk.py          # V1.5 实时风控中心（亏损<-8% 告警）
+│   ├── position_control.py       # V2.4 动态仓位控制（评分→目标仓位）
+│   └── stop_manager.py           # V2.4 止盈止损系统（-8% 止损 / +20% 止盈）
 ├── config/                       # V0.9 全局配置
 │   ├── __init__.py
 │   └── settings.py               # API Key 只从 .env 读取
@@ -227,14 +229,16 @@ AI-Hedge-Fund-OS/
 │   ├── report_tool.py           # 报告工具（V1.0 演示版）
 │   ├── tools.py                 # V1.1 工具系统（Market/News）
 │   └── server.py                # V1.1 MCP 统一管理
-├── portfolio/                   # V0.6 + V1.0 组合管理
+├── portfolio/                   # V0.6 + V1.0 组合管理 + V2.4 资金账户
 │   ├── __init__.py
 │   ├── optimizer.py              # Markowitz 组合优化（V0.6）
 │   ├── risk_model.py             # 组合风险模型（V0.6）
 │   ├── allocator.py              # 风险预算分配（V0.6）
 │   ├── rebalance.py              # 动态调仓 BUY/SELL（V0.6）
 │   ├── main_engine.py            # 多策略组合入口（V0.6）
-│   └── manager.py                # AI 自动调仓（V1.0）
+│   ├── manager.py                # AI 自动调仓（V1.0）
+│   ├── account.py                # V2.4 模拟资金账户（Account）
+│   └── position.py               # V2.4 持仓管理（PositionManager）
 ├── rag/                         # V1.1 RAG 投资知识库
 │   ├── __init__.py
 │   ├── document_loader.py       # PDF 财报读取（pypdf）
@@ -335,9 +339,19 @@ AI-Hedge-Fund-OS/
 ├── alpha/                       # V1.9 Alpha 评价层
 │   ├── __init__.py
 │   └── alpha_score.py           # Alpha 评分（收益/Sharpe/回撤/胜率）
-├── strategy/                    # V1.9 策略层
+├── strategy/                    # V1.9 策略层 + V2.4 交易信号
 │   ├── __init__.py
-│   └── strategy_template.py     # 策略 DNA 定义与变异
+│   ├── strategy_template.py     # 策略 DNA 定义与变异
+│   └── signal_engine.py         # V2.4 AI 交易信号引擎（资金评分+风险→BUY/WAIT）
+├── execution/                   # V2.4 交易执行层
+│   ├── __init__.py
+│   ├── order.py                 # 交易订单（Order dataclass）
+│   ├── broker.py                # 券商接口抽象（Broker）
+│   ├── simulator.py             # 模拟成交执行器（SimulatorBroker）
+│   └── qmt_gateway.py           # QMT 接口预留（QMTGateway，禁止实盘）
+├── journal/                     # V2.4 交易日志
+│   ├── __init__.py
+│   └── trade_log.py             # 交易日志系统（TradeJournal）
 ├── rl/                           # V1.7 强化学习交易 Agent
 │   ├── __init__.py
 │   ├── state.py                  # 交易状态向量（MarketState）
@@ -456,6 +470,9 @@ python main_v22.py
 
 # 20. V2.3 实时市场感知演示（资金雷达 + 盘口分析 → 盘中交易决策）
 python main_v23.py
+
+# 21. V2.4 盘中自主交易演示（信号 → 订单 → 模拟成交 → 持仓）
+python main_v24.py
 ```
 
 ## API
@@ -509,6 +526,7 @@ V2.0  数字基金团队：CIO Agent 统管 → 研究员/量化/宏观/交易/�
 V2.1  研究智能层：  Agent → MCP 工具注册/调用 → 财报 PDF 阅读 / 新闻舆情 / 金融数据 → 向量记忆 → RAG 知识库 → AI 研报 → CIO 决策
 V2.2  自动流水线：  每日定时调度 → 市场扫描（动量/量能/资金流因子）→ 机会排名 → 委员会票决 → 晨报/晚报 → 股票池（观察/候选/重点/持仓）
 V2.3  实时感知：    WebSocket 实时行情 → Tick 数据流 → Redis 缓存 → 资金雷达/盘口分析/异动检测 → 盘中 AI 交易 → 实时风控 → 模拟盘
+V2.4  自主交易：    CIO 决策 → 交易委员会 → 信号引擎（资金+风险）→ 动态仓位 → 订单 → 模拟成交 → 持仓/账户 → 交易日志 → 止盈止损 → QMT 接口预留
 ```
 
 生成的 CIO 报告保存在 `reports/{code}_{timestamp}.md`。
@@ -535,7 +553,8 @@ V2.3  实时感知：    WebSocket 实时行情 → Tick 数据流 → Redis 缓
 - V2.0（已发布）：多智能体 AI 基金经理系统（Multi-Agent AI Fund Team：LangGraph 多 Agent 协作、AI 投资委员会投票、CIO 最终决策、研究员/量化/宏观/交易/风控 Agent、AI 每日晨会、长期投资记忆）
 - V2.1（已发布）：财报 + 新闻 + MCP 工具生态（Research Intelligence Layer：MCP 工具注册框架、财报 PDF 自动阅读 Agent、新闻舆情 Agent、金融数据 Agent、ChromaDB 向量长期记忆、RAG 知识库、AI 投资研究报告、CIO 工具化研究决策）
 - V2.2（已发布）：自动投资研究流水线（Autonomous Research Pipeline：每日定时调度、A 股因子扫描、AI 机会排名、投资委员会票决、每日 AI 晨报/晚报、观察/候选/重点/持仓股票池）
-- V2.3（当前）：实时市场感知系统（Real-Time Market Intelligence Engine：WebSocket 实时行情、Tick 级数据流、Redis 行情缓存、五档盘口分析、主力资金雷达、实时异动检测、盘中 AI 交易 Agent、实时风险控制）
-- V2.4（规划）：下一代（等 ChatGPT 会话输出后同步）
+- V2.3（已发布）：实时市场感知系统（Real-Time Market Intelligence Engine：WebSocket 实时行情、Tick 级数据流、Redis 行情缓存、五档盘口分析、主力资金雷达、实时异动检测、盘中 AI 交易 Agent、实时风险控制）
+- V2.4（当前）：盘中自主交易系统（Autonomous Trading Execution Layer：自动订单生成、模拟交易账户、持仓管理、委托系统、成交回报、止盈止损、动态仓位、QMT 接口预留、交易日志系统）
+- V2.5（规划）：量化交易风控中心（VaR 风险模型、最大回撤控制、波动率监控、市场状态识别、黑天鹅检测、组合风险预算、AI 风险委员会；等 ChatGPT 会话输出后同步）
 
 **注意**：本项目仅用于研究与模拟，不构成投资建议。禁止接入真实交易接口。
