@@ -1,4 +1,4 @@
-# AI Hedge Fund OS V1.7
+# AI Hedge Fund OS V1.8
 
 AI 股票研究与量化基础设施（研究 / 模拟用途）。
 
@@ -23,6 +23,7 @@ AI 股票研究与量化基础设施（研究 / 模拟用途）。
 - **V1.5**：实时盘中交易平台（Intraday Trading System）——WebSocket 实时行情（realtime/websocket.py）、Tick 实时数据流（tick_stream.py）、Level-5 五档盘口分析（orderbook.py，买卖压力强度）、主力资金雷达（capital/main_force.py，大单>50万评分）、分钟动量因子（intraday/momentum.py）、T+0 策略（intraday/t0_strategy.py，低吸/止盈）、AI 盘中交易 Agent（intraday/trader_agent.py，多信号加权决策）、涨停板策略（market/limit_strategy.py，≥9.8% 涨停检测）、龙虎榜 Agent（market/dragon_tiger.py，机构抢筹识别）、实时风控中心（risk/realtime_risk.py，亏损<-8% 卖出告警）、`main_v15.py` 实时交易循环（模拟决策，无实盘接口）
 - **V1.6**：机器学习交易引擎（Machine Learning Trading Engine）——数据特征工程（ml/feature_engineering.py：收益率/MA5/MA20/波动率/量比/次日涨跌标签）、XGBoost 涨跌预测（ml/xgboost_model.py，XGBClassifier）、LSTM 时间序列价格预测（ml/lstm_model.py，PyTorch）、Transformer 行情模型（ml/transformer_model.py，PyTorch 编码器）、数据集加载（dataset/loader.py，80/20 划分）、模型训练评价（ml/trainer.py）、AI 模型仓库自动选择最优（models/registry.py）、多模型融合预测（prediction/ensemble.py，XGBoost 50% + LSTM 30% + Transformer 20% → BUY/SELL/HOLD）、AI 交易信号 Agent（intraday/ml_trader.py，开仓/平仓/等待）、`main_v16.py` 运行入口（模拟预测，无实盘接口）
 - **V1.7**：强化学习交易 Agent（Reinforcement Learning Trading Agent）——交易状态定义（rl/state.py MarketState 状态向量）、动作空间（rl/action.py SELL/HOLD/BUY）、强化学习交易环境（rl/environment.py 简化全仓模拟）、奖励引擎（rl/reward.py 收益−回撤惩罚−过度交易惩罚）、DQN 网络与 Agent（rl/dqn_agent.py，epsilon-greedy）、PPO Actor-Critic 框架（rl/ppo_agent.py）、RL 训练器（rl/trainer.py）、风险闸门（risk/risk_gate.py，日亏-3%/回撤10% 拒绝放行）、仓位管理（risk/position_sizer.py 置信度×20%）、RL 模型评价（evaluation/rl_evaluator.py 总收益/最大回撤/Sharpe）、`main_v17.py` 模拟训练入口（研究/模拟，无实盘接口）
+- **V1.8**：真实市场强化学习训练平台（Real Market RL Platform）——AkShare 真实 A 股历史行情加载（data_engine/akshare_loader.py）、股票数据集管理（dataset/stock_dataset.py）、AI 因子流水线（dataset/feature_pipeline.py：日收益/MA5/MA20/量比/动量）、多股票强化学习环境（rl/multi_stock_env.py）、交易成本模型（rl/transaction_cost.py 佣金+印花税）、滑点模拟（rl/slippage.py）、Walk Forward 回测切分（backtest/walk_forward.py）、绩效评价（backtest/performance.py 收益/Sharpe/最大回撤）、AI 策略排行榜（evolution/model_rank.py）、`main_v18.py` 运行入口（真实行情 → 因子 → 训练数据，无实盘接口）
 
 ## 技术栈
 
@@ -252,6 +253,17 @@ AI-Hedge-Fund-OS/
 ├── main_v15.py                  # V1.5 实时盘中交易入口（盘口 + 主力资金 → AI 决策）
 ├── main_v16.py                  # V1.6 机器学习交易入口（多模型融合 → AI 交易信号）
 ├── main_v17.py                  # V1.7 强化学习训练入口（DQN 模拟训练 → 评价）
+├── main_v18.py                  # V1.8 真实市场训练平台入口（AkShare 行情 → 因子 → 训练数据）
+├── data_engine/                 # V1.8 真实行情数据引擎
+│   ├── __init__.py
+│   └── akshare_loader.py        # AkShare 真实 A 股历史行情加载
+├── backtest/                    # V1.8 回测系统
+│   ├── __init__.py
+│   ├── walk_forward.py          # Walk Forward 训练/测试切分
+│   └── performance.py           # 收益 / Sharpe / 最大回撤
+├── evolution/                   # V1.8 AI 策略进化（V1.9 铺垫）
+│   ├── __init__.py
+│   └── model_rank.py            # 策略排行榜
 ├── rl/                           # V1.7 强化学习交易 Agent
 │   ├── __init__.py
 │   ├── state.py                  # 交易状态向量（MarketState）
@@ -352,6 +364,9 @@ python main_v16.py
 
 # 14. V1.7 强化学习训练演示（DQN 模拟市场训练 → 评价）
 python main_v17.py
+
+# 15. V1.8 真实市场训练平台演示（AkShare 真实行情 → 因子工程 → 训练数据）
+python main_v18.py
 ```
 
 ## API
@@ -399,6 +414,7 @@ V1.4  生产系统：  AkShare 行情 → 股票扫描 → AI 分析 → 股票�
 V1.5  盘中交易：  WebSocket 行情 → 五档盘口 → 主力资金 → 分钟因子 → AI 盘中决策 → T+0/涨停/龙虎榜 → 实时风控
 V1.6  机器学习：  特征工程 → XGBoost/LSTM/Transformer → 模型融合 → AI 交易信号 → 开仓/平仓/等待
 V1.7  强化学习：  模拟市场 → Trading Environment → DQN/PPO Agent → 训练 → Risk Gate → 模拟盘
+V1.8  真实训练：  AkShare 真实行情 → 因子流水线 → 多股票 RL 环境 → Walk Forward 回测 → Sharpe 评价 → 策略排行
 ```
 
 生成的 CIO 报告保存在 `reports/{code}_{timestamp}.md`。
@@ -419,7 +435,8 @@ V1.7  强化学习：  模拟市场 → Trading Environment → DQN/PPO Agent �
 - V1.4（已发布）：自动交易生产系统（AkShare/Tushare 实时行情、MySQL 数据仓库、实时扫描、自动模拟交易、晨晚报推送、Docker 部署、Web 管理后台）
 - V1.5（已发布）：实时盘中交易平台（WebSocket 实时行情、Level-5 五档盘口、主力资金流模型、分钟级 Alpha 因子、AI 盘中交易 Agent、自动 T+0 模拟、涨停板策略、龙虎榜 Agent、实时风控中心）
 - V1.6（已发布）：机器学习交易引擎（XGBoost 涨跌预测、LSTM 时间序列、Transformer 行情模型、特征工程、模型融合、模型仓库自动选择、AI 交易信号）
-- V1.7（当前）：强化学习交易 Agent（Deep RL、PPO/DQN、AI 模拟交易训练、自动仓位管理、风险收益优化、RL 模型评价、风险闸门）
-- V1.8（规划）：AI 强化学习真实历史数据训练平台（用真实历史行情训练，替换模拟数据）
+- V1.7（已发布）：强化学习交易 Agent（Deep RL、PPO/DQN、AI 模拟交易训练、自动仓位管理、风险收益优化、RL 模型评价、风险闸门）
+- V1.8（当前）：真实市场强化学习训练平台（AkShare 真实 A 股历史行情训练、因子工程、多股票 RL 环境、交易成本/滑点、Walk Forward 回测、Sharpe 评价、策略排行榜）
+- V1.9（规划）：AI 策略自动进化系统（Self-Evolving Strategy Engine：遗传算法优化、多策略竞争淘汰、AutoML、策略基因库、AI 策略委员会投票）
 
 **注意**：本项目仅用于研究与模拟，不构成投资建议。禁止接入真实交易接口。

@@ -1,1 +1,1 @@
-"""V1.2 Self-Evolving AI Hedge Fund Agent：自动进化型量化研究实验室。"""
+"""V1.8 AI 策略进化：策略排行榜（为 V1.9 自动进化铺垫）。"""
