@@ -239,7 +239,17 @@ AI-Hedge-Fund-OS/
 │   ├── manager.py                # AI 自动调仓（V1.0）
 │   ├── account.py                # V2.4 模拟资金账户（Account）
 │   ├── position.py               # V2.4 持仓管理（PositionManager）
-│   └── risk_budget.py            # V2.5 组合风险预算（RiskBudget 等权分散）
+│   ├── risk_budget.py            # V2.5 组合风险预算（RiskBudget 等权分散）
+│   ├── portfolio_manager.py      # V2.6 组合管理器（PortfolioManager）
+│   ├── exposure.py               # V2.6 行业风险暴露（ExposureAnalyzer）
+│   └── attribution.py            # V2.6 收益归因（Attribution）
+├── portfolio_ai/                 # V2.6 组合智能层
+│   ├── __init__.py
+│   ├── scoring.py                # AI 股票评分（AIStockScore 基本面30%+技术20%+资金流30%+行业20%）
+│   ├── optimizer.py              # Markowitz 组合优化（PortfolioOptimizer 等权）
+│   ├── black_litterman.py        # Black-Litterman 模型（市场权重+AI 观点）
+│   ├── asset_allocator.py        # 资金分配（A级20%/B级10%/观察5%）
+│   └── rebalance.py              # 动态调仓（RebalanceEngine 偏差>5% 调仓）
 ├── rag/                         # V1.1 RAG 投资知识库
 │   ├── __init__.py
 │   ├── document_loader.py       # PDF 财报读取（pypdf）
@@ -488,6 +498,9 @@ python main_v24.py
 
 # 22. V2.5 量化风控演示（风险 Agent → 风险委员会投票审批）
 python main_v25.py
+
+# 23. V2.6 组合优化演示（AI 评分 → Markowitz 组合 → 资金配置）
+python main_v26.py
 ```
 
 ## API
@@ -543,6 +556,7 @@ V2.2  自动流水线：  每日定时调度 → 市场扫描（动量/量能/�
 V2.3  实时感知：    WebSocket 实时行情 → Tick 数据流 → Redis 缓存 → 资金雷达/盘口分析/异动检测 → 盘中 AI 交易 → 实时风控 → 模拟盘
 V2.4  自主交易：    CIO 决策 → 交易委员会 → 信号引擎（资金+风险）→ 动态仓位 → 订单 → 模拟成交 → 持仓/账户 → 交易日志 → 止盈止损 → QMT 接口预留
 V2.5  机构风控：    交易信号 → Risk Agent 审核（波动/单票仓位）→ AI 风险委员会票决（>=2 拒）→ 通过执行 / 拒绝记录；VaR / 最大回撤 / 波动率 / 市场状态 / 黑天鹅 / 风险预算
+V2.6  组合管理：    5000 股票池 → AI 评分（基本面/技术/资金流/行业）→ Markowitz 组合优化 → Black-Litterman 观点调整 → 资金分配（A20%/B10%/观察5%）→ 动态调仓 → 行业暴露/收益归因
 ```
 
 生成的 CIO 报告保存在 `reports/{code}_{timestamp}.md`。
@@ -571,7 +585,8 @@ V2.5  机构风控：    交易信号 → Risk Agent 审核（波动/单票仓�
 - V2.2（已发布）：自动投资研究流水线（Autonomous Research Pipeline：每日定时调度、A 股因子扫描、AI 机会排名、投资委员会票决、每日 AI 晨报/晚报、观察/候选/重点/持仓股票池）
 - V2.3（已发布）：实时市场感知系统（Real-Time Market Intelligence Engine：WebSocket 实时行情、Tick 级数据流、Redis 行情缓存、五档盘口分析、主力资金雷达、实时异动检测、盘中 AI 交易 Agent、实时风险控制）
 - V2.4（已发布）：盘中自主交易系统（Autonomous Trading Execution Layer：自动订单生成、模拟交易账户、持仓管理、委托系统、成交回报、止盈止损、动态仓位、QMT 接口预留、交易日志系统）
-- V2.5（当前）：量化交易风控中心（Institutional Risk Control Engine：VaR 风险模型、最大回撤控制、波动率监控、市场状态识别、黑天鹅检测、组合风险预算、单股票风险限制、AI 风险委员会、自动降仓机制）
-- V2.6（规划）：组合优化与资金管理系统（Portfolio Intelligence Layer：Markowitz 组合优化、Black-Litterman 模型、AI 动态资产配置、多股票资金分配、行业风险平衡、Beta 控制、Alpha/Beta 分离、AI 自动调仓；等 ChatGPT 会话输出后同步）
+- V2.5（已发布）：量化交易风控中心（Institutional Risk Control Engine：VaR 风险模型、最大回撤控制、波动率监控、市场状态识别、黑天鹅检测、组合风险预算、单股票风险限制、AI 风险委员会、自动降仓机制）
+- V2.6（当前）：组合优化与资金管理系统（Portfolio Intelligence Layer：AI 股票评分、Markowitz 组合优化、Black-Litterman 模型、AI 动态资产配置、多股票资金分配、动态调仓、行业风险平衡、收益归因、组合管理器）
+- V2.7（规划）：机器学习 Alpha 预测引擎（Machine Learning Alpha Engine：训练数据准备、特征工程、模型训练、预测信号生成、Alpha 因子回测；等 ChatGPT 会话输出后同步）
 
 **注意**：本项目仅用于研究与模拟，不构成投资建议。禁止接入真实交易接口。
