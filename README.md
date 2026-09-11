@@ -269,11 +269,42 @@ AI-Hedge-Fund-OS/
 │   ├── trader_agent.py          # + TraderAgent（V2.0）
 │   ├── risk_agent.py            # + RiskAgent（V2.0）
 │   └── cio_agent.py             # + CIOAgent（V2.0）
-├── memory/                      # V2.0 投资记忆系统
+├── memory/                      # V2.0 投资记忆系统 + V2.1 向量记忆
 │   ├── __init__.py
-│   └── investment_memory.py     # 历史交易记忆（最近 10 条回放）
-├── reports/                     # V0.4/V2.0 投资报告（report_generator.py 增量）
-│   └── report_generator.py      # + ReportGenerator（V2.0 AI 基金晨报）
+│   ├── investment_memory.py     # 历史交易记忆（最近 10 条回放）
+│   └── vector_memory.py         # V2.1 ChromaDB 向量长期记忆（VectorMemory）
+├── reports/                     # V0.4/V2.0/V2.1/V2.2 投资报告
+│   ├── report_generator.py      # + ReportGenerator（V2.0 AI 基金晨报）
+│   └── ai_research_report.py    # + ResearchReportGenerator（V2.1 AI 投资研究报告）
+├── research/                    # V2.1 研究智能层（Research Intelligence Layer）
+│   ├── __init__.py
+│   ├── pdf_agent.py             # 财报 PDF 自动阅读 Agent（PDFResearchAgent）
+│   ├── news_agent.py            # 新闻舆情 Agent（NewsAgent）
+│   └── financial_agent.py       # 金融数据 Agent（FinancialAgent）
+├── mcp/                         # MCP 工具层（V1.0 / V1.1 / V2.1 注册式）
+│   ├── __init__.py
+│   ├── market_tool.py           # 行情工具（V1.0 演示版）
+│   ├── report_tool.py           # 报告工具（V1.0 演示版）
+│   ├── tools.py                 # V1.1 Market/News + V2.1 FinancialTools
+│   ├── server.py                # V1.1 MCP 统一管理 + V2.1 register() 注册机制
+│   └── register.py              # V2.1 默认工具注册（company_info/news_search）
+├── automation/                  # V2.2 自动投资研究流水线
+│   ├── __init__.py
+│   ├── scheduler.py             # 每日定时调度（AIScheduler）
+│   └── daily_pipeline.py        # 每日流水线（扫描 → 机会 → 委员会决策）
+├── scanner/                     # V1.4 股票扫描器 + V2.2 因子扫描
+│   ├── __init__.py
+│   ├── stock_scanner.py         # V1.4 StockScanner + V2.2 StockScannerV22
+│   ├── opportunity_rank.py      # V2.2 AI 机会排名（Top50）
+│   └── ranking.py               # AI 精选股票池
+├── committee/                   # V1.0/V1.3 投资委员会 + V2.2 票决
+│   ├── __init__.py
+│   ├── research_committee.py    # AI 研究委员会：多 Agent 综合评分
+│   ├── cio.py                   # CIO 基金经理：研究评分 → BUY/WATCH/PASS + 仓位
+│   ├── risk_committee.py        # 风险委员会：组合波动 → RED/NORMAL
+│   ├── voting.py                # V1.3 VotingSystem + V2.2 InvestmentCommittee
+│   ├── investment_committee.py  # CIO 投资委员会（V1.3）
+│   └── risk_agent.py            # 风险委员会 Agent（V1.3）
 ├── data_engine/                 # V1.8 真实行情数据引擎
 │   ├── __init__.py
 │   └── akshare_loader.py        # AkShare 真实 A 股历史行情加载
@@ -404,6 +435,12 @@ python main_v19.py
 
 # 17. V2.0 多智能体 AI 基金经理演示（AI 投资委员会投票）
 python main_v20.py
+
+# 18. V2.1 研究智能层演示（CIO 通过 MCP 工具研究 + 决策）
+python main_v21.py
+
+# 19. V2.2 自动投资研究流水线演示（扫描 → 发现机会 → 委员会决策）
+python main_v22.py
 ```
 
 ## API
@@ -454,6 +491,8 @@ V1.7  强化学习：  模拟市场 → Trading Environment → DQN/PPO Agent �
 V1.8  真实训练：  AkShare 真实行情 → 因子流水线 → 多股票 RL 环境 → Walk Forward 回测 → Sharpe 评价 → 策略排行
 V1.9  自主进化：  策略 DNA 生成 → 种群竞争 → 遗传算法选择/交叉/变异 → Alpha 评分 → 淘汰失败策略 → 下一代
 V2.0  数字基金团队：CIO Agent 统管 → 研究员/量化/宏观/交易/风控多 Agent 分工 → LangGraph 协作流 → 投资委员会投票 → 晨报输出
+V2.1  研究智能层：  Agent → MCP 工具注册/调用 → 财报 PDF 阅读 / 新闻舆情 / 金融数据 → 向量记忆 → RAG 知识库 → AI 研报 → CIO 决策
+V2.2  自动流水线：  每日定时调度 → 市场扫描（动量/量能/资金流因子）→ 机会排名 → 委员会票决 → 晨报/晚报 → 股票池（观察/候选/重点/持仓）
 ```
 
 生成的 CIO 报告保存在 `reports/{code}_{timestamp}.md`。
@@ -477,7 +516,9 @@ V2.0  数字基金团队：CIO Agent 统管 → 研究员/量化/宏观/交易/�
 - V1.7（已发布）：强化学习交易 Agent（Deep RL、PPO/DQN、AI 模拟交易训练、自动仓位管理、风险收益优化、RL 模型评价、风险闸门）
 - V1.8（已发布）：真实市场强化学习训练平台（AkShare 真实 A 股历史行情训练、因子工程、多股票 RL 环境、交易成本/滑点、Walk Forward 回测、Sharpe 评价、策略排行榜）
 - V1.9（已发布）：AI 策略自动进化系统（Self-Evolving Strategy Engine：AI 自动生成策略、策略 DNA、因子自动发现、遗传算法优化、策略基因库、多策略竞争淘汰、Alpha 评分）
-- V2.0（当前）：多智能体 AI 基金经理系统（Multi-Agent AI Fund Team：LangGraph 多 Agent 协作、AI 投资委员会投票、CIO 最终决策、研究员/量化/宏观/交易/风控 Agent、AI 每日晨会、长期投资记忆）
-- V2.1（规划）：财报 + 新闻 + MCP 工具生态（Research Intelligence Layer：财报 PDF 自动阅读 Agent、新闻舆情 Agent、行情数据 Agent、MCP 工具接口）
+- V2.0（已发布）：多智能体 AI 基金经理系统（Multi-Agent AI Fund Team：LangGraph 多 Agent 协作、AI 投资委员会投票、CIO 最终决策、研究员/量化/宏观/交易/风控 Agent、AI 每日晨会、长期投资记忆）
+- V2.1（已发布）：财报 + 新闻 + MCP 工具生态（Research Intelligence Layer：MCP 工具注册框架、财报 PDF 自动阅读 Agent、新闻舆情 Agent、金融数据 Agent、ChromaDB 向量长期记忆、RAG 知识库、AI 投资研究报告、CIO 工具化研究决策）
+- V2.2（当前）：自动投资研究流水线（Autonomous Research Pipeline：每日定时调度、A 股因子扫描、AI 机会排名、投资委员会票决、每日 AI 晨报/晚报、观察/候选/重点/持仓股票池）
+- V2.3（规划）：下一代（等 ChatGPT 会话输出后同步）
 
 **注意**：本项目仅用于研究与模拟，不构成投资建议。禁止接入真实交易接口。

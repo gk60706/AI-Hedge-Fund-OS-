@@ -1,4 +1,7 @@
-"""V1.3 AI 投资委员会投票系统：基金经理观点表决。"""
+"""V1.3 AI 投资委员会投票系统：基金经理观点表决。
+
+V2.2 追加：InvestmentCommittee（Research/Quant/Macro/Risk/CIO 简单票决）。
+"""
 
 
 class VotingSystem:
@@ -37,3 +40,35 @@ class VotingSystem:
                 "SELL": sell,
             },
         }
+
+
+# ---------------------------------------------------------------------------
+# V2.2 AI 投资委员会：多个 Agent 各自投票（BUY/SELL/HOLD），按票数定决策。
+# ---------------------------------------------------------------------------
+class InvestmentCommittee:
+    """V2.2 投资委员会投票。"""
+
+    def vote(self, opinions: list) -> str:
+        """统计 BUY/SELL/HOLD 票数。
+
+        Args:
+            opinions: 字符串列表，如 ["BUY", "BUY", "HOLD", ...]。
+
+        Returns:
+            "BUY"（buy>=3）、"SELL"（sell>=3）、否则 "HOLD"。
+        """
+        buy = 0
+        sell = 0
+        hold = 0
+        for opinion in opinions:
+            if opinion == "BUY":
+                buy += 1
+            elif opinion == "SELL":
+                sell += 1
+            else:
+                hold += 1
+        if buy >= 3:
+            return "BUY"
+        if sell >= 3:
+            return "SELL"
+        return "HOLD"
