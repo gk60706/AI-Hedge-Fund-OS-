@@ -229,7 +229,7 @@ AI-Hedge-Fund-OS/
 │   ├── report_tool.py           # 报告工具（V1.0 演示版）
 │   ├── tools.py                 # V1.1 工具系统（Market/News）
 │   └── server.py                # V1.1 MCP 统一管理
-├── portfolio/                   # V0.6 + V1.0 组合管理 + V2.4 资金账户
+├── portfolio/                   # V0.6 + V1.0 组合管理 + V2.4 资金账户 + V2.5 风险预算
 │   ├── __init__.py
 │   ├── optimizer.py              # Markowitz 组合优化（V0.6）
 │   ├── risk_model.py             # 组合风险模型（V0.6）
@@ -238,7 +238,8 @@ AI-Hedge-Fund-OS/
 │   ├── main_engine.py            # 多策略组合入口（V0.6）
 │   ├── manager.py                # AI 自动调仓（V1.0）
 │   ├── account.py                # V2.4 模拟资金账户（Account）
-│   └── position.py               # V2.4 持仓管理（PositionManager）
+│   ├── position.py               # V2.4 持仓管理（PositionManager）
+│   └── risk_budget.py            # V2.5 组合风险预算（RiskBudget 等权分散）
 ├── rag/                         # V1.1 RAG 投资知识库
 │   ├── __init__.py
 │   ├── document_loader.py       # PDF 财报读取（pypdf）
@@ -352,6 +353,17 @@ AI-Hedge-Fund-OS/
 ├── journal/                     # V2.4 交易日志
 │   ├── __init__.py
 │   └── trade_log.py             # 交易日志系统（TradeJournal）
+├── risk_engine/                 # V2.5 机构级风控引擎
+│   ├── __init__.py
+│   ├── var_model.py             # VaR 风险模型（VaRModel）
+│   ├── drawdown_monitor.py      # 最大回撤监控（DrawdownMonitor，>15% STOP）
+│   ├── volatility.py            # 波动率监控（VolatilityMonitor，年化波动分级）
+│   ├── market_regime.py         # 市场状态识别（MarketRegime：BULL/BEAR/SIDEWAY）
+│   └── black_swan.py            # 黑天鹅检测（BlackSwanDetector）
+├── risk_committee/              # V2.5 AI 风险委员会
+│   ├── __init__.py
+│   ├── risk_agent.py            # 风险 Agent（RiskAgent：波动/仓位审核）
+│   └── risk_vote.py             # 委员会投票（RiskCommittee，>=2 REJECT 拒绝）
 ├── rl/                           # V1.7 强化学习交易 Agent
 │   ├── __init__.py
 │   ├── state.py                  # 交易状态向量（MarketState）
@@ -473,6 +485,9 @@ python main_v23.py
 
 # 21. V2.4 盘中自主交易演示（信号 → 订单 → 模拟成交 → 持仓）
 python main_v24.py
+
+# 22. V2.5 量化风控演示（风险 Agent → 风险委员会投票审批）
+python main_v25.py
 ```
 
 ## API
@@ -527,6 +542,7 @@ V2.1  研究智能层：  Agent → MCP 工具注册/调用 → 财报 PDF 阅�
 V2.2  自动流水线：  每日定时调度 → 市场扫描（动量/量能/资金流因子）→ 机会排名 → 委员会票决 → 晨报/晚报 → 股票池（观察/候选/重点/持仓）
 V2.3  实时感知：    WebSocket 实时行情 → Tick 数据流 → Redis 缓存 → 资金雷达/盘口分析/异动检测 → 盘中 AI 交易 → 实时风控 → 模拟盘
 V2.4  自主交易：    CIO 决策 → 交易委员会 → 信号引擎（资金+风险）→ 动态仓位 → 订单 → 模拟成交 → 持仓/账户 → 交易日志 → 止盈止损 → QMT 接口预留
+V2.5  机构风控：    交易信号 → Risk Agent 审核（波动/单票仓位）→ AI 风险委员会票决（>=2 拒）→ 通过执行 / 拒绝记录；VaR / 最大回撤 / 波动率 / 市场状态 / 黑天鹅 / 风险预算
 ```
 
 生成的 CIO 报告保存在 `reports/{code}_{timestamp}.md`。
@@ -554,7 +570,8 @@ V2.4  自主交易：    CIO 决策 → 交易委员会 → 信号引擎（资�
 - V2.1（已发布）：财报 + 新闻 + MCP 工具生态（Research Intelligence Layer：MCP 工具注册框架、财报 PDF 自动阅读 Agent、新闻舆情 Agent、金融数据 Agent、ChromaDB 向量长期记忆、RAG 知识库、AI 投资研究报告、CIO 工具化研究决策）
 - V2.2（已发布）：自动投资研究流水线（Autonomous Research Pipeline：每日定时调度、A 股因子扫描、AI 机会排名、投资委员会票决、每日 AI 晨报/晚报、观察/候选/重点/持仓股票池）
 - V2.3（已发布）：实时市场感知系统（Real-Time Market Intelligence Engine：WebSocket 实时行情、Tick 级数据流、Redis 行情缓存、五档盘口分析、主力资金雷达、实时异动检测、盘中 AI 交易 Agent、实时风险控制）
-- V2.4（当前）：盘中自主交易系统（Autonomous Trading Execution Layer：自动订单生成、模拟交易账户、持仓管理、委托系统、成交回报、止盈止损、动态仓位、QMT 接口预留、交易日志系统）
-- V2.5（规划）：量化交易风控中心（VaR 风险模型、最大回撤控制、波动率监控、市场状态识别、黑天鹅检测、组合风险预算、AI 风险委员会；等 ChatGPT 会话输出后同步）
+- V2.4（已发布）：盘中自主交易系统（Autonomous Trading Execution Layer：自动订单生成、模拟交易账户、持仓管理、委托系统、成交回报、止盈止损、动态仓位、QMT 接口预留、交易日志系统）
+- V2.5（当前）：量化交易风控中心（Institutional Risk Control Engine：VaR 风险模型、最大回撤控制、波动率监控、市场状态识别、黑天鹅检测、组合风险预算、单股票风险限制、AI 风险委员会、自动降仓机制）
+- V2.6（规划）：组合优化与资金管理系统（Portfolio Intelligence Layer：Markowitz 组合优化、Black-Litterman 模型、AI 动态资产配置、多股票资金分配、行业风险平衡、Beta 控制、Alpha/Beta 分离、AI 自动调仓；等 ChatGPT 会话输出后同步）
 
 **注意**：本项目仅用于研究与模拟，不构成投资建议。禁止接入真实交易接口。
