@@ -339,14 +339,28 @@ AI-Hedge-Fund-OS/
 │   ├── __init__.py
 │   ├── walk_forward.py          # Walk Forward 训练/测试切分
 │   └── performance.py           # 收益 / Sharpe / 最大回撤
-├── evolution/                   # V1.8/V1.9 AI 策略进化
+├── evolution/                   # V1.8/V1.9 AI 策略进化 + V2.8/V2.8.1 自动策略进化
 │   ├── __init__.py
 │   ├── model_rank.py            # 策略排行榜（V1.8）
-│   ├── strategy_generator.py    # AI 策略生成器（V1.9）
+│   ├── strategy_generator.py    # AI 策略生成器（V1.9）+ V2.8 StrategyGeneratorV28 + V2.8.1 StrategyGeneratorV281
 │   ├── strategy_population.py   # 策略种群（V1.9）
 │   ├── factor_miner.py          # 因子自动挖掘（V1.9）
 │   ├── genetic_optimizer.py     # 遗传算法优化器（V1.9）
+│   ├── genetic_algorithm.py     # V2.8 遗传算法 + V2.8.1 GeneticAlgorithmV281（选择/交叉/变异）
 │   └── evolution_engine.py      # 策略进化引擎（V1.9）
+├── strategy_lab/                # V2.8/V2.8.1 AI 策略实验室
+│   ├── __init__.py
+│   ├── strategy.py              # V2.8 Strategy + V2.8.1 StrategyDNA/StrategyV281
+│   ├── evaluator.py             # V1.1 evaluate + V2.8 StrategyEvaluator + V2.8.1 StrategyEvaluatorV281
+│   ├── leaderboard.py           # V2.8 排行榜 + V2.8.1 StrategyLeaderboardV281
+│   ├── lifecycle.py             # V2.8 生命周期 + V2.8.1 StrategyLifecycleV281
+│   ├── signal_engine.py         # V2.8.1 策略信号生成器（StrategySignalEngine）
+│   ├── evolution.py             # 策略进化（V1.8/V1.9）
+│   └── generator.py             # 策略生成器（V1.8/V1.9）
+├── automl/                      # V2.8 AutoML 自动参数优化
+│   ├── __init__.py
+│   └── optimizer.py             # AutoOptimizer（网格搜索最佳参数）
+├── backtest/                    # 回测引擎（V0.5 + V1.2 + V2.8.1）
 ├── alpha/                       # V1.9 Alpha 评价层 + V2.7 因子库/Alpha 生成
 │   ├── __init__.py
 │   ├── alpha_score.py           # V1.9 Alpha 评分（收益/Sharpe/回撤/胜率）
@@ -516,6 +530,12 @@ python main_v26.py
 
 # 24. V2.7 机器学习 Alpha 预测演示（多模型融合 → Alpha 评分 → 精选股票池）
 python main_v27.py
+
+# 25. V2.8 自动策略发现与进化演示（100 策略 → 评价 → 排行榜 TOP5）
+python main_v28.py
+
+# 26. V2.8.1 AI 策略自动进化实验室演示（100 策略 → 回测 → 淘汰/保留 → 交叉/变异 → 20 代进化 → FINAL CHAMPION）
+python main_v281.py
 ```
 
 ## API
@@ -573,6 +593,8 @@ V2.4  自主交易：    CIO 决策 → 交易委员会 → 信号引擎（资�
 V2.5  机构风控：    交易信号 → Risk Agent 审核（波动/单票仓位）→ AI 风险委员会票决（>=2 拒）→ 通过执行 / 拒绝记录；VaR / 最大回撤 / 波动率 / 市场状态 / 黑天鹅 / 风险预算
 V2.6  组合管理：    5000 股票池 → AI 评分（基本面/技术/资金流/行业）→ Markowitz 组合优化 → Black-Litterman 观点调整 → 资金分配（A20%/B10%/观察5%）→ 动态调仓 → 行业暴露/收益归因
 V2.7  ML预测：       历史数据 → 因子工程/因子库（价值/动量/质量/资金）→ XGBoost/LSTM/Transformer 训练 → 多模型融合 Alpha 评分（XGB*0.4+LSTM*0.3+资金*0.3）→ Alpha>0.8 进精选池 → 组合优化
+V2.8  策略进化：    AI 策略实验室（Strategy Lab）：策略基因（Strategy DNA）→ 策略生成器自动创造 → 回测评价（收益/Sharpe/回撤）→ 策略排行榜 → 遗传算法进化 → AutoML 参数优化 → 策略生命周期（KILL/PROMOTE/TEST）
+V2.8.1 进化闭环：  AI 策略自动进化实验室（可运行版）：StrategyDNA（9 基因位）→ 生成 100 策略 → 信号引擎 → 真实回测引擎（佣金/滑点/权益曲线）→ CAGR/Sharpe/Sortino/Calmar 评价 → 排行榜 → 生命周期（EXPERIMENT→BACKTEST→VALIDATION→RETIRED）→ 选择精英/交叉/变异 → 20 代进化 → Champion Strategy → 模拟盘（禁止自动实盘）
 ```
 
 生成的 CIO 报告保存在 `reports/{code}_{timestamp}.md`。
@@ -603,7 +625,9 @@ V2.7  ML预测：       历史数据 → 因子工程/因子库（价值/动量/
 - V2.4（已发布）：盘中自主交易系统（Autonomous Trading Execution Layer：自动订单生成、模拟交易账户、持仓管理、委托系统、成交回报、止盈止损、动态仓位、QMT 接口预留、交易日志系统）
 - V2.5（已发布）：量化交易风控中心（Institutional Risk Control Engine：VaR 风险模型、最大回撤控制、波动率监控、市场状态识别、黑天鹅检测、组合风险预算、单股票风险限制、AI 风险委员会、自动降仓机制）
 - V2.6（已发布）：组合优化与资金管理系统（Portfolio Intelligence Layer：AI 股票评分、Markowitz 组合优化、Black-Litterman 模型、AI 动态资产配置、多股票资金分配、动态调仓、行业风险平衡、收益归因、组合管理器）
-- V2.7（当前）：机器学习 Alpha 预测引擎（Machine Learning Alpha Engine：因子工程、因子库、XGBoost 收益预测、LSTM 时间序列、Transformer 行情模型接口、自动训练流程、多模型融合 Alpha 生成、模型管理）
-- V2.8（规划）：自动策略发现与进化系统（Auto Strategy Evolution Engine；等 ChatGPT 会话输出后同步）
+- V2.7（已发布）：机器学习 Alpha 预测引擎（Machine Learning Alpha Engine：因子工程、因子库、XGBoost 收益预测、LSTM 时间序列、Transformer 行情模型接口、自动训练流程、多模型融合 Alpha 生成、模型管理）
+- V2.8（已发布）：自动策略发现与进化系统（Auto Strategy Evolution Engine：AI 策略实验室、策略基因 Strategy DNA、AI 策略生成器、因子自动组合、回测评价、策略排行榜、遗传算法进化、AutoML 参数优化、策略生命周期管理）
+- V2.8.1（当前）：AI 策略自动进化实验室（可运行版：StrategyDNA 9 基因位、真实回测引擎含佣金/滑点、CAGR/Sharpe/Sortino/Calmar 评价、Selection→Crossover→Mutation 进化闭环、20 代进化 Champion、模拟盘、禁止自动实盘）
+- V2.9（规划）：多 Agent 自主投资委员会升级版（CIO/Quant/Fundamental/Macro/Risk/Trader 六主管、Agent 辩论机制、投资观点冲突解决、多策略竞争、AI 投资会议、投票决策 → 交易计划 → 执行）
 
 **注意**：本项目仅用于研究与模拟，不构成投资建议。禁止接入真实交易接口。

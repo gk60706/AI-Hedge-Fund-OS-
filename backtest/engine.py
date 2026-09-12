@@ -62,3 +62,39 @@ class BacktestEngine:
             "capital": capital,
             "return": capital / self.initial_capital - 1,
         }
+
+
+class BacktestEngineV281:
+    """V2.8.1 可运行版回测引擎：价格序列 + 信号序列 → 权益曲线。
+
+    支持佣金与滑点，BUY 全仓买入、SELL 全仓卖出，返回 numpy 权益曲线。
+    """
+
+    def run(self, prices, signals, initial_cash=1_000_000, commission=0.0003, slippage=0.0005):
+        import numpy as np
+        prices = np.asarray(prices, dtype=float)
+        signals = np.asarray(signals, dtype=int)
+        cash = initial_cash
+        shares = 0
+        equity_curve = []
+        for i in range(len(prices)):
+            price = prices[i]
+            signal = signals[i]
+            # BUY
+            if signal == 1 and shares == 0:
+                execution_price = price * (1 + slippage)
+                available_cash = cash
+                shares = int(available_cash / execution_price / 100) * 100
+                cost = shares * execution_price
+                fee = cost * commission
+                cash -= (cost + fee)
+            # SELL
+            elif signal == -1 and shares > 0:
+                execution_price = price * (1 - slippage)
+                revenue = shares * execution_price
+                fee = revenue * commission
+                cash += (revenue - fee)
+                shares = 0
+            equity = cash + shares * price
+            equity_curve.append(equity)
+        return np.asarray(equity_curve)

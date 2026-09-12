@@ -19,3 +19,38 @@ class StrategyGenerator:
             stop_loss=random.uniform(0.03, 0.1),
             take_profit=random.uniform(0.05, 0.3),
         )
+
+
+class StrategyGeneratorV28:
+    """V2.8 框架演示版：随机生成策略基因 dict（价值/动量/资金/持仓）。"""
+
+    def generate(self):
+        genes = {
+            "value": random.random(),
+            "momentum": random.random(),
+            "capital": random.random(),
+            "holding": random.randint(5, 60),
+        }
+        return genes
+
+
+class StrategyGeneratorV281:
+    """V2.8.1 可运行版：随机生成 StrategyV281 对象（9 基因位合法区间）。"""
+
+    def generate(self):
+        from strategy_lab.strategy import StrategyV281, StrategyDNA
+        dna = StrategyDNA(
+            momentum_weight=random.random(),
+            value_weight=random.random(),
+            capital_weight=random.random(),
+            volume_weight=random.random(),
+            buy_threshold=random.uniform(0.50, 0.90),
+            stop_loss=random.uniform(0.03, 0.10),
+            take_profit=random.uniform(0.08, 0.30),
+            holding_period=random.randint(5, 40),
+            max_position=random.uniform(0.05, 0.25),
+        )
+        return StrategyV281(dna)
+
+    def generate_population(self, size=100):
+        return [self.generate() for _ in range(size)]
