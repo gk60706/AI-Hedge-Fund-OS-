@@ -347,9 +347,21 @@ AI-Hedge-Fund-OS/
 │   ├── factor_miner.py          # 因子自动挖掘（V1.9）
 │   ├── genetic_optimizer.py     # 遗传算法优化器（V1.9）
 │   └── evolution_engine.py      # 策略进化引擎（V1.9）
-├── alpha/                       # V1.9 Alpha 评价层
+├── alpha/                       # V1.9 Alpha 评价层 + V2.7 因子库/Alpha 生成
 │   ├── __init__.py
-│   └── alpha_score.py           # Alpha 评分（收益/Sharpe/回撤/胜率）
+│   ├── alpha_score.py           # V1.9 Alpha 评分（收益/Sharpe/回撤/胜率）
+│   ├── factor_library.py        # V2.7 因子库（价值/动量/质量/资金）
+│   └── alpha_generator.py       # V2.7 Alpha 生成器（XGBoost*0.4+LSTM*0.3+资金流*0.3）
+├── ml_engine/                   # V2.7 机器学习引擎
+│   ├── __init__.py
+│   ├── feature_engineering.py   # 因子工程（FeatureEngineering）
+│   ├── xgboost_model.py         # XGBoost Alpha 预测（XGBoostAlpha）
+│   ├── lstm_model.py            # LSTM 时间序列（LSTMModel）
+│   ├── transformer_model.py     # Transformer 行情模型接口（MarketTransformer）
+│   └── trainer.py               # 自动训练管理器（ModelTrainer）
+├── model/                       # V2.7 模型层
+│   ├── __init__.py
+│   └── model_manager.py         # 模型管理（ModelManager 注册/获取）
 ├── strategy/                    # V1.9 策略层 + V2.4 交易信号
 │   ├── __init__.py
 │   ├── strategy_template.py     # 策略 DNA 定义与变异
@@ -501,6 +513,9 @@ python main_v25.py
 
 # 23. V2.6 组合优化演示（AI 评分 → Markowitz 组合 → 资金配置）
 python main_v26.py
+
+# 24. V2.7 机器学习 Alpha 预测演示（多模型融合 → Alpha 评分 → 精选股票池）
+python main_v27.py
 ```
 
 ## API
@@ -557,6 +572,7 @@ V2.3  实时感知：    WebSocket 实时行情 → Tick 数据流 → Redis 缓
 V2.4  自主交易：    CIO 决策 → 交易委员会 → 信号引擎（资金+风险）→ 动态仓位 → 订单 → 模拟成交 → 持仓/账户 → 交易日志 → 止盈止损 → QMT 接口预留
 V2.5  机构风控：    交易信号 → Risk Agent 审核（波动/单票仓位）→ AI 风险委员会票决（>=2 拒）→ 通过执行 / 拒绝记录；VaR / 最大回撤 / 波动率 / 市场状态 / 黑天鹅 / 风险预算
 V2.6  组合管理：    5000 股票池 → AI 评分（基本面/技术/资金流/行业）→ Markowitz 组合优化 → Black-Litterman 观点调整 → 资金分配（A20%/B10%/观察5%）→ 动态调仓 → 行业暴露/收益归因
+V2.7  ML预测：       历史数据 → 因子工程/因子库（价值/动量/质量/资金）→ XGBoost/LSTM/Transformer 训练 → 多模型融合 Alpha 评分（XGB*0.4+LSTM*0.3+资金*0.3）→ Alpha>0.8 进精选池 → 组合优化
 ```
 
 生成的 CIO 报告保存在 `reports/{code}_{timestamp}.md`。
@@ -586,7 +602,8 @@ V2.6  组合管理：    5000 股票池 → AI 评分（基本面/技术/资金�
 - V2.3（已发布）：实时市场感知系统（Real-Time Market Intelligence Engine：WebSocket 实时行情、Tick 级数据流、Redis 行情缓存、五档盘口分析、主力资金雷达、实时异动检测、盘中 AI 交易 Agent、实时风险控制）
 - V2.4（已发布）：盘中自主交易系统（Autonomous Trading Execution Layer：自动订单生成、模拟交易账户、持仓管理、委托系统、成交回报、止盈止损、动态仓位、QMT 接口预留、交易日志系统）
 - V2.5（已发布）：量化交易风控中心（Institutional Risk Control Engine：VaR 风险模型、最大回撤控制、波动率监控、市场状态识别、黑天鹅检测、组合风险预算、单股票风险限制、AI 风险委员会、自动降仓机制）
-- V2.6（当前）：组合优化与资金管理系统（Portfolio Intelligence Layer：AI 股票评分、Markowitz 组合优化、Black-Litterman 模型、AI 动态资产配置、多股票资金分配、动态调仓、行业风险平衡、收益归因、组合管理器）
-- V2.7（规划）：机器学习 Alpha 预测引擎（Machine Learning Alpha Engine：训练数据准备、特征工程、模型训练、预测信号生成、Alpha 因子回测；等 ChatGPT 会话输出后同步）
+- V2.6（已发布）：组合优化与资金管理系统（Portfolio Intelligence Layer：AI 股票评分、Markowitz 组合优化、Black-Litterman 模型、AI 动态资产配置、多股票资金分配、动态调仓、行业风险平衡、收益归因、组合管理器）
+- V2.7（当前）：机器学习 Alpha 预测引擎（Machine Learning Alpha Engine：因子工程、因子库、XGBoost 收益预测、LSTM 时间序列、Transformer 行情模型接口、自动训练流程、多模型融合 Alpha 生成、模型管理）
+- V2.8（规划）：自动策略发现与进化系统（Auto Strategy Evolution Engine；等 ChatGPT 会话输出后同步）
 
 **注意**：本项目仅用于研究与模拟，不构成投资建议。禁止接入真实交易接口。
