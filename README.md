@@ -663,6 +663,8 @@ V3.0  自主对冲基金：A 股候选池 → StockScanner 筛选（市值/PE/�
 - V3.0.4（已发布）：Paper Trading 完整账本（trading/ledger.py TradeLedger 永久记录、PaperBrokerV30 成交入账、trading/account_report.py AccountReport 账户统计；注：T+1 未完整实现）
 - V3.0.5（已发布）：AI Trade Review（TradeReviewV305 EXCELLENT/WIN/BAD_LOSS/LOSS 评分、review/review_engine.py 复盘统计、agents/trade_review_agent.py OpenAI Responses API 复盘）
 - V3.0.6（已发布）：AI 自动淘汰策略（strategy_lab/strategy_health.py 健康度、strategy_lab/retirement.py 退役引擎、evolution/evolution_controller.py 自动补种+进化、main_v306.py 生命周期演示）
-- V3.1（规划）：AI Portfolio Manager（组合优化）
+- V3.1（已发布）：AI Portfolio Manager（组合优化：factors/alpha_score.py AlphaScore 多维评分、portfolio/portfolio_manager.py PortfolioManagerV31 Alpha 排名、portfolio/optimizer.py PortfolioOptimizerV31 Alpha 加权组合、portfolio/constraints.py 组合约束校验、risk/portfolio_risk.py 组合风险分析、main_v31.py 演示）
+- V3.2（当前）：Dynamic Risk Budget + Portfolio Optimization（动态风险预算：factors/beta.py 个股 Beta、portfolio/risk_parity.py Risk Parity、portfolio/volatility_target.py 波动率目标、portfolio/industry_budget.py 行业风险预算、portfolio/beta_control.py Beta 控制、portfolio/dynamic_cash.py 动态现金、risk/risk_state.py 风险状态机、risk/drawdown_control.py 回撤仓位控制、portfolio/optimizer.py PortfolioOptimizerV32 十条流水线、portfolio/portfolio_manager.py PortfolioManagerV32、main_v32.py 演示）
+- V3.3（规划）：AI 进化与自学习（不再堆 Demo 模块）
 
 **注意**：本项目仅用于研究与模拟，不构成投资建议。禁止接入真实交易接口。
