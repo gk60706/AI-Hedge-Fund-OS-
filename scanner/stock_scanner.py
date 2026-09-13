@@ -109,3 +109,65 @@ class StockScannerV30:
             reverse=True,
         )
         return candidates[:limit]
+
+# ============================================================
+# V3.0.2 5000 A 股自动扫描：DataFrame 批量扫描
+# ============================================================
+from scanner.universe import AShareUniverse
+
+
+class StockScannerV302:
+    def __init__(
+        self,
+        min_market_cap: float = 5e9,
+        max_pe: float = 120,
+        min_turnover: float = 0.5,
+    ):
+        self.min_market_cap = min_market_cap
+        self.max_pe = max_pe
+        self.min_turnover = min_turnover
+        self.universe = AShareUniverse()
+
+    def scan_dataframe(
+        self,
+        df,
+        limit: int = 100,
+    ) -> list:
+        data = self.universe.clean(df)
+        # 市值过滤
+        if "总市值" in data.columns:
+            data = data[
+                data["总市值"].fillna(0) >= self.min_market_cap
+            ]
+        # PE过滤
+        if "市盈率-动态" in data.columns:
+            pe = data["市盈率-动态"]
+            data = data[
+                pe.isna()
+                | ((pe > 0) & (pe <= self.max_pe))
+            ]
+        # 换手率
+        if "换手率" in data.columns:
+            data = data[
+                data["换手率"].fillna(0) >= self.min_turnover
+            ]
+        # 按涨跌幅进行第一轮排序
+        if "涨跌幅" in data.columns:
+            data = data.sort_values(
+                "涨跌幅",
+                ascending=False,
+            )
+        data = data.head(limit)
+        result = []
+        for _, row in data.iterrows():
+            result.append({
+                "code": str(row["代码"]).zfill(6),
+                "name": str(row["名称"]),
+                "latest_price": row.get("最新价"),
+                "change_pct": row.get("涨跌幅"),
+                "turnover_pct": row.get("换手率"),
+                "pe_dynamic": row.get("市盈率-动态"),
+                "pb": row.get("市净率"),
+                "market_cap": row.get("总市值"),
+            })
+        return result

@@ -1,6 +1,7 @@
 """V3.0 AI Autonomous Hedge Fund：模拟券商（Paper Broker）。
 
 V3.0 暂时绝对不接真实券商，先建立模拟券商。
+V3.0.4 升级：每次成交永久记录到 TradeLedger。
 """
 from __future__ import annotations
 
@@ -8,6 +9,7 @@ import uuid
 
 from portfolio.portfolio import PortfolioV30 as Portfolio
 from portfolio.position import PositionV30 as Position
+from trading.ledger import TradeLedger
 from trading.order import (
     OrderV30 as Order,
     OrderSideV30 as OrderSide,
@@ -20,10 +22,16 @@ class PaperBrokerV30:
         portfolio: Portfolio,
         commission: float = 0.0003,
         slippage: float = 0.0005,
+        ledger: TradeLedger | None = None,
     ):
         self.portfolio = portfolio
         self.commission = commission
         self.slippage = slippage
+        self.ledger = (
+            ledger
+            if ledger is not None
+            else TradeLedger()
+        )
 
     def submit_order(
         self,
@@ -150,5 +158,14 @@ class PaperBrokerV30:
             "quantity": quantity,
             "price": price,
             "status": order.status,
+        })
+        self.ledger.append({
+            "code": code,
+            "side": side.value,
+            "quantity": quantity,
+            "price": price,
+            "status": order.status,
+            "commission": self.commission,
+            "slippage": self.slippage,
         })
         return order

@@ -657,9 +657,12 @@ V3.0  自主对冲基金：A 股候选池 → StockScanner 筛选（市值/PE/�
 - V2.8.1（已发布）：AI 策略自动进化实验室（可运行版：StrategyDNA 9 基因位、真实回测引擎含佣金/滑点、CAGR/Sharpe/Sortino/Calmar 评价、Selection→Crossover→Mutation 进化闭环、20 代进化 Champion、模拟盘、禁止自动实盘）
 - V2.9（已发布）：AI 多 Agent 投资委员会（6 风格 Agent 独立分析、ResearchAgent 汇总、CommitteeVoting 加权投票、PositionAllocator 仓位分配、InvestmentDecision 最终决策、main_v29.py 演示）
 - V3.0（当前）：AI Autonomous Hedge Fund 第一个闭环版本（StockScanner 股票池 → 投资委员会 → PortfolioManager 组合 → RiskEngine 风控 → PaperBroker 模拟交易 → Portfolio 快照 → TradeReview AI 复盘，main_v30.py 串联；强调 Look-ahead Bias / Survivorship Bias / Data Leakage 三大陷阱，禁止自动实盘）
-- V3.0.1（规划）：Real Market Data Engine（AkShare 真实历史数据接入）
-- V3.0.2（规划）：每日自动运行（定时扫描 → 自动决策 → 模拟盘）
-- V3.0.3（规划）：AI 自我学习闭环（策略反馈 → 自动进化）
-- V3.0.4-V3.0.6 / V4.0（规划）：真实数据驱动 / 因子研究 / 策略淘汰 / 自主进化对冲基金
+- V3.0.1（已发布）：Real Market Data Engine（AkShare 真实行情：data/schemas.py StockQuote、data/cache.py DataCache 60s 缓存、data/market_data.py MarketData 实时/历史/全市场）
+- V3.0.2（已发布）：5000 A 股自动扫描（scanner/universe.py AShareUniverse ST/退过滤、StockScannerV302 市值/PE/换手/涨幅扫描、scanner/market_scanner.py MarketScanner 全市场→候选）
+- V3.0.3（已发布）：自动投资流水线（pipeline/investment_pipeline.py InvestmentPipeline：Scanner→Committee→PortfolioManager→RiskEngine→Report、scheduler/daily_job.py 每日任务）
+- V3.0.4（已发布）：Paper Trading 完整账本（trading/ledger.py TradeLedger 永久记录、PaperBrokerV30 成交入账、trading/account_report.py AccountReport 账户统计；注：T+1 未完整实现）
+- V3.0.5（已发布）：AI Trade Review（TradeReviewV305 EXCELLENT/WIN/BAD_LOSS/LOSS 评分、review/review_engine.py 复盘统计、agents/trade_review_agent.py OpenAI Responses API 复盘）
+- V3.0.6（已发布）：AI 自动淘汰策略（strategy_lab/strategy_health.py 健康度、strategy_lab/retirement.py 退役引擎、evolution/evolution_controller.py 自动补种+进化、main_v306.py 生命周期演示）
+- V3.1（规划）：AI Portfolio Manager（组合优化）
 
 **注意**：本项目仅用于研究与模拟，不构成投资建议。禁止接入真实交易接口。
