@@ -119,7 +119,10 @@ AI-Hedge-Fund-OS/
 │   ├── execution.py              # 交易执行引擎
 │   ├── performance.py            # 盈亏统计
 │   ├── portfolio.py              # 组合快照
-│   └── rebalance.py              # V1.4 自动调仓系统
+│   ├── rebalance.py              # V1.4 自动调仓系统
+│   ├── order.py                  # V3.0 OrderSideV30/OrderV30（模拟订单）
+│   ├── paper_broker.py           # V3.0 PaperBrokerV30（佣金/滑点/合并持仓均价，不接真实券商）
+│   └── execution_engine.py       # V3.0 ExecutionEngineV30（目标仓位→手数→下单）
 ├── database/                     # V0.7 交易记录数据库 + V1.4 MySQL
 │   ├── __init__.py
 │   ├── trade_db.py               # SQLite 模拟成交记录
@@ -180,7 +183,8 @@ AI-Hedge-Fund-OS/
 │   ├── alert.py                  # 实时风险预警（跌破止损）
 │   ├── realtime_risk.py          # V1.5 实时风控中心（亏损<-8% 告警）
 │   ├── position_control.py       # V2.4 动态仓位控制（评分→目标仓位）
-│   └── stop_manager.py           # V2.4 止盈止损系统（-8% 止损 / +20% 止盈）
+│   ├── stop_manager.py           # V2.4 止盈止损系统（-8% 止损 / +20% 止盈）
+│   └── risk_engine.py            # V3.0 RiskEngineV30（单票>20%/总仓>95% 拒绝）
 ├── config/                       # V0.9 全局配置
 │   ├── __init__.py
 │   └── settings.py               # API Key 只从 .env 读取
@@ -240,9 +244,11 @@ AI-Hedge-Fund-OS/
 │   ├── account.py                # V2.4 模拟资金账户（Account）
 │   ├── position.py               # V2.4 持仓管理（PositionManager）
 │   ├── risk_budget.py            # V2.5 组合风险预算（RiskBudget 等权分散）
-│   ├── portfolio_manager.py      # V2.6 组合管理器（PortfolioManager）
+│   ├── portfolio_manager.py      # V2.6 组合管理器（PortfolioManager）+ V3.0 PortfolioManagerV30（BUY→等权目标）
 │   ├── exposure.py               # V2.6 行业风险暴露（ExposureAnalyzer）
-│   └── attribution.py            # V2.6 收益归因（Attribution）
+│   ├── attribution.py            # V2.6 收益归因（Attribution）
+│   ├── position.py               # V3.0 PositionV30（持仓 dataclass：市值/盈亏）
+│   └── portfolio.py              # V3.0 PortfolioV30（现金+持仓+快照，初始 100 万）
 ├── portfolio_ai/                 # V2.6 组合智能层
 │   ├── __init__.py
 │   ├── scoring.py                # AI 股票评分（AIStockScore 基本面30%+技术20%+资金流30%+行业20%）
@@ -284,18 +290,24 @@ AI-Hedge-Fund-OS/
 ├── main_v18.py                  # V1.8 真实市场训练平台入口（AkShare 行情 → 因子 → 训练数据）
 ├── main_v19.py                  # V1.9 策略自动进化入口（第一代策略 → 评分 → 下一代）
 ├── main_v20.py                  # V2.0 多智能体基金委员会入口（投票演示）
+├── main_v29.py                  # V2.9 AI 多 Agent 投资委员会入口（6 Agent 投票 → 决策 → 仓位）
+├── main_v30.py                  # V3.0 AI Autonomous Hedge Fund 闭环入口（扫描→委员会→组合→风控→模拟交易→快照）
 ├── graph/                       # V2.0 LangGraph 多 Agent 协作层
 │   ├── __init__.py
 │   ├── state.py                 # FundState 共享状态（TypedDict）
 │   └── fund_graph.py            # research → quant → risk → cio 工作流
-├── agents/                      # V0.2/V1.x/V2.0 Agent 集（V2.0 增量类共存）
+├── agents/                      # V0.2/V1.x/V2.0/V2.9 Agent 集（增量类共存）
 │   ├── __init__.py
-│   ├── research_agent.py        # + ResearchAgent（V2.0）
-│   ├── quant_agent.py           # + QuantAgentV20（V2.0）
-│   ├── macro_agent.py           # + MacroAgentV20（V2.0）
+│   ├── research_agent.py        # + ResearchAgent（V2.0）+ ResearchAgentV29（V2.9）
+│   ├── quant_agent.py           # + QuantAgentV20（V2.0）+ QuantAgentV29（V2.9）
+│   ├── macro_agent.py           # + MacroAgentV20（V2.0）+ MacroAgentV29（V2.9）
 │   ├── trader_agent.py          # + TraderAgent（V2.0）
-│   ├── risk_agent.py            # + RiskAgent（V2.0）
-│   └── cio_agent.py             # + CIOAgent（V2.0）
+│   ├── risk_agent.py            # + RiskAgent（V2.0）+ RiskAgentV29（V2.9）
+│   ├── cio_agent.py             # + CIOAgent（V2.0）
+│   ├── value_agent.py           # V2.9 ValueAgentV29（价值估值）
+│   ├── trend_agent.py           # V2.9 TrendAgentV29（价格动能）
+│   ├── base_agent.py            # V2.9 BaseAgent 抽象基类（normalize_score）
+│   └── investment_committee.py  # V2.9 InvestmentCommitteeV29（6 Agent 编排）
 ├── memory/                      # V2.0 投资记忆系统 + V2.1 向量记忆
 │   ├── __init__.py
 │   ├── investment_memory.py     # 历史交易记忆（最近 10 条回放）
@@ -321,17 +333,19 @@ AI-Hedge-Fund-OS/
 │   └── daily_pipeline.py        # 每日流水线（扫描 → 机会 → 委员会决策）
 ├── scanner/                     # V1.4 股票扫描器 + V2.2 因子扫描
 │   ├── __init__.py
-│   ├── stock_scanner.py         # V1.4 StockScanner + V2.2 StockScannerV22
+│   ├── stock_scanner.py         # V1.4 StockScanner + V2.2 StockScannerV22 + V3.0 StockScannerV30
 │   ├── opportunity_rank.py      # V2.2 AI 机会排名（Top50）
 │   └── ranking.py               # AI 精选股票池
-├── committee/                   # V1.0/V1.3 投资委员会 + V2.2 票决
+├── committee/                   # V1.0/V1.3 投资委员会 + V2.2 票决 + V2.9 加权投票
 │   ├── __init__.py
 │   ├── research_committee.py    # AI 研究委员会：多 Agent 综合评分
 │   ├── cio.py                   # CIO 基金经理：研究评分 → BUY/WATCH/PASS + 仓位
 │   ├── risk_committee.py        # 风险委员会：组合波动 → RED/NORMAL
-│   ├── voting.py                # V1.3 VotingSystem + V2.2 InvestmentCommittee
+│   ├── voting.py                # V1.3 VotingSystem + V2.2 InvestmentCommittee + V2.9 CommitteeVoting（SIGNAL_SCORE 加权）
 │   ├── investment_committee.py  # CIO 投资委员会（V1.3）
-│   └── risk_agent.py            # 风险委员会 Agent（V1.3）
+│   ├── risk_agent.py            # 风险委员会 Agent（V1.3）
+│   ├── allocator.py             # V2.9 PositionAllocator（决策×风险分→目标仓位）
+│   └── decision.py              # V2.9 InvestmentDecision（最终决策对象）
 ├── data_engine/                 # V1.8 真实行情数据引擎
 │   ├── __init__.py
 │   └── akshare_loader.py        # AkShare 真实 A 股历史行情加载
@@ -357,6 +371,9 @@ AI-Hedge-Fund-OS/
 │   ├── signal_engine.py         # V2.8.1 策略信号生成器（StrategySignalEngine）
 │   ├── evolution.py             # 策略进化（V1.8/V1.9）
 │   └── generator.py             # 策略生成器（V1.8/V1.9）
+├── review/                      # V3.0 AI 交易复盘
+│   ├── __init__.py
+│   └── trade_review.py           # TradeReviewV30（WIN/LOSS/NEUTRAL + 教训）
 ├── automl/                      # V2.8 AutoML 自动参数优化
 │   ├── __init__.py
 │   └── optimizer.py             # AutoOptimizer（网格搜索最佳参数）
@@ -444,7 +461,9 @@ AI-Hedge-Fund-OS/
 │   ├── test_scanners.py
 │   ├── test_fundamental.py
 │   ├── test_v10.py              # V1.0 委员会流程
-│   └── test_v11.py              # V1.1 LangGraph/MCP/RAG/策略实验室
+│   ├── test_v11.py              # V1.1 LangGraph/MCP/RAG/策略实验室
+│   ├── test_v29.py              # V2.9 多 Agent 委员会单元测试
+│   └── test_v30.py              # V3.0 闭环系统单元测试
 ├── docs/
 │   └── architecture.md
 ├── .env.example            # 密钥模板（占位值）
@@ -536,6 +555,12 @@ python main_v28.py
 
 # 26. V2.8.1 AI 策略自动进化实验室演示（100 策略 → 回测 → 淘汰/保留 → 交叉/变异 → 20 代进化 → FINAL CHAMPION）
 python main_v281.py
+
+# 27. V2.9 AI 多 Agent 投资委员会演示（6 Agent 独立分析 → 加权投票 → 仓位分配 → 最终决策）
+python main_v29.py
+
+# 28. V3.0 AI Autonomous Hedge Fund 闭环演示（扫描 → 委员会 → 组合 → 风控 → 模拟交易 → 组合快照）
+python main_v30.py
 ```
 
 ## API
@@ -595,6 +620,8 @@ V2.6  组合管理：    5000 股票池 → AI 评分（基本面/技术/资金�
 V2.7  ML预测：       历史数据 → 因子工程/因子库（价值/动量/质量/资金）→ XGBoost/LSTM/Transformer 训练 → 多模型融合 Alpha 评分（XGB*0.4+LSTM*0.3+资金*0.3）→ Alpha>0.8 进精选池 → 组合优化
 V2.8  策略进化：    AI 策略实验室（Strategy Lab）：策略基因（Strategy DNA）→ 策略生成器自动创造 → 回测评价（收益/Sharpe/回撤）→ 策略排行榜 → 遗传算法进化 → AutoML 参数优化 → 策略生命周期（KILL/PROMOTE/TEST）
 V2.8.1 进化闭环：  AI 策略自动进化实验室（可运行版）：StrategyDNA（9 基因位）→ 生成 100 策略 → 信号引擎 → 真实回测引擎（佣金/滑点/权益曲线）→ CAGR/Sharpe/Sortino/Calmar 评价 → 排行榜 → 生命周期（EXPERIMENT→BACKTEST→VALIDATION→RETIRED）→ 选择精英/交叉/变异 → 20 代进化 → Champion Strategy → 模拟盘（禁止自动实盘）
+V2.9  投资委员会：  6 风格 Agent（价值/趋势/量化/宏观/风险）独立分析 → ResearchAgent 汇总 → CommitteeVoting 加权投票（quant/risk ×1.5）→ ≥2.0 BUY / ≤-2.0 SELL → PositionAllocator 仓位分配（决策×风险分×最大仓位）→ InvestmentDecision 最终决策
+V3.0  自主对冲基金：A 股候选池 → StockScanner 筛选（市值/PE/换手）→ 投资委员会逐股决策 → PortfolioManager 等权目标仓位 → RiskEngine 风控（单票>20%/总仓>95% 拒绝）→ PaperBroker 模拟交易（佣金 0.03%/滑点 0.05%）→ ExecutionEngine 按手数下单 → Portfolio 快照（Cash/市值/总资产/收益率）→ TradeReview AI 复盘 → 策略反馈（禁止自动实盘）
 ```
 
 生成的 CIO 报告保存在 `reports/{code}_{timestamp}.md`。
@@ -627,7 +654,12 @@ V2.8.1 进化闭环：  AI 策略自动进化实验室（可运行版）：Strat
 - V2.6（已发布）：组合优化与资金管理系统（Portfolio Intelligence Layer：AI 股票评分、Markowitz 组合优化、Black-Litterman 模型、AI 动态资产配置、多股票资金分配、动态调仓、行业风险平衡、收益归因、组合管理器）
 - V2.7（已发布）：机器学习 Alpha 预测引擎（Machine Learning Alpha Engine：因子工程、因子库、XGBoost 收益预测、LSTM 时间序列、Transformer 行情模型接口、自动训练流程、多模型融合 Alpha 生成、模型管理）
 - V2.8（已发布）：自动策略发现与进化系统（Auto Strategy Evolution Engine：AI 策略实验室、策略基因 Strategy DNA、AI 策略生成器、因子自动组合、回测评价、策略排行榜、遗传算法进化、AutoML 参数优化、策略生命周期管理）
-- V2.8.1（当前）：AI 策略自动进化实验室（可运行版：StrategyDNA 9 基因位、真实回测引擎含佣金/滑点、CAGR/Sharpe/Sortino/Calmar 评价、Selection→Crossover→Mutation 进化闭环、20 代进化 Champion、模拟盘、禁止自动实盘）
-- V2.9（规划）：多 Agent 自主投资委员会升级版（CIO/Quant/Fundamental/Macro/Risk/Trader 六主管、Agent 辩论机制、投资观点冲突解决、多策略竞争、AI 投资会议、投票决策 → 交易计划 → 执行）
+- V2.8.1（已发布）：AI 策略自动进化实验室（可运行版：StrategyDNA 9 基因位、真实回测引擎含佣金/滑点、CAGR/Sharpe/Sortino/Calmar 评价、Selection→Crossover→Mutation 进化闭环、20 代进化 Champion、模拟盘、禁止自动实盘）
+- V2.9（已发布）：AI 多 Agent 投资委员会（6 风格 Agent 独立分析、ResearchAgent 汇总、CommitteeVoting 加权投票、PositionAllocator 仓位分配、InvestmentDecision 最终决策、main_v29.py 演示）
+- V3.0（当前）：AI Autonomous Hedge Fund 第一个闭环版本（StockScanner 股票池 → 投资委员会 → PortfolioManager 组合 → RiskEngine 风控 → PaperBroker 模拟交易 → Portfolio 快照 → TradeReview AI 复盘，main_v30.py 串联；强调 Look-ahead Bias / Survivorship Bias / Data Leakage 三大陷阱，禁止自动实盘）
+- V3.0.1（规划）：Real Market Data Engine（AkShare 真实历史数据接入）
+- V3.0.2（规划）：每日自动运行（定时扫描 → 自动决策 → 模拟盘）
+- V3.0.3（规划）：AI 自我学习闭环（策略反馈 → 自动进化）
+- V3.0.4-V3.0.6 / V4.0（规划）：真实数据驱动 / 因子研究 / 策略淘汰 / 自主进化对冲基金
 
 **注意**：本项目仅用于研究与模拟，不构成投资建议。禁止接入真实交易接口。

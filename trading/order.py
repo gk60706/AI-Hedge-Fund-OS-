@@ -23,3 +23,24 @@ class Order:
             "volume": self.volume,
             "time": str(self.time),
         }
+
+# ============================================================
+# V3.0 AI Autonomous Hedge Fund：模拟交易 Order
+# ============================================================
+from dataclasses import dataclass
+from enum import Enum
+
+
+class OrderSideV30(str, Enum):
+    BUY = "BUY"
+    SELL = "SELL"
+
+
+@dataclass
+class OrderV30:
+    code: str
+    side: OrderSideV30
+    quantity: int
+    price: float
+    order_id: str = ""
+    status: str = "PENDING"

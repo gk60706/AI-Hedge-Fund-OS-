@@ -98,3 +98,31 @@ class QuantAgentV20:
         elif score <= 30:
             return "SELL"
         return "HOLD"
+
+# ============================================================
+# V2.9 AI 多 Agent 投资委员会
+# ============================================================
+
+from typing import Any
+
+from agents.base_agent import BaseAgent
+
+class QuantAgentV29(BaseAgent):
+    name = "quant_agent"
+
+    def analyze(self, context: dict[str, Any]) -> dict[str, Any]:
+        quant = context.get("quant_signal", {})
+        score = float(quant.get("score", 50))
+        score = self.normalize_score(score)
+        if score >= 70:
+            signal = "BUY"
+        elif score <= 40:
+            signal = "SELL"
+        else:
+            signal = "HOLD"
+        return {
+            "agent": self.name,
+            "score": score,
+            "signal": signal,
+            "reasons": quant.get("reasons", []),
+        }

@@ -72,3 +72,52 @@ class InvestmentCommittee:
         if sell >= 3:
             return "SELL"
         return "HOLD"
+
+# ============================================================
+# V2.9 AI 多 Agent 投资委员会：加权投票系统
+# ============================================================
+
+from typing import Any
+
+SIGNAL_SCORE = {
+    "BUY": 1,
+    "HOLD": 0,
+    "SELL": -1,
+}
+
+
+class CommitteeVoting:
+    def vote(
+        self,
+        results: dict[str, dict[str, Any]],
+    ) -> dict[str, Any]:
+        total = 0.0
+        votes = {}
+        weights = {
+            "value_agent": 1.0,
+            "trend_agent": 1.0,
+            "quant_agent": 1.5,
+            "macro_agent": 1.0,
+            "risk_agent": 1.5,
+        }
+        for name, result in results.items():
+            signal = result.get("signal", "HOLD")
+            weight = weights.get(name, 1.0)
+            vote = SIGNAL_SCORE.get(signal, 0)
+            votes[name] = {
+                "signal": signal,
+                "weight": weight,
+                "vote": vote,
+            }
+            total += vote * weight
+        if total >= 2.0:
+            decision = "BUY"
+        elif total <= -2.0:
+            decision = "SELL"
+        else:
+            decision = "HOLD"
+        return {
+            "decision": decision,
+            "weighted_score": round(total, 4),
+            "votes": votes,
+        }

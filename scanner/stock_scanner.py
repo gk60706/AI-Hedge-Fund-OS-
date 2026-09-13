@@ -60,3 +60,52 @@ class StockScannerV22:
                     }
                 )
         return sorted(candidates, key=lambda x: x["score"], reverse=True)
+
+# ============================================================
+# V3.0 AI Autonomous Hedge Fund：股票池扫描器
+# ============================================================
+class StockScannerV30:
+    def __init__(
+        self,
+        min_market_cap: float = 5e9,
+        max_pe: float = 100,
+        min_turnover: float = 0.5,
+    ):
+        self.min_market_cap = min_market_cap
+        self.max_pe = max_pe
+        self.min_turnover = min_turnover
+
+    def filter_stock(
+        self,
+        stock: dict,
+    ) -> bool:
+        market_cap = stock.get("market_cap")
+        pe = stock.get("pe_dynamic")
+        turnover = stock.get("turnover_pct")
+        if market_cap is not None:
+            if market_cap < self.min_market_cap:
+                return False
+        if pe is not None:
+            if pe <= 0 or pe > self.max_pe:
+                return False
+        if turnover is not None:
+            if turnover < self.min_turnover:
+                return False
+        return True
+
+    def scan(
+        self,
+        stocks: list,
+        limit: int = 100,
+    ) -> list:
+        candidates = []
+        for stock in stocks:
+            if self.filter_stock(stock):
+                candidates.append(stock)
+        candidates.sort(
+            key=lambda x: (
+                x.get("change_pct") or 0
+            ),
+            reverse=True,
+        )
+        return candidates[:limit]

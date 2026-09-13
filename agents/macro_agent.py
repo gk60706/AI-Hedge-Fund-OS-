@@ -30,3 +30,31 @@ class MacroAgentV20:
             "risk": "MEDIUM",
             "comment": "等待政策方向确认",
         }
+
+# ============================================================
+# V2.9 AI 多 Agent 投资委员会
+# ============================================================
+
+from typing import Any
+
+from agents.base_agent import BaseAgent
+
+class MacroAgentV29(BaseAgent):
+    name = "macro_agent"
+
+    def analyze(self, context: dict[str, Any]) -> dict[str, Any]:
+        macro = context.get("macro", {"score": 50, "regime": "NEUTRAL"})
+        score = self.normalize_score(macro.get("score", 50))
+        regime = macro.get("regime", "NEUTRAL")
+        if score >= 70:
+            signal = "BUY"
+        elif score <= 40:
+            signal = "SELL"
+        else:
+            signal = "HOLD"
+        return {
+            "agent": self.name,
+            "score": score,
+            "signal": signal,
+            "regime": regime,
+        }

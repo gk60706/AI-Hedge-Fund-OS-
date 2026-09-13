@@ -52,3 +52,37 @@ BUY WATCH
 
 """
         return report
+
+# ============================================================
+# V2.9 AI 多 Agent 投资委员会
+# ============================================================
+
+from typing import Any
+
+from agents.base_agent import BaseAgent
+
+class ResearchAgentV29(BaseAgent):
+    name = "research_agent"
+
+    def analyze(self, context: dict[str, Any]) -> dict[str, Any]:
+        agents = context.get("agent_results", {})
+        scores = []
+        for result in agents.values():
+            if "score" in result:
+                scores.append(float(result["score"]))
+        if not scores:
+            score = 50.0
+        else:
+            score = sum(scores) / len(scores)
+        if score >= 70:
+            signal = "BUY"
+        elif score <= 40:
+            signal = "SELL"
+        else:
+            signal = "HOLD"
+        return {
+            "agent": self.name,
+            "score": round(score, 2),
+            "signal": signal,
+            "agents_used": len(scores),
+        }
