@@ -254,3 +254,132 @@ class PortfolioOptimizerV32:
             "drawdown_multiplier": drawdown_multiplier,
         }
 
+
+
+# ============================================================
+# V3.4 机构级 Ensemble Portfolio Optimizer（MV + RP + BL + Alpha）
+# ============================================================
+import numpy as np  # noqa: E402
+from optimization.mean_variance import MeanVarianceOptimizer  # noqa: E402
+from optimization.risk_parity import RiskParityOptimizer  # noqa: E402
+from optimization.black_litterman import BlackLittermanModel  # noqa: E402
+from optimization.ensemble import EnsembleOptimizer  # noqa: E402
+from risk.constraints import RiskConstraintEngine  # noqa: E402
+
+
+class InstitutionalPortfolioOptimizer:
+    """V3.4 机构级组合优化器。
+
+    流程：Mean-Variance → Risk Parity → Black-Litterman → Alpha
+          → Ensemble 融合 → 单票权重上限 → 归一化。
+    """
+
+    def __init__(self):
+        self.mv = MeanVarianceOptimizer()
+        self.rp = RiskParityOptimizer()
+        self.bl = BlackLittermanModel()
+        self.ensemble = EnsembleOptimizer()
+        self.constraints = RiskConstraintEngine()
+
+    def optimize(
+        self,
+        codes,
+        covariance,
+        expected_returns,
+        alpha_scores,
+        market_weights=None,
+        views=None,
+        confidence=None,
+    ):
+        """机构级组合优化。
+
+        Args:
+            codes: 股票代码列表。
+            covariance: 协方差矩阵。
+            expected_returns: 预期收益向量。
+            alpha_scores: 代码 -> Alpha 分数。
+            market_weights: 市值权重（默认等权）。
+            views: Black-Litterman 观点（默认 = expected_returns）。
+            confidence: 观点置信度（默认 0.5）。
+
+        Returns:
+            代码 -> 权重 dict。
+        """
+        n = len(codes)
+        if n == 0:
+            return {}
+
+        covariance = np.asarray(covariance, dtype=float)
+        if market_weights is None:
+            market_weights = np.ones(n) / n
+        if views is None:
+            views = np.array(expected_returns, dtype=float)
+        if confidence is None:
+            confidence = np.ones(n) * 0.5
+
+        # -----------------------------
+        # Mean Variance
+        # -----------------------------
+        mv_weights = self.mv.optimize(
+            expected_returns={
+                code: expected_returns[i]
+                for i, code in enumerate(codes)
+            },
+            covariance=covariance,
+            codes=codes,
+        )
+
+        # -----------------------------
+        # Risk Parity
+        # -----------------------------
+        rp_weights = self.rp.optimize(
+            covariance=covariance,
+            codes=codes,
+        )
+
+        # -----------------------------
+        # Black-Litterman
+        # -----------------------------
+        posterior = self.bl.calculate_posterior_returns(
+            covariance=covariance,
+            market_weights=market_weights,
+            views=views,
+            view_confidence=confidence,
+        )
+        bl_raw = {
+            code: max(float(posterior[i]), 0.0)
+            for i, code in enumerate(codes)
+        }
+        total_bl = sum(bl_raw.values())
+        if total_bl > 0:
+            bl_weights = {
+                code: value / total_bl
+                for code, value in bl_raw.items()
+            }
+        else:
+            bl_weights = {code: 1.0 / n for code in codes}
+
+        # -----------------------------
+        # Ensemble
+        # -----------------------------
+        final_weights = self.ensemble.combine(
+            mean_variance=mv_weights,
+            risk_parity=rp_weights,
+            black_litterman=bl_weights,
+            alpha_scores=alpha_scores,
+        )
+
+        # -----------------------------
+        # 单票限制
+        # -----------------------------
+        final_weights = {
+            code: min(weight, self.constraints.max_single_weight)
+            for code, weight in final_weights.items()
+        }
+        total = sum(final_weights.values())
+        if total > 0:
+            final_weights = {
+                code: weight / total
+                for code, weight in final_weights.items()
+            }
+        return final_weights

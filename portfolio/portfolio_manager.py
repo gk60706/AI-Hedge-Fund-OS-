@@ -167,3 +167,72 @@ class PortfolioManagerV32:
             for stock in selected
         ]
         return result
+
+
+# ============================================================
+# V3.3 AI Portfolio Rebalancer：目标组合 + 成本感知调仓订单
+# ============================================================
+from typing import Any  # noqa: E402
+from portfolio.optimizer import PortfolioOptimizerV32  # noqa: E402
+from portfolio.rebalancer import Rebalancer  # noqa: E402
+
+
+class PortfolioManagerV33:
+    """V3.3 组合管理器。
+
+    流程：Alpha 排序取 Top-N → 动态风险预算优化目标组合
+          → 对比当前持仓 → 生成成本感知调仓订单。
+    """
+
+    def __init__(self):
+        self.optimizer = PortfolioOptimizerV32()
+        self.rebalancer = Rebalancer(min_trade_weight=0.02)
+
+    def build_target_portfolio(
+        self,
+        candidates: list[dict[str, Any]],
+        portfolio_volatility: float,
+        max_drawdown: float,
+        market_score: float,
+        top_n: int = 10,
+    ) -> dict[str, Any]:
+        """构建目标组合。
+
+        Args:
+            candidates: 候选股（含 code/alpha_score/volatility/industry/beta）。
+            portfolio_volatility: 当前组合年化波动率。
+            max_drawdown: 当前最大回撤（负数）。
+            market_score: 市场评分（0-100）。
+            top_n: 取 Alpha 前 N 只。
+
+        Returns:
+            {"positions", "cash", "exposure", ...}。
+        """
+        ranked = sorted(
+            candidates,
+            key=lambda x: x.get("alpha_score", 0),
+            reverse=True,
+        )
+        selected = ranked[:top_n]
+        result = self.optimizer.optimize(
+            candidates=selected,
+            portfolio_volatility=portfolio_volatility,
+            max_drawdown=max_drawdown,
+            market_score=market_score,
+        )
+        return result
+
+    def generate_rebalance_orders(
+        self,
+        current_positions: dict[str, float],
+        target_positions: dict[str, float],
+        prices: dict[str, float],
+        total_equity: float,
+    ) -> list[dict[str, Any]]:
+        """对比当前持仓与目标组合，生成调仓订单。"""
+        return self.rebalancer.generate_orders(
+            current_positions=current_positions,
+            target_positions=target_positions,
+            prices=prices,
+            total_equity=total_equity,
+        )
