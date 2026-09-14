@@ -1,4 +1,4 @@
-"""V3.2 波动率工具：计算收益序列的年化波动率。"""
+﻿"""V3.2 波动率工具：计算收益序列的年化波动率。"""
 
 from __future__ import annotations
 
@@ -19,3 +19,30 @@ def calculate_volatility(returns, annualize: int = 252) -> float:
     if len(arr) < 2:
         return 0.0
     return float(np.std(arr, ddof=1) * np.sqrt(annualize))
+
+
+
+# ============================================================================
+# V3.8 AI Alpha Research Engine - volatility factor class
+# ============================================================================
+import pandas as pd
+
+from factors.base import Factor
+
+
+class VolatilityFactor(Factor):
+    name = "volatility_20"
+
+    def __init__(
+        self,
+        period: int = 20,
+    ):
+        self.period = period
+
+    def calculate(
+        self,
+        data: pd.DataFrame,
+    ) -> pd.Series:
+        close = pd.to_numeric(data["close"], errors="coerce",)
+        returns = close.pct_change()
+        return (returns.rolling(self.period).std() * (252 ** 0.5))
