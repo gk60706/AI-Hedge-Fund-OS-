@@ -61,3 +61,32 @@ class AkShareClientV36:
             raise RuntimeError(f"{code}没有返回历史数据")
         df.to_csv(cache_file, index=False, encoding="utf-8-sig")
         return df
+
+
+# ============================================================================
+# V3.9.1 unified research engine - unified AkShare client
+# ============================================================================
+
+
+class AkShareClientV391:
+    """统一行情客户端：带 CSV 缓存 + 归一化。"""
+
+    def __init__(self, cache_dir="data_cache"):
+        self.cache = CSVCache(cache_dir)
+
+    def get_daily(self, code: str, start: str = "", end: str = "") -> pd.DataFrame:
+        cached = self.cache.get(code)
+        if cached is not None and len(cached) > 0:
+            return cached
+        df = ak.stock_zh_a_hist(
+            symbol=code,
+            period="daily",
+            adjust="qfq",
+            start_date=start or "19900101",
+            end_date=end or "20991231",
+        )
+        df = normalize_daily(df, code)
+        self.cache.put(code, df)
+        return df
+from data.cache import CSVCache
+from data.price_loader import normalize_daily

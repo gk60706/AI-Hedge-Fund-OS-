@@ -47,3 +47,21 @@ class AlphaEvaluator:
         if operator == "ZSCORE":
             return AlphaOperators.zscore(children[0])
         raise ValueError(f"未知 operator: {operator}")
+# ============================================================================
+# V3.9.1 unified research engine - expression evaluator (V391 tree, dump semantics)
+# ============================================================================
+
+
+class ExpressionEvaluator:
+    def evaluate(self, expression, df):
+        if expression.feature is not None:
+            if expression.feature not in df.columns:
+                return pd.Series(float("nan"), index=df.index)
+            return pd.to_numeric(df[expression.feature], errors="coerce")
+        if expression.constant is not None:
+            return pd.Series(float(expression.constant), index=df.index)
+        args = [self.evaluate(child, df) for child in expression.children]
+        return apply_operator_v391(expression.operator, args, df["date"])
+
+
+from alpha.operators import apply_operator_v391  # noqa: E402

@@ -61,3 +61,28 @@ class DataCache:
             ),
             encoding="utf-8",
         )
+
+
+# ============================================================================
+# V3.9.1 unified research engine - simple CSV cache
+# ============================================================================
+
+
+class CSVCache:
+    def __init__(self, cache_dir: str = "data_cache"):
+        self.cache_dir = Path(cache_dir)
+
+    def _path(self, key: str) -> Path:
+        safe = key.replace("/", "_").replace("\\", "_")
+        return self.cache_dir / f"{safe}.csv"
+
+    def get(self, key: str):
+        path = self._path(key)
+        if not path.exists():
+            return None
+        return pd.read_csv(path, parse_dates=["date"])
+
+    def put(self, key: str, df) -> None:
+        self.cache_dir.mkdir(parents=True, exist_ok=True)
+        df.to_csv(self._path(key), index=False)
+import pandas as pd

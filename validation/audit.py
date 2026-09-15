@@ -55,3 +55,23 @@ class BacktestAudit:
             "lookahead": (lookahead_result),
             "leakage": (leakage_result),
         }
+# ============================================================================
+# V3.9.1 unified research engine - full audit (dump)
+# ============================================================================
+
+
+def full_audit(df, target_col=None):
+    result = {
+        "data_quality": audit_panel(df),
+        "lookahead_rows": int(len(find_lookahead(df))),
+    }
+    if target_col:
+        result["leakage"] = leakage_checks(df, target_col)
+    else:
+        result["leakage"] = []
+    return result
+
+
+from validation.data_quality import audit_panel  # noqa: E402
+from validation.leakage import leakage_checks  # noqa: E402
+from validation.lookahead import find_lookahead  # noqa: E402

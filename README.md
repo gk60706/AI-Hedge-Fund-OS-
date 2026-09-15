@@ -25,6 +25,7 @@ AI 股票研究与量化基础设施（研究 / 模拟用途）。
 - **V1.7**：强化学习交易 Agent（Reinforcement Learning Trading Agent）——交易状态定义（rl/state.py MarketState 状态向量）、动作空间（rl/action.py SELL/HOLD/BUY）、强化学习交易环境（rl/environment.py 简化全仓模拟）、奖励引擎（rl/reward.py 收益−回撤惩罚−过度交易惩罚）、DQN 网络与 Agent（rl/dqn_agent.py，epsilon-greedy）、PPO Actor-Critic 框架（rl/ppo_agent.py）、RL 训练器（rl/trainer.py）、风险闸门（risk/risk_gate.py，日亏-3%/回撤10% 拒绝放行）、仓位管理（risk/position_sizer.py 置信度×20%）、RL 模型评价（evaluation/rl_evaluator.py 总收益/最大回撤/Sharpe）、`main_v17.py` 模拟训练入口（研究/模拟，无实盘接口）
 - **V1.8**：真实市场强化学习训练平台（Real Market RL Platform）——AkShare 真实 A 股历史行情加载（data_engine/akshare_loader.py）、股票数据集管理（dataset/stock_dataset.py）、AI 因子流水线（dataset/feature_pipeline.py：日收益/MA5/MA20/量比/动量）、多股票强化学习环境（rl/multi_stock_env.py）、交易成本模型（rl/transaction_cost.py 佣金+印花税）、滑点模拟（rl/slippage.py）、Walk Forward 回测切分（backtest/walk_forward.py）、绩效评价（backtest/performance.py 收益/Sharpe/最大回撤）、AI 策略排行榜（evolution/model_rank.py）、`main_v18.py` 运行入口（真实行情 → 因子 → 训练数据，无实盘接口）
 - **V2.0**：多智能体 AI 基金经理系统（Multi-Agent AI Fund Team）——LangGraph 多 Agent 协作（graph/fund_graph.py：research→quant→risk→cio 工作流）、共享状态 FundState（graph/state.py TypedDict）、CIO Agent（agents/cio_agent.py 投资委员会投票）、研究员 Agent（agents/research_agent.py 基本面/财报/行业/竞争）、量化 Agent（agents/quant_agent.py 因子打分 BUY/SELL/HOLD）、宏观 Agent（agents/macro_agent.py 市场/风险/政策）、交易 Agent（agents/trader_agent.py 模拟建仓/清仓/等待）、风控 Agent（agents/risk_agent.py 单票仓位超限否决）、投资记忆（memory/investment_memory.py 最近 10 条回放）、AI 基金晨报（reports/report_generator.py）、`main_v20.py` 运行入口（委员会投票演示，无实盘接口）
+- **V3.9.1**：统一量化研究底座（V3.6～V3.9）——Research Pipeline（Data Quality → PIT → Cross Section → Factor → Alpha Search → IC/ICIR/Q5-Q1 → Correlation Dedup → OOS → Transaction Cost → Portfolio Backtest → Risk → Alpha Library）、Alpha 公式树生成器 / 求值器 / 正则化 / 去重、Walk-Forward、OOS 验证、成本模型、`main_v391.py` Demo / 单股票入口
 
 ## 技术栈
 
@@ -676,3 +677,177 @@ V3.0  自主对冲基金：A 股候选池 → StockScanner 筛选（市值/PE/�
 - V3.9.1（规划）：Integration 统一重构——把 V3.6～V3.9 四版合并成一个可运行研究引擎（统一模块接口、真实 A 股横截面数据贯通、PIT 财务数据完全接入、交易规则与 Alpha 实验打通）
 
 **注意**：本项目仅用于研究与模拟，不构成投资建议。禁止接入真实交易接口。
+
+
+---
+
+# AI Hedge Fund OS V3.9.1
+
+AI Hedge Fund OS V3.9.1 是 V3.6～V3.9 的统一量化研究底座。
+
+## 核心能力
+
+### Data
+
+- AkShare A股日线
+- CSV Cache
+- Cross-Section Panel
+- Point-in-Time
+- Data Availability
+- Historical Universe
+- Corporate Actions
+
+### Market
+
+- A股涨跌停规则
+- Suspension
+- T+1
+- 100股交易单位
+- Transaction Cost
+- Slippage
+
+### Factors
+
+- Value
+- Momentum
+- Quality
+- Volatility
+- Liquidity
+- Cross-sectional Rank
+- Cross-sectional ZScore
+- Winsorization
+- Market Cap Neutralization
+- Group Neutralization
+
+### Alpha
+
+- Formula Tree
+- Alpha Generator
+- Alpha Evaluator
+- Cross-sectional IC
+- ICIR
+- Positive IC Ratio
+- Q5-Q1
+- IC Decay
+- Complexity Penalty
+- Formula Canonicalization
+- Signal Correlation Deduplication
+- Alpha Library
+
+### Validation
+
+- Look-ahead Detection
+- Data Leakage
+- PIT
+- Survivorship Bias
+- OOS
+- Walk Forward
+- Data Quality Audit
+
+### Backtest
+
+- T -> T+1 execution model
+- Commission
+- Stamp Duty
+- Slippage
+- Portfolio Backtest
+- CAGR
+- Sharpe
+- Sortino
+- Calmar
+- Max Drawdown
+
+## 安装
+
+Windows PowerShell：
+
+```powershell
+python -m venv .venv
+
+.venv\Scripts\activate
+
+python -m pip install --upgrade pip
+
+pip install -r requirements.txt
+
+copy .env.example .env
+```
+
+## 测试
+
+```powershell
+pytest -q
+```
+
+## Demo
+
+```powershell
+python main_v391.py --mode demo
+```
+
+## 下载真实股票数据
+
+例如：
+
+```powershell
+python main_v391.py --mode stock --code 300394 --start 20200101 --end 20261231
+```
+
+## Alpha Search Demo
+
+```powershell
+python scripts/run_alpha_search.py
+```
+
+## 完整 Research Pipeline
+
+```powershell
+python scripts/run_research.py
+```
+
+## Research Pipeline
+
+```
+Data
+  ↓
+Data Quality
+  ↓
+PIT
+  ↓
+Historical Universe
+  ↓
+Cross Section
+  ↓
+Factor
+  ↓
+Alpha Search
+  ↓
+IC
+  ↓
+ICIR
+  ↓
+Q5-Q1
+  ↓
+Complexity Penalty
+  ↓
+Correlation Dedup
+  ↓
+OOS
+  ↓
+Transaction Cost
+  ↓
+Portfolio Backtest
+  ↓
+Risk
+  ↓
+Alpha Library
+```
+
+## 重要说明
+
+- V3.9.1 当前 AkShare 数据层主要解决真实价格数据获取。
+- 真正的机构级 PIT 基本面研究，需要具有可靠发布日期/可用日期的数据源。
+- 不能获得可靠 publication date 的基本面数据，不应该被伪装成 PIT 数据。
+- V3.9.1 默认不连接真实券商。
+- 禁止根据 synthetic demo 的结果推断真实收益。
+- 下一阶段 V4.0 将在此 Research Engine 之上增加：AI Research Agent、AI Factor Scientist、AI Alpha Scientist、AI Hypothesis Generator、AI Backtest Agent、AI Risk Agent、Investment Committee、Alpha Evolution、Strategy Generation。

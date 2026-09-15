@@ -31,3 +31,21 @@ class TradingCostModel:
 
     def sell_price(self, price: float) -> float:
         return price * (1 - self.slippage_rate)
+# ============================================================================
+# V3.9.1 unified research engine - transaction cost (notional, side, dump)
+# ============================================================================
+
+
+def transaction_cost(
+    notional: float,
+    side: str,
+    commission_rate=0.0003,
+    stamp_duty=0.0005,
+    min_commission=5.0,
+):
+    notional = abs(float(notional))
+    if notional <= 0:
+        return 0.0
+    commission = max(min_commission, notional * commission_rate)
+    stamp = notional * stamp_duty if side.upper() == "SELL" else 0.0
+    return commission + stamp

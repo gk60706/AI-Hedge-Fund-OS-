@@ -31,3 +31,30 @@ class PriceLoader:
         for column in numeric_columns:
             df[column] = pd.to_numeric(df[column], errors="coerce")
         return df
+
+
+# ============================================================================
+# V3.9.1 unified research engine - normalization
+# ============================================================================
+
+REQUIRED_COLUMNS = ["date", "open", "high", "low", "close", "volume"]
+
+
+def normalize_daily(df: pd.DataFrame, code: str) -> pd.DataFrame:
+    frame = df.copy()
+    frame.columns = [str(c).strip() for c in frame.columns]
+    mapping = {
+        "日期": "date",
+        "开盘": "open",
+        "最高": "high",
+        "最低": "low",
+        "收盘": "close",
+        "成交量": "volume",
+    }
+    frame = frame.rename(columns=mapping)
+    for col in ["open", "high", "low", "close"]:
+        if col in frame.columns:
+            frame[col] = pd.to_numeric(frame[col], errors="coerce")
+    frame["code"] = code
+    frame["date"] = pd.to_datetime(frame["date"], errors="coerce")
+    return frame.dropna(subset=["date", "close"]).reset_index(drop=True)

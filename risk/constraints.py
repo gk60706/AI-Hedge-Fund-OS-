@@ -35,3 +35,38 @@ class RiskConstraintEngine:
     def check_cash(self, cash_weight: float) -> bool:
         """现金比例不低于下限。"""
         return cash_weight >= self.min_cash
+
+
+# ============================================================================
+# V3.9.1 unified research engine - risk constraints dataclass
+# ============================================================================
+
+from dataclasses import dataclass  # noqa: E402
+
+
+@dataclass
+class RiskConstraints:
+    max_single_weight: float = 0.20
+    max_total_exposure: float = 0.95
+    min_cash: float = 0.05
+    max_leverage: float = 1.0
+
+    def validate(self, weights, cash_ratio: float) -> list:
+        errors = []
+        weights = list(weights)
+        if weights:
+            worst = max(weights)
+            if worst > self.max_single_weight:
+                errors.append(
+                    f"单票权重 {worst:.4f} 超过上限 {self.max_single_weight}"
+                )
+        total = sum(weights)
+        if total > self.max_total_exposure:
+            errors.append(
+                f"总敞口 {total:.4f} 超过上限 {self.max_total_exposure}"
+            )
+        if cash_ratio < self.min_cash:
+            errors.append(
+                f"现金比例 {cash_ratio:.4f} 低于下限 {self.min_cash}"
+            )
+        return errors

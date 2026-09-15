@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date
+import pandas as pd
 
 
 @dataclass(frozen=True)
@@ -38,3 +39,16 @@ class HistoricalUniverse:
             for code in self.securities
             if self.is_active(code, as_of_date,)
         ]
+
+
+# ============================================================================
+# V3.9.1 unified research engine - universe filter
+# ============================================================================
+
+
+class HistoricalUniverseV391:
+    def __init__(self, codes):
+        self.codes = set(codes)
+
+    def filter(self, panel: pd.DataFrame) -> pd.DataFrame:
+        return panel[panel["code"].isin(self.codes)].copy()

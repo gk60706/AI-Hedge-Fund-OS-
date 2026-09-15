@@ -20,3 +20,23 @@ class AShareTradingRules:
         # 当前日期买入的股份不可卖
         today_bought = self.buy_lots.get((code, str(date)), 0)
         return max(total_shares - today_bought, 0)
+
+
+# ============================================================================
+# V3.9.1 unified research engine - T+1 ledger
+# ============================================================================
+
+
+class T1Ledger:
+    """A 股 T+1 规则：当日买入的仓位当日不可卖出。"""
+
+    def __init__(self):
+        self._buy_dates = {}
+
+    def record_buy(self, code: str, date) -> None:
+        self._buy_dates.setdefault(code, []).append(str(date))
+
+    def can_sell(self, code: str, date) -> bool:
+        buys = self._buy_dates.get(code, [])
+        today = str(date)
+        return not any(b == today for b in buys)

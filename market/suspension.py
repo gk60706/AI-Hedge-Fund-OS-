@@ -22,3 +22,16 @@ class SuspensionDetector:
         if float(volume) <= 0:
             return True
         return False
+
+
+# ============================================================================
+# V3.9.1 unified research engine - module-level suspension helper
+# ============================================================================
+
+
+def is_suspended(row) -> bool:
+    """按行判断是否停牌：成交量为 0 视为停牌。"""
+    volume = row.get("volume", 0)
+    if volume is None:
+        return True
+    return float(volume) <= 0

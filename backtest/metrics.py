@@ -43,3 +43,45 @@ def evaluate(result: dict) -> dict:
     if ret < 0:
         score -= 50
     return {"return": ret, "score": score}
+# ============================================================================
+# V3.9.1 unified research engine - performance metrics (equity series, dump)
+# ============================================================================
+
+
+def performance_metrics(equity: pd.Series):
+    equity = equity.dropna().sort_index()
+    if len(equity) < 2:
+        return {}
+    returns = equity.pct_change().dropna()
+    total_return = equity.iloc[-1] / equity.iloc[0] - 1
+    days = (equity.index[-1] - equity.index[0]).days
+    years = max(days / 365.25, 1 / 365.25)
+    if (1 + total_return) > 0:
+        cagr = (1 + total_return) ** (1 / years) - 1
+    else:
+        cagr = -1.0
+    volatility = returns.std(ddof=1) * np.sqrt(252)
+    if returns.std(ddof=1) > 0:
+        sharpe = returns.mean() / returns.std(ddof=1) * np.sqrt(252)
+    else:
+        sharpe = np.nan
+    downside = returns[returns < 0].std(ddof=1) * np.sqrt(252)
+    if downside and downside > 0:
+        sortino = returns.mean() * 252 / downside
+    else:
+        sortino = np.nan
+    drawdown = equity / equity.cummax() - 1
+    max_drawdown = float(drawdown.min())
+    calmar = cagr / abs(max_drawdown) if max_drawdown < 0 else np.nan
+    return {
+        "total_return": float(total_return),
+        "cagr": float(cagr),
+        "annual_vol": float(volatility),
+        "sharpe": float(sharpe),
+        "sortino": float(sortino),
+        "max_drawdown": max_drawdown,
+        "calmar": float(calmar),
+    }
+
+
+import numpy as np  # noqa: E402

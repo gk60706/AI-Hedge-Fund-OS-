@@ -1,6 +1,7 @@
 """V3.5 OOSValidator：样本外验证（Sharpe 下限 + 最大回撤上限）。"""
 
 from __future__ import annotations
+import pandas as pd
 
 
 class OOSValidator:
@@ -19,3 +20,26 @@ class OOSValidator:
         if drawdown < maximum_drawdown:
             return {"passed": False, "reason": "DRAWDOWN_TOO_HIGH"}
         return {"passed": True, "reason": "PASS"}
+# ============================================================================
+# V3.9.1 unified research engine - OOS evaluation (dump)
+# ============================================================================
+
+
+def evaluate_oos(expression, oos: pd.DataFrame, horizon: int = 1):
+    work = oos.copy().sort_values(["date", "code"]).reset_index(drop=True)
+    signal = ExpressionEvaluator().evaluate(expression, work)
+    future_return = work.groupby("code")["close"].shift(-horizon) / work["close"] - 1
+    ic_series = cross_sectional_ic(signal, future_return, work["date"])
+    return {
+        "oos_ic": mean_ic(ic_series),
+        "oos_positive_ratio": (
+            float((ic_series.dropna() > 0).mean())
+            if ic_series.notna().any()
+            else float("nan")
+        ),
+        "oos_days": int(ic_series.notna().sum()),
+    }
+
+
+from alpha.evaluator import ExpressionEvaluator  # noqa: E402
+from alpha.ic import cross_sectional_ic, mean_ic  # noqa: E402

@@ -31,3 +31,44 @@ class AlphaExpression:
             right = self.children[1].to_string()
             return f"({left} {self.operator} {right})"
         return self.operator
+
+
+# ============================================================================
+# V3.9.1 unified research engine - expression with constant support
+# ============================================================================
+
+
+@dataclass
+class AlphaExpressionV391:
+    operator: str = ""
+    children: list[Any] = field(default_factory=list)
+    feature: str | None = None
+    constant: float | None = None
+
+    @staticmethod
+    def feature_node(feature: str) -> "AlphaExpressionV391":
+        return AlphaExpressionV391(feature=feature)
+
+    @staticmethod
+    def const(value: float) -> "AlphaExpressionV391":
+        return AlphaExpressionV391(constant=value)
+
+    def is_leaf(self) -> bool:
+        return self.feature is not None or self.constant is not None
+
+    def complexity(self) -> int:
+        if self.is_leaf():
+            return 1
+        return 1 + sum(
+            child.complexity()
+            for child in self.children
+            if isinstance(child, AlphaExpressionV391)
+        )
+
+    def to_string(self) -> str:
+        if self.constant is not None:
+            return str(self.constant)
+        if self.feature is not None:
+            return self.feature
+        parts = [child.to_string() for child in self.children]
+        return f"({self.operator} {' '.join(parts)})"

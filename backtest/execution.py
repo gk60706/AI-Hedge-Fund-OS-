@@ -70,3 +70,37 @@ class ExecutionEngine:
         stamp = self.cost_model.stamp_duty(gross)
         net = gross - fee - stamp
         return ExecutionResult(shares, net, fee, stamp, True, "SELL")
+
+
+# ============================================================================
+# V3.9.1 unified research engine - simple order execution
+# ============================================================================
+
+
+@dataclass
+class ExecutionResultV391:
+    shares: int = 0
+    price: float = 0.0
+    notional: float = 0.0
+    executed: bool = False
+    reason: str = ""
+
+
+def execute_order(
+    price: float,
+    cash: float,
+    lot_size: int = 100,
+    slippage: float = 0.0005,
+) -> ExecutionResultV391:
+    if price <= 0:
+        return ExecutionResultV391(reason="invalid_price")
+    fill_price = price * (1 + slippage)
+    shares = int(cash // (fill_price * lot_size)) * lot_size
+    if shares <= 0:
+        return ExecutionResultV391(reason="insufficient_cash")
+    return ExecutionResultV391(
+        shares=shares,
+        price=fill_price,
+        notional=shares * fill_price,
+        executed=True,
+    )

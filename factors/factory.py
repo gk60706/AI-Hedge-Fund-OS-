@@ -43,3 +43,16 @@ class FactorFactory:
             TurnoverFactor(),
             Amount20Factor(),
         ]
+
+
+# ============================================================================
+# V3.9.1 unified research engine - module-level default factors
+# ============================================================================
+
+
+def default_factors():
+    from factors.value import ValueFactor
+    from factors.quality import QualityFactor
+    from factors.liquidity import LiquidityFactor
+
+    return [ValueFactor(), QualityFactor(), LiquidityFactor()]

@@ -56,3 +56,12 @@ data/cache/
 # ---- V3.8 AI Alpha 因子实验结果（运行生成，不入库）----
 experiments/results/
 !experiments/results/.gitkeep
+
+# ---- V3.9.1 统一研究引擎：运行缓存（保留 .gitkeep）----
+.env.*
+!.env.example
+data_cache/*
+!data_cache/.gitkeep
+alpha_library/*
+!alpha_library/.gitkeep
+*.log

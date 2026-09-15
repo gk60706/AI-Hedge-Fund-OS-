@@ -27,3 +27,25 @@ class CorporateActionStore:
             if action.code == code
             and action.ex_date <= as_of_date
         ]
+
+
+# ============================================================================
+# V3.9.1 unified research engine - corporate action factor
+# ============================================================================
+
+
+class CorporateActionStoreV391:
+    def __init__(self):
+        self.records = []
+
+    def add(self, record) -> None:
+        self.records.append(record)
+
+    def factor_on(self, code: str, date, factor: float = 1.0) -> float:
+        total = 1.0
+        for record in self.records:
+            if getattr(record, "code", None) == code:
+                ex_date = getattr(record, "ex_date", None)
+                if ex_date is not None and str(ex_date) <= str(date):
+                    total *= factor
+        return total

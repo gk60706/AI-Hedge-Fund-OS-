@@ -43,3 +43,35 @@ class LimitRule:
             return False
         limit = self.limit_pct(code)
         return price <= prev_close * (1 - limit + 0.002)
+
+
+# ============================================================================
+# V3.9.1 unified research engine - module-level limit helpers
+# ============================================================================
+
+
+def limit_pct(code: str) -> float:
+    """A 股涨跌幅限制：创业板/科创板 20%，北交所 30%，其余 10%。"""
+    if code.startswith(("30", "68")):
+        return 0.20
+    if code.startswith(("43", "83", "87")):
+        return 0.30
+    return 0.10
+
+
+def limit_prices(prev_close: float, pct: float) -> tuple:
+    return (round(prev_close * (1 + pct), 2), round(prev_close * (1 - pct), 2))
+
+
+def is_limit_up(prev_close, price, code, tolerance: float = 1e-6) -> bool:
+    if prev_close <= 0:
+        return False
+    up, _ = limit_prices(prev_close, limit_pct(code))
+    return price >= up - tolerance
+
+
+def is_limit_down(prev_close, price, code, tolerance: float = 1e-6) -> bool:
+    if prev_close <= 0:
+        return False
+    _, down = limit_prices(prev_close, limit_pct(code))
+    return price <= down + tolerance

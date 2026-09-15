@@ -28,3 +28,24 @@ class LookaheadDetector:
             "valid": violations.empty,
             "violations": len(violations),
         }
+
+
+
+# ============================================================================
+# V3.9.1 unified research engine - look-ahead detection
+# ============================================================================
+
+
+def find_lookahead(panel: pd.DataFrame) -> list:
+    """返回 available_date 晚于 date 的违规行索引（未来数据泄漏）。"""
+    violations: list = []
+    if panel is None or panel.empty:
+        return violations
+    if "available_date" not in panel.columns or "date" not in panel.columns:
+        return violations
+    for idx, row in panel.iterrows():
+        if pd.isna(row["available_date"]):
+            continue
+        if pd.Timestamp(row["available_date"]) > pd.Timestamp(row["date"]):
+            violations.append(idx)
+    return violations

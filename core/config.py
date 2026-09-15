@@ -65,3 +65,55 @@ def get_openai_client():
     from openai import OpenAI
 
     return OpenAI(api_key=get_openai_api_key() or None)
+
+
+# ============================================================================
+# V3.9.1 unified research engine - pydantic settings
+# ============================================================================
+
+from pathlib import Path  # noqa: E402
+
+from pydantic import BaseModel  # noqa: E402
+
+
+class Settings(BaseModel):
+    app_name: str = "AI Hedge Fund OS"
+    app_env: str = "development"
+    log_level: str = "INFO"
+    cache_dir: Path = Path("data_cache")
+    alpha_library_dir: Path = Path("alpha_library")
+    report_dir: Path = Path("reports")
+    experiment_dir: Path = Path("experiments")
+    random_seed: int = 42
+    commission_rate: float = 0.0003
+    stamp_duty_rate: float = 0.0005
+    slippage_rate: float = 0.0005
+    max_single_weight: float = 0.20
+    max_total_exposure: float = 0.95
+    min_cash: float = 0.05
+
+    @classmethod
+    def from_env(cls) -> "Settings":
+        return cls(
+            app_name=os.getenv("APP_NAME", "AI Hedge Fund OS"),
+            app_env=os.getenv("APP_ENV", "development"),
+            log_level=os.getenv("LOG_LEVEL", "INFO"),
+            cache_dir=Path(os.getenv("CACHE_DIR", "data_cache")),
+            alpha_library_dir=Path(
+                os.getenv("ALPHA_LIBRARY_DIR", "alpha_library")
+            ),
+            report_dir=Path(os.getenv("REPORT_DIR", "reports")),
+            experiment_dir=Path(os.getenv("EXPERIMENT_DIR", "experiments")),
+            random_seed=int(os.getenv("RANDOM_SEED", "42")),
+            commission_rate=float(os.getenv("COMMISSION_RATE", "0.0003")),
+            stamp_duty_rate=float(os.getenv("STAMP_DUTY_RATE", "0.0005")),
+            slippage_rate=float(os.getenv("SLIPPAGE_RATE", "0.0005")),
+            max_single_weight=float(os.getenv("MAX_SINGLE_WEIGHT", "0.20")),
+            max_total_exposure=float(os.getenv("MAX_TOTAL_EXPOSURE", "0.95")),
+            min_cash=float(os.getenv("MIN_CASH", "0.05")),
+        )
+
+
+@lru_cache
+def get_settings() -> Settings:
+    return Settings.from_env()

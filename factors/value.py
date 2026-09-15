@@ -65,3 +65,28 @@ class PSFactor(Factor):
         ps = pd.to_numeric(data["ps"], errors="coerce",)
         ps = ps.where(ps > 0)
         return 1.0 / ps
+
+
+# ============================================================================
+# V3.9.1 unified research engine - composite value factor
+# ============================================================================
+
+
+class ValueFactor:
+    def __init__(self, pe: bool = True, pb: bool = True, ps: bool = True):
+        self.include_pe = pe
+        self.include_pb = pb
+        self.include_ps = ps
+
+    def calculate(self, data: pd.DataFrame) -> pd.Series:
+        score = pd.Series(0.0, index=data.index)
+        count = pd.Series(0, index=data.index)
+        for flag, col in [
+            (self.include_pe, "pe_inverse"),
+            (self.include_pb, "pb_inverse"),
+            (self.include_ps, "ps_inverse"),
+        ]:
+            if flag and col in data:
+                score = score + data[col].fillna(0.0)
+                count = count + data[col].notna().astype(int)
+        return score / count.replace(0, 1)

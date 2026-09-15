@@ -60,3 +60,42 @@ class AlphaGenerator:
             self.generate(random.randint(1, max_depth))
             for _ in range(size)
         ]
+
+
+# ============================================================================
+# V3.9.1 unified research engine - generator for panel-compatible features
+# ============================================================================
+
+FEATURES_V391 = [
+    "value",
+    "momentum",
+    "quality",
+    "volatility",
+    "liquidity",
+    "turnover",
+    "pe",
+    "pb",
+]
+
+
+class AlphaGeneratorV391:
+    def __init__(self, seed: int = 42, max_depth: int = 3):
+        self.random = random.Random(seed)
+        self.max_depth = max_depth
+
+    def _leaf(self):
+        return AlphaExpressionV391.feature_node(
+            self.random.choice(FEATURES_V391)
+        )
+
+    def generate(self, depth: int = 1) -> AlphaExpressionV391:
+        if depth >= self.max_depth or self.random.random() < 0.4:
+            return self._leaf()
+        operator = self.random.choice(BINARY_OPERATORS)
+        left = self.generate(depth + 1)
+        right = self.generate(depth + 1)
+        return AlphaExpressionV391(
+            operator=operator,
+            children=[left, right],
+        )
+from alpha.expression import AlphaExpressionV391

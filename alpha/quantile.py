@@ -59,3 +59,41 @@ class QuantileAnalyzer:
         return float(
             groups.iloc[-1] - groups.iloc[0]
         )
+
+
+# ============================================================================
+# V3.9.1 unified research engine - quantile spread
+# ============================================================================
+
+
+def quantile_spread(
+    signal,
+    forward_return,
+    dates,
+    quantiles: int = 5,
+) -> float:
+    frame = pd.DataFrame(
+        {
+            "date": dates,
+            "signal": signal,
+            "fwd": forward_return,
+        }
+    ).dropna(subset=["signal", "fwd"])
+
+    def _spread(group):
+        if len(group) < quantiles:
+            return float("nan")
+        try:
+            group = group.copy()
+            group["q"] = pd.qcut(group["signal"], quantiles, labels=False)
+        except ValueError:
+            return float("nan")
+        means = group.groupby("q")["fwd"].mean()
+        if len(means) < 2:
+            return float("nan")
+        return float(means.iloc[-1] - means.iloc[0])
+
+    spreads = frame.groupby("date").apply(_spread, include_groups=False).dropna()
+    if spreads.empty:
+        return 0.0
+    return float(spreads.mean())

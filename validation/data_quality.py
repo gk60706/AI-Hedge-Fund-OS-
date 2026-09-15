@@ -41,3 +41,29 @@ class DataQualityChecker:
             "start": str(df["日期"].min()),
             "end": str(df["日期"].max()),
         }
+# ============================================================================
+# V3.9.1 unified research engine - data quality audit (dump)
+# ============================================================================
+
+
+def audit_panel(df: pd.DataFrame) -> list[str]:
+    errors = []
+    if df.empty:
+        errors.append("Panel为空")
+        return errors
+    if df.duplicated(["date", "code"]).any():
+        errors.append("存在重复 date/code")
+    for column in ["open", "high", "low", "close"]:
+        if column not in df.columns:
+            continue
+        values = pd.to_numeric(df[column], errors="coerce")
+        if (values <= 0).any():
+            errors.append(f"{column}存在非正价格")
+    if {"high", "low"}.issubset(df.columns):
+        bad = df["high"] < df["low"]
+        if bad.any():
+            errors.append("存在 high < low")
+    return errors
+
+
+import pandas as pd  # noqa: E402

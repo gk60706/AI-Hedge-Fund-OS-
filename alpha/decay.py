@@ -27,3 +27,21 @@ class FactorDecayAnalyzer:
                 forward_return,
             )
         return result
+
+
+# ============================================================================
+# V3.9.1 unified research engine - decay profile
+# ============================================================================
+
+
+def decay_profile(
+    signal,
+    close,
+    horizons=(1, 3, 5, 10, 20),
+) -> dict:
+    ic = InformationCoefficient()
+    result = {}
+    for horizon in horizons:
+        fwd = close.shift(-horizon) / close - 1
+        result[int(horizon)] = ic.rank_ic(signal, fwd)
+    return result

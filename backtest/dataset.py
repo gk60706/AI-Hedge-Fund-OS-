@@ -39,3 +39,17 @@ class CleanBacktestDataset:
         result = self.filter_available(df, available_column,)
         result = self.remove_duplicates(result, subset,)
         return result.reset_index(drop=True)
+# ============================================================================
+# V3.9.1 unified research engine - dataset preparation (dump)
+# ============================================================================
+
+
+def prepare_dataset(panel: pd.DataFrame) -> pd.DataFrame:
+    x = panel.copy()
+    x["date"] = pd.to_datetime(x["date"])
+    x["code"] = x["code"].astype(str).str.zfill(6)
+    return (
+        x.sort_values(["date", "code"])
+        .drop_duplicates(["date", "code"])
+        .reset_index(drop=True)
+    )
