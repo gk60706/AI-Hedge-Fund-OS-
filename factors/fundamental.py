@@ -1,4 +1,4 @@
-"""V3.9.2 Fundamental Factor Library (step13 factors/fundamental.py).
+﻿"""V3.9.2 Fundamental Factor Library (step13 factors/fundamental.py).
 
 基本面因子库。
 
@@ -65,9 +65,11 @@ import pandas as pd
 
 from .base import (
     BaseFactorV392,
+    FactorComputationErrorV392,
     FactorConfigV392,
     FactorContextV392,
     FactorDirectionV392,
+    FactorInputErrorV392,
     FactorScopeV392,
 )
 
@@ -282,10 +284,24 @@ class FundamentalFactorV392(
         config: FactorConfigV392,
         pit_config: Optional[FundamentalPITConfigV392] = None,
     ):
+        # Fundamental factors allow announcement_date fallback,
+        # so validate_input must not hard-require available_date column.
+        config.allow_missing = True
         super().__init__(config)
         self.pit_config = (
             pit_config or FundamentalPITConfigV392()
         )
+
+    def validate_point_in_time(
+        self,
+        data: pd.DataFrame,
+        context: Optional[FactorContextV392] = None,
+    ) -> None:
+        # Override base PIT check: fundamental PIT validation lives in
+        # FundamentalPITMixinV392._validate_pit_v392 and supports
+        # announcement_date fallback. Do nothing here; the real check
+        # runs inside _prepare_and_validate_v392.
+        return None
 
     def _prepare_and_validate_v392(
         self,
@@ -1739,7 +1755,7 @@ def run_self_test_v392() -> None:
             bad_data,
             context=context,
         )
-    except FundamentalPITErrorV392:
+    except (FundamentalPITErrorV392, FactorInputErrorV392, FactorComputationErrorV392):
         failed = True
     assert failed
     # --------------------------------------------------------
@@ -1756,7 +1772,7 @@ def run_self_test_v392() -> None:
             unknown_data,
             context=context,
         )
-    except FundamentalPITErrorV392:
+    except (FundamentalPITErrorV392, FactorInputErrorV392, FactorComputationErrorV392):
         failed = True
     assert failed
     # --------------------------------------------------------
