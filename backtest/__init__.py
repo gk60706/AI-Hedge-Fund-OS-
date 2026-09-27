@@ -32,3 +32,22 @@ __all__ = [
     "calculate_long_only_quantile_return_v392",
     "prepare_alpha_dataset_v392",
 ]
+
+
+# ============================================================================
+# V3.9.2 Backtest Costs Engine exports
+# ============================================================================
+
+from .costs import (
+    TradeSideV392,
+    TransactionCostConfigV392,
+    TradeCostResultV392,
+    TransactionCostEngineV392,
+    CostSummaryV392,
+    calculate_transaction_costs_v392,
+    calculate_turnover_cost_v392,
+    apply_transaction_cost_v392,
+    apply_transaction_cost_compounded_v392,
+    summarize_costs_v392,
+    cost_impact_analysis_v392,
+)
