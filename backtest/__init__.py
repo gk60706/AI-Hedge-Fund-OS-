@@ -51,3 +51,26 @@ from .costs import (
     summarize_costs_v392,
     cost_impact_analysis_v392,
 )
+
+
+# ============================================================================
+# V3.9.2 Alpha Backtest exports
+# ============================================================================
+
+from .alpha_backtest import (
+    AlphaBacktestConfigV392,
+    AlphaDailyMetricsV392,
+    AlphaBacktestResultV392,
+    AlphaBacktestEngineV392,
+    calculate_daily_ic_v392,
+    add_signal_quantiles_v392,
+    calculate_daily_quantile_returns_v392,
+    calculate_daily_turnover_v392,
+    calculate_equity_curve_v392,
+    calculate_max_drawdown_v392,
+    calculate_sharpe_v392,
+    calculate_annualized_return_v392,
+    calculate_annualized_volatility_v392,
+    run_alpha_backtest_v392,
+    alpha_result_to_dict_v392,
+)
