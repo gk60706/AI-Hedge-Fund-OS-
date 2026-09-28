@@ -1,0 +1,452 @@
+# ============================================================
+# AI Hedge Fund OS
+# V3.9.2 - AI Alpha Discovery Engine
+# Configuration
+# ============================================================
+project:
+  name: "AI Hedge Fund OS"
+  version: "3.9.2"
+  engine: "AI Alpha Discovery Engine"
+  market: "A-share"
+  timezone: "Asia/Shanghai"
+
+# ------------------------------------------------------------
+# 1. 数据配置
+# ------------------------------------------------------------
+data:
+  source: "akshare"
+  # 日线数据
+  frequency: "1d"
+  # 默认研究区间
+  start_date: "2020-01-01"
+  end_date: "2025-12-31"
+  # 价格复权
+  adjust: "qfq"
+  # 是否包含停牌股票
+  include_suspended: false
+  # 最低历史交易日要求
+  min_history_days: 120
+  # 缓存
+  cache:
+    enabled: true
+    directory: "data/cache"
+    format: "csv"
+  # AkShare 请求
+  request:
+    retry: 3
+    retry_delay_seconds: 2
+    timeout_seconds: 30
+  # 批量下载
+  batch:
+    enabled: true
+    max_workers: 4
+    delay_seconds: 0.3
+
+# ------------------------------------------------------------
+# 2. 股票池配置
+# ------------------------------------------------------------
+universe:
+  name: "A_SHARE_ALL"
+  # A股范围
+  markets:
+    - "SH"
+    - "SZ"
+    - "BJ"
+  # 是否排除 ST
+  exclude_st: true
+  # 是否排除退市整理股票
+  exclude_delisting: true
+  # 是否排除上市不足指定天数的股票
+  exclude_new_listing: true
+  new_listing_min_days: 120
+  # 流动性过滤
+  liquidity:
+    enabled: true
+    # 最低20日平均成交额
+    min_avg_amount_20: 20000000
+    # 最低20日平均成交量
+    min_avg_volume_20: 100000
+
+# ------------------------------------------------------------
+# 3. PIT（Point-in-Time）配置
+# ------------------------------------------------------------
+point_in_time:
+  enabled: true
+  # 强制要求 available_date
+  require_available_date: true
+  # 允许的数据必须满足：
+  # available_date <= as_of_date
+  strict: true
+  # 没有真实披露日期的数据是否允许进入研究
+  allow_missing_available_date: false
+  # 防止使用未来数据
+  reject_future_data: true
+
+# ------------------------------------------------------------
+# 4. 因子配置
+# ------------------------------------------------------------
+factors:
+  # 技术因子
+  technical:
+    enabled: true
+    momentum:
+      - 20
+      - 60
+      - 120
+    volatility:
+      - 20
+      - 60
+    turnover:
+      - 5
+      - 20
+      - 60
+    amount:
+      - 20
+      - 60
+  # 基本面因子
+  fundamental:
+    enabled: true
+    valuation:
+      - "pe_inverse"
+      - "pb_inverse"
+      - "ps_inverse"
+    profitability:
+      - "roe"
+      - "roic"
+    growth:
+      - "revenue_growth"
+      - "profit_growth"
+
+# ------------------------------------------------------------
+# 5. 因子预处理
+# ------------------------------------------------------------
+factor_processing:
+  # 是否去极值
+  winsorize:
+    enabled: true
+    method: "mad"
+    n_mad: 5.0
+  # 是否横截面标准化
+  zscore:
+    enabled: true
+  # 是否横截面 Rank
+  rank:
+    enabled: true
+  # 行业中性化
+  industry_neutralization:
+    enabled: true
+  # 市值中性化
+  market_cap_neutralization:
+    enabled: true
+  # 最小横截面样本数
+  min_cross_section_size: 100
+
+# ------------------------------------------------------------
+# 6. Alpha Expression 搜索空间
+# ------------------------------------------------------------
+alpha_search:
+  enabled: true
+  # 每轮候选 Alpha 数量
+  candidates_per_round: 1000
+  # 搜索轮数
+  rounds: 20
+  # 随机种子
+  random_seed: 392
+  # 最大表达式深度
+  max_depth: 4
+  # 最大节点数
+  max_nodes: 15
+  # 最大常数
+  max_constant: 5.0
+  # 允许的基础因子
+  features:
+    - "pe_inverse"
+    - "pb_inverse"
+    - "ps_inverse"
+    - "momentum_20"
+    - "momentum_60"
+    - "momentum_120"
+    - "roe"
+    - "roic"
+    - "revenue_growth"
+    - "profit_growth"
+    - "volatility_20"
+    - "turnover"
+    - "amount_20"
+  # 允许的运算符
+  operators:
+    arithmetic:
+      - "add"
+      - "sub"
+      - "mul"
+      - "div"
+    unary:
+      - "neg"
+      - "abs"
+      - "log"
+      - "rank"
+      - "zscore"
+
+# ------------------------------------------------------------
+# 7. Alpha 质量评价
+# ------------------------------------------------------------
+alpha_metrics:
+  # IC类型
+  ic_method: "spearman"
+  # IC最小绝对值
+  min_ic: 0.02
+  # ICIR
+  min_icir: 0.30
+  # Q5-Q1 最小收益差
+  min_quantile_spread: 0.005
+  # 最低有效交易日
+  min_valid_days: 120
+  # 最低横截面股票数
+  min_cross_section_size: 100
+  # IC稳定性
+  min_positive_ic_ratio: 0.50
+  # 是否要求方向稳定
+  require_direction_consistency: true
+
+# ------------------------------------------------------------
+# 8. Alpha复杂度惩罚
+# ------------------------------------------------------------
+complexity:
+  enabled: true
+  # 节点数惩罚
+  node_penalty: 0.002
+  # 深度惩罚
+  depth_penalty: 0.003
+  # 运算符惩罚
+  operator_penalty: 0.001
+  # 常数惩罚
+  constant_penalty: 0.001
+
+# ------------------------------------------------------------
+# 9. Alpha相关性去重
+# ------------------------------------------------------------
+deduplication:
+  enabled: true
+  # 与已有 Alpha 的最大允许相关性
+  max_signal_correlation: 0.80
+  # 计算相关性最少样本
+  min_overlap: 100
+  # 是否进行表达式 Canonicalization
+  canonicalize_expression: true
+  # ADD / MUL 是否进行交换律标准化
+  canonicalize_commutative: true
+
+# ------------------------------------------------------------
+# 10. Forward Return 配置
+# ------------------------------------------------------------
+forward_return:
+  enabled: true
+  # 信号产生于 t
+  # 买入发生在 t+1
+  entry: "next_open"
+  horizons:
+    - 1
+    - 5
+    - 10
+    - 20
+  # 默认Alpha研究目标
+  primary_horizon: 5
+  # 默认目标
+  target: "next_open_to_close"
+
+# ------------------------------------------------------------
+# 11. A股交易规则
+# ------------------------------------------------------------
+market_rules:
+  market: "A-share"
+  # T+1
+  t_plus_one: true
+  # 最小交易单位
+  lot_size: 100
+  # 涨跌停
+  limit_rule:
+    enabled: true
+    default_limit_percent: 0.10
+    st_limit_percent: 0.05
+  # 科创板/创业板
+  high_volatility_board_limit_percent: 0.20
+  # 北交所
+  beijing_limit_percent: 0.30
+  # 停牌
+  suspension:
+    enabled: true
+    cannot_trade: true
+
+# ------------------------------------------------------------
+# 12. 交易成本
+# ------------------------------------------------------------
+transaction_cost:
+  enabled: true
+  commission:
+    rate: 0.0003
+    min_fee: 5.0
+  stamp_duty:
+    # A股卖出印花税
+    sell_rate: 0.0005
+  transfer_fee:
+    rate: 0.00001
+  slippage:
+    enabled: true
+    buy: 0.0005
+    sell: 0.0005
+
+# ------------------------------------------------------------
+# 13. Alpha 回测
+# ------------------------------------------------------------
+backtest:
+  enabled: true
+  initial_capital: 10000000
+  # 多空研究 / A股实盘适配
+  mode: "long_only"
+  # 股票数量
+  portfolio_size: 20
+  # 持仓权重
+  weighting: "equal"
+  # 是否过滤涨停不能买
+  avoid_limit_up: true
+  # 是否过滤跌停不能卖
+  avoid_limit_down: true
+  # 是否过滤停牌
+  avoid_suspended: true
+  # 调仓
+  rebalance_frequency: "5d"
+  # 最大单只股票权重
+  max_position_weight: 0.10
+  # 最小单只股票权重
+  min_position_weight: 0.01
+
+# ------------------------------------------------------------
+# 14. OOS 验证
+# ------------------------------------------------------------
+oos:
+  enabled: true
+  # Train / Validation / Test
+  train_ratio: 0.60
+  validation_ratio: 0.20
+  test_ratio: 0.20
+  # OOS IC最低要求
+  min_ic: 0.02
+  # OOS IC 相对于 Train IC 的最低保持比例
+  min_train_retention: 0.30
+  # OOS ICIR
+  min_icir: 0.20
+  # OOS Q5-Q1
+  min_quantile_spread: 0.003
+
+# ------------------------------------------------------------
+# 15. Walk Forward
+# ------------------------------------------------------------
+walk_forward:
+  enabled: true
+  train_days: 504
+  validation_days: 126
+  test_days: 126
+  step_days: 63
+  embargo_days: 5
+  purge_days: 5
+  min_windows: 3
+
+# ------------------------------------------------------------
+# 16. Alpha Selection
+# ------------------------------------------------------------
+selection:
+  # Alpha最终综合评分
+  enabled: true
+  weights:
+    ic: 0.25
+    icir: 0.20
+    quantile_spread: 0.20
+    oos_ic: 0.15
+    oos_icir: 0.10
+    turnover: 0.05
+    complexity: 0.05
+  # 最终接受条件
+  acceptance:
+    require_oos_pass: true
+    require_walk_forward_pass: true
+    require_dedup_pass: true
+
+# ------------------------------------------------------------
+# 17. Alpha Library
+# ------------------------------------------------------------
+alpha_library:
+  enabled: true
+  path: "data/alpha_library.json"
+  # 保存多少个Alpha
+  max_alpha_count: 500
+  # 是否只保存通过OOS的Alpha
+  save_oos_only: true
+  # 是否保存完整实验信息
+  save_experiment_metadata: true
+
+# ------------------------------------------------------------
+# 18. Experiment Registry
+# ------------------------------------------------------------
+experiments:
+  enabled: true
+  path: "experiments/registry.json"
+  # 保存完整实验记录
+  persist: true
+  # 保存随机种子
+  record_random_seed: true
+  # 保存数据版本
+  record_dataset_metadata: true
+  # 保存代码版本
+  record_code_version: true
+
+# ------------------------------------------------------------
+# 19. Validation Audit
+# ------------------------------------------------------------
+audit:
+  enabled: true
+  strict: true
+  checks:
+    lookahead: true
+    leakage: true
+    survivorship: true
+    temporal: true
+    pit: true
+    duplicate: true
+    schema: true
+
+# ------------------------------------------------------------
+# 20. Logging
+# ------------------------------------------------------------
+logging:
+  level: "INFO"
+  file: "logs/v392.log"
+  console: true
+
+# ------------------------------------------------------------
+# 21. Runtime
+# ------------------------------------------------------------
+runtime:
+  # 是否使用并行
+  parallel: false
+  max_workers: 4
+  # 失败后是否继续搜索
+  continue_on_candidate_error: true
+  # 最大候选错误数
+  max_errors: 100
+
+# ------------------------------------------------------------
+# 22. Research Safety
+# ------------------------------------------------------------
+research_safety:
+  # 禁止使用未来数据
+  prevent_lookahead: true
+  # 禁止使用未来财报
+  prevent_pit_violation: true
+  # 禁止幸存者偏差
+  prevent_survivorship_bias: true
+  # 禁止将回测结果当作真实交易结果
+  research_only: true
+  # 禁止AI模型直接伪造回测数据
+  llm_cannot_generate_metrics: true
+  # 所有指标必须由确定性计算引擎产生
+  metrics_must_be_computed: true
