@@ -45,3 +45,6 @@ beautifulsoup4>=4.12,<5
 # V2.3 实时市场感知系统（Real-Time Market Intelligence Engine）
 websocket-client>=1.8,<2
 redis>=5,<9
+
+# V3.9.2 data/cache.py Parquet 缓存引擎
+fastparquet>=2024.5,<2027
