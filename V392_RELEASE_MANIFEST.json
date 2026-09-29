@@ -1,0 +1,15 @@
+{
+  "version": "3.9.2",
+  "status": "release-candidate",
+  "files": [
+    "backtest/returns.py",
+    "backtest/costs.py",
+    "backtest/alpha_backtest.py",
+    "backtest/__init__.py",
+    "validation/walk_forward.py",
+    "validation/__init__.py",
+    "tests/test_backtest_v392.py",
+    "requirements.txt",
+    "README_V392.md"
+  ]
+}
