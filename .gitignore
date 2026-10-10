@@ -57,6 +57,10 @@ data/cache/
 experiments/results/
 !experiments/results/.gitkeep
 
+# ---- V3.9.3 进化实验 JSONL 运行记录（运行生成，不入库）----
+experiments/runs/
+!experiments/runs/.gitkeep
+
 # ---- V3.9.1 统一研究引擎：运行缓存（保留 .gitkeep）----
 .env.*
 !.env.example
