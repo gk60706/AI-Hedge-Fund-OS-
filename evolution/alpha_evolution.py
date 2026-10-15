@@ -84,6 +84,10 @@ from evolution.fitness import (
     AlphaFitnessError,
     FitnessResult,
 )
+from evolution.evolution_history import (
+    EvolutionHistory,
+    EvolutionHistoryConfig,
+)
 # Expected return shape from the external research evaluator:
 #
 # {
@@ -220,8 +224,23 @@ class AlphaEvolutionEngine:
         research_evaluator: Optional[ResearchEvaluator] = None,
         fitness_evaluator: Optional[AlphaFitnessEvaluator] = None,
         config: Optional[AlphaEvolutionConfig] = None,
+        history: Optional[EvolutionHistory] = None,
     ) -> None:
         self.config = config or AlphaEvolutionConfig()
+        self.history = history or EvolutionHistory(
+            config=EvolutionHistoryConfig(
+                output_path="experiments/runs/evolution_history.jsonl",
+                enabled=True,
+                flush_each_record=True,
+            ),
+            metadata={
+                "experiment_name": self.config.experiment_name,
+                "random_seed": self.config.random_seed,
+                "engine": "AlphaEvolutionEngine",
+                "version": "3.9.3",
+                "live_trading_enabled": False,
+            },
+        )
         # 注意：不能使用 `population or AlphaPopulation(...)`——
         # AlphaPopulation 定义了 __len__，空种群的 bool 值为 False，
         # 会导致传入的空种群被 or 丢弃并替换为默认种群。
@@ -347,7 +366,7 @@ class AlphaEvolutionEngine:
         elapsed = max(0.0, time.monotonic() - started_monotonic)
         best = self._best_genome()
         accepted = self._accepted_genomes()
-        return EvolutionRunResult(
+        result = EvolutionRunResult(
             experiment_name=self.config.experiment_name,
             status=status,
             stop_reason=stop_reason,
@@ -372,8 +391,23 @@ class AlphaEvolutionEngine:
                 ),
                 "research_evaluator_required": True,
                 "live_trading_enabled": False,
+                "history_run_id": self.history.run_id,
             },
         )
+        self.history.finish(
+            status=(
+                "failed" if status == "failed"
+                else "stopped" if stop_reason != "max_generations_reached"
+                else "completed"
+            ),
+            stop_reason=stop_reason,
+            metadata={
+                "experiment_name": self.config.experiment_name,
+                "generations_completed": result.generations_completed,
+                "final_generation": result.final_generation,
+            },
+        )
+        return result
     def evaluate_generation(
         self,
         elapsed_seconds: float = 0.0,
@@ -447,6 +481,41 @@ class AlphaEvolutionEngine:
             },
         )
         self._update_improvement_state(best_fitness)
+        # Persist generation-level research and fitness history.
+        try:
+            self.history.record_generation(
+                generation=report.generation,
+                population=list(self.population),
+                report=report,
+                best_genome=best,
+                metrics={
+                    "best_fitness": report.best_fitness,
+                    "mean_fitness": report.mean_fitness,
+                    "accepted_count": report.accepted_count,
+                    "oos_passed_count": report.oos_passed_count,
+                    "evaluated_count": report.evaluated_count,
+                    "unique_expression_count": (
+                        report.unique_expression_count
+                    ),
+                    "expression_diversity": (
+                        report.expression_diversity
+                    ),
+                    "mean_complexity": report.mean_complexity,
+                },
+                metadata={
+                    "experiment_name": self.config.experiment_name,
+                    "random_seed": self.config.random_seed,
+                    "evaluation_errors": report.errors,
+                },
+            )
+        except Exception as exc:
+            # History persistence errors must not silently corrupt
+            # the research metrics or the genome fitness values.
+            if self.config.fail_fast:
+                raise AlphaEvolutionError(
+                    "Failed to persist evolution generation history: "
+                    f"{type(exc).__name__}: {exc}"
+                ) from exc
         return report
     def step(self) -> GenerationReport:
         """
@@ -482,6 +551,17 @@ class AlphaEvolutionEngine:
     def get_generation_history(self) -> list[dict[str, Any]]:
         """Return recorded generation reports."""
         return [report.to_dict() for report in self.generation_reports]
+    def get_evolution_history_summary(self) -> dict[str, Any]:
+        """Return a compact summary of the current evolution history."""
+        return self.history.summary()
+    def get_persisted_evolution_history(
+        self,
+        record_type: Optional[str] = None,
+    ) -> list[dict[str, Any]]:
+        """Load persisted history records for this run."""
+        return self.history.load_persisted_records(
+            record_type=record_type,
+        )
     def get_accepted_genomes(self) -> list[_EVGenome]:
         """Return current-population genomes that passed fitness acceptance."""
         return self._accepted_genomes()
