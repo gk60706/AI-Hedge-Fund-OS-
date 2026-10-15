@@ -305,63 +305,79 @@ class AlphaEvolutionEngine:
         initial_generation = self.population.generation
         stop_reason = "max_generations_reached"
         status = "completed"
-        for _ in range(generations_to_run):
-            generation_started = time.monotonic()
-            errors: list[str] = []
-            try:
-                report = self.evaluate_generation(
-                    elapsed_seconds=0.0,
-                    errors=errors,
-                )
-                report.elapsed_seconds = max(
-                    0.0,
-                    time.monotonic() - generation_started,
-                )
-                self.generation_reports.append(report)
-                self._consecutive_errors = 0
-            except Exception as exc:
-                self._consecutive_errors += 1
-                message = (
-                    f"Generation {self.population.generation} evaluation "
-                    f"failed: {type(exc).__name__}: {exc}"
-                )
-                if self.config.fail_fast:
-                    raise AlphaEvolutionError(message) from exc
-                if self._consecutive_errors >= (
-                    self.config.max_consecutive_generation_errors
-                ):
-                    status = "failed"
-                    stop_reason = "too_many_consecutive_errors"
+        try:
+            for _ in range(generations_to_run):
+                generation_started = time.monotonic()
+                errors: list[str] = []
+                try:
+                    report = self.evaluate_generation(
+                        elapsed_seconds=0.0,
+                        errors=errors,
+                    )
+                    report.elapsed_seconds = max(
+                        0.0,
+                        time.monotonic() - generation_started,
+                    )
+                    self.generation_reports.append(report)
+                    self._consecutive_errors = 0
+                except Exception as exc:
+                    self._consecutive_errors += 1
+                    message = (
+                        f"Generation {self.population.generation} evaluation "
+                        f"failed: {type(exc).__name__}: {exc}"
+                    )
+                    if self.config.fail_fast:
+                        raise AlphaEvolutionError(message) from exc
+                    if self._consecutive_errors >= (
+                        self.config.max_consecutive_generation_errors
+                    ):
+                        status = "failed"
+                        stop_reason = "too_many_consecutive_errors"
+                        break
+                    # Do not create a new generation from an unevaluated
+                    # population after an evaluation failure.
+                    continue
+                stop_reason = self._check_stop_conditions(report)
+                if stop_reason is not None:
                     break
-                # Do not create a new generation from an unevaluated
-                # population after an evaluation failure.
-                continue
-            stop_reason = self._check_stop_conditions(report)
-            if stop_reason is not None:
-                break
-            # Do not generate an unnecessary next generation after the final
-            # requested evaluation.
-            completed_this_run = len(self.generation_reports)
-            if completed_this_run >= generations_to_run:
-                stop_reason = "max_generations_reached"
-                break
-            try:
-                self.population = self.population.create_next_generation()
-            except (
-                EvolutionError,
-                InvalidPopulationError,
-                ValueError,
-                RuntimeError,
-            ) as exc:
-                message = (
-                    f"Generation transition failed: "
-                    f"{type(exc).__name__}: {exc}"
-                )
-                if self.config.fail_fast:
-                    raise AlphaEvolutionError(message) from exc
-                status = "failed"
-                stop_reason = "next_generation_failed"
-                break
+                # Do not generate an unnecessary next generation after the final
+                # requested evaluation.
+                completed_this_run = len(self.generation_reports)
+                if completed_this_run >= generations_to_run:
+                    stop_reason = "max_generations_reached"
+                    break
+                try:
+                    self.population = self.population.create_next_generation()
+                except (
+                    EvolutionError,
+                    InvalidPopulationError,
+                    ValueError,
+                    RuntimeError,
+                ) as exc:
+                    message = (
+                        f"Generation transition failed: "
+                        f"{type(exc).__name__}: {exc}"
+                    )
+                    if self.config.fail_fast:
+                        raise AlphaEvolutionError(message) from exc
+                    status = "failed"
+                    stop_reason = "next_generation_failed"
+                    break
+        except AlphaEvolutionError as exc:
+            # Unified failure finalization: persist the failed run status
+            # before re-raising so run_finished is never lost, and the
+            # recorded summary carries the error type and message.
+            self.history.finish(
+                status="failed",
+                stop_reason=stop_reason,
+                error=exc,
+                metadata={
+                    "experiment_name": self.config.experiment_name,
+                    "generations_completed": len(self.generation_reports),
+                    "final_generation": self.population.generation,
+                },
+            )
+            raise
         finished_at = self._utc_now()
         elapsed = max(0.0, time.monotonic() - started_monotonic)
         best = self._best_genome()
