@@ -272,40 +272,36 @@ class AlphaEvolutionEngine:
     ) -> EvolutionRunResult:
         """
         Run the evolution loop.
-        Each loop iteration:
-        1. Evaluates the current population using real research metrics.
-        2. Calculates fitness and OOS acceptance.
-        3. Records generation statistics.
-        4. Checks stopping conditions.
-        5. Creates the next generation when appropriate.
-        max_generations is the number of generations to evaluate during this
-        call, not an absolute generation number.
+        max_generations 表示本次调用要评估的代数，而不是绝对代数。
+        本次返回结果只统计本次运行，不混入之前调用的报告。
         """
-        if self.research_evaluator is None:
-            raise ResearchEvaluatorError(
-                "A research_evaluator callback is required. Connect the "
-                "existing Alpha metrics/backtest/validation pipeline; "
-                "the evolution engine will not invent financial metrics."
-            )
+        started_monotonic = time.monotonic()
+        started_at = self._utc_now()
+        report_start_index = len(self.generation_reports)
+        initial_generation = self.population.generation
         generations_to_run = (
             self.config.max_generations
             if max_generations is None
             else max_generations
         )
-        if generations_to_run < 1:
-            raise ValueError("max_generations must be >= 1")
-        if self.population.is_empty:
-            if not self.config.initialize_if_empty:
-                raise InvalidPopulationError(
-                    "Population is empty and initialize_if_empty=False"
-                )
-            self.population.initialize()
-        started_monotonic = time.monotonic()
-        started_at = self._utc_now()
-        initial_generation = self.population.generation
         stop_reason = "max_generations_reached"
         status = "completed"
         try:
+            if self.research_evaluator is None:
+                raise ResearchEvaluatorError(
+                    "A research_evaluator callback is required. Connect the "
+                    "existing Alpha metrics/backtest/validation pipeline; "
+                    "the evolution engine will not invent financial metrics."
+                )
+            if generations_to_run < 1:
+                raise ValueError("max_generations must be >= 1")
+            if self.population.is_empty:
+                if not self.config.initialize_if_empty:
+                    raise InvalidPopulationError(
+                        "Population is empty and initialize_if_empty=False"
+                    )
+                self.population.initialize()
+            initial_generation = self.population.generation
             for _ in range(generations_to_run):
                 generation_started = time.monotonic()
                 errors: list[str] = []
@@ -334,15 +330,16 @@ class AlphaEvolutionEngine:
                         status = "failed"
                         stop_reason = "too_many_consecutive_errors"
                         break
-                    # Do not create a new generation from an unevaluated
-                    # population after an evaluation failure.
+                    # 评估失败时不基于未评估种群生成下一代。
                     continue
-                stop_reason = self._check_stop_conditions(report)
-                if stop_reason is not None:
+                stop_reason_from_report = self._check_stop_conditions(report)
+                if stop_reason_from_report is not None:
+                    stop_reason = stop_reason_from_report
                     break
-                # Do not generate an unnecessary next generation after the final
-                # requested evaluation.
-                completed_this_run = len(self.generation_reports)
+                # 关键修复：只统计本次 run() 新产生的报告。
+                completed_this_run = (
+                    len(self.generation_reports) - report_start_index
+                )
                 if completed_this_run >= generations_to_run:
                     stop_reason = "max_generations_reached"
                     break
@@ -355,7 +352,7 @@ class AlphaEvolutionEngine:
                     RuntimeError,
                 ) as exc:
                     message = (
-                        f"Generation transition failed: "
+                        "Generation transition failed: "
                         f"{type(exc).__name__}: {exc}"
                     )
                     if self.config.fail_fast:
@@ -363,23 +360,43 @@ class AlphaEvolutionEngine:
                     status = "failed"
                     stop_reason = "next_generation_failed"
                     break
-        except AlphaEvolutionError as exc:
-            # Unified failure finalization: persist the failed run status
-            # before re-raising so run_finished is never lost, and the
-            # recorded summary carries the error type and message.
-            self.history.finish(
-                status="failed",
-                stop_reason=stop_reason,
-                error=exc,
-                metadata={
-                    "experiment_name": self.config.experiment_name,
-                    "generations_completed": len(self.generation_reports),
-                    "final_generation": self.population.generation,
-                },
-            )
-            raise
+        except Exception as exc:
+            # 统一失败收尾：尽可能将失败状态写入历史，再向调用方抛出异常。
+            if isinstance(exc, AlphaEvolutionError):
+                recorded_error = exc
+            else:
+                recorded_error = AlphaEvolutionError(
+                    f"Evolution run failed: {type(exc).__name__}: {exc}"
+                )
+            try:
+                self.history.finish(
+                    status="failed",
+                    stop_reason=stop_reason or "exception",
+                    error=recorded_error,
+                    metadata={
+                        "experiment_name": self.config.experiment_name,
+                        "generations_completed": (
+                            len(self.generation_reports) - report_start_index
+                        ),
+                        "initial_generation": initial_generation,
+                        "final_generation": self.population.generation,
+                        "live_trading_enabled": False,
+                    },
+                )
+            except Exception as history_exc:
+                # 保留原始运行异常，不让历史写入错误将其覆盖。
+                if hasattr(recorded_error, "add_note"):
+                    recorded_error.add_note(
+                        "Additionally, finalizing evolution history failed: "
+                        f"{type(history_exc).__name__}: {history_exc}"
+                    )
+            if recorded_error is exc:
+                raise
+            raise recorded_error from exc
         finished_at = self._utc_now()
         elapsed = max(0.0, time.monotonic() - started_monotonic)
+        # 返回值仅使用本次 run() 新产生的报告。
+        run_reports = self.generation_reports[report_start_index:]
         best = self._best_genome()
         accepted = self._accepted_genomes()
         result = EvolutionRunResult(
@@ -388,12 +405,11 @@ class AlphaEvolutionEngine:
             stop_reason=stop_reason,
             initial_generation=initial_generation,
             final_generation=self.population.generation,
-            generations_completed=len(self.generation_reports),
+            generations_completed=len(run_reports),
             best_genome=best.to_dict() if best else None,
             accepted_genomes=[g.to_dict() for g in accepted],
             generation_reports=[
-                report.to_dict()
-                for report in self.generation_reports
+                report.to_dict() for report in run_reports
             ],
             started_at=started_at,
             finished_at=finished_at,
@@ -402,25 +418,29 @@ class AlphaEvolutionEngine:
                 "random_seed": self.config.random_seed,
                 "population_config": asdict(self.population.config),
                 "evolution_config": asdict(self.config),
-                "fitness_config": asdict(
-                    self.fitness_evaluator.config
-                ),
+                "fitness_config": asdict(self.fitness_evaluator.config),
                 "research_evaluator_required": True,
                 "live_trading_enabled": False,
                 "history_run_id": self.history.run_id,
+                "report_start_index": report_start_index,
             },
         )
+        final_history_status = (
+            "failed"
+            if status == "failed"
+            else "stopped"
+            if stop_reason != "max_generations_reached"
+            else "completed"
+        )
         self.history.finish(
-            status=(
-                "failed" if status == "failed"
-                else "stopped" if stop_reason != "max_generations_reached"
-                else "completed"
-            ),
+            status=final_history_status,
             stop_reason=stop_reason,
             metadata={
                 "experiment_name": self.config.experiment_name,
                 "generations_completed": result.generations_completed,
+                "initial_generation": result.initial_generation,
                 "final_generation": result.final_generation,
+                "live_trading_enabled": False,
             },
         )
         return result

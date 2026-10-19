@@ -544,3 +544,24 @@ def test_generation_report_history_contains_no_fake_live_trading(
     result = engine.run()
     assert result.metadata["live_trading_enabled"] is False
     assert result.metadata["history_run_id"] == history.run_id
+# ---------------------------------------------------------------------------
+# Repeated run behavior
+# ---------------------------------------------------------------------------
+def test_repeated_run_reports_only_current_call(
+    tmp_path,
+):
+    history = EvolutionHistory(
+        config=EvolutionHistoryConfig(
+            output_path=str(tmp_path / "history.jsonl"),
+            enabled=True,
+        )
+    )
+    engine = make_engine(
+        history,
+        max_generations=2,
+    )
+    first = engine.run(max_generations=2)
+    second = engine.run(max_generations=1)
+    assert first.generations_completed == 2
+    assert second.generations_completed == 1
+    assert len(second.generation_reports) == 1
