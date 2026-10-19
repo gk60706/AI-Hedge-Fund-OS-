@@ -263,6 +263,9 @@ class AlphaEvolutionEngine:
         self._best_fitness_seen: Optional[float] = None
         self._generations_without_improvement = 0
         self._consecutive_errors = 0
+        # 最近一次成功完成评估的种群代数；用于连续 run() 调用时
+        # 避免重复评估上一轮已经研究过的同一代 Alpha。
+        self._last_evaluated_generation: Optional[int] = None
     # ------------------------------------------------------------------
     # Public API
     # ------------------------------------------------------------------
@@ -295,12 +298,26 @@ class AlphaEvolutionEngine:
                 )
             if generations_to_run < 1:
                 raise ValueError("max_generations must be >= 1")
+            reinitialized = False
             if self.population.is_empty:
                 if not self.config.initialize_if_empty:
                     raise InvalidPopulationError(
                         "Population is empty and initialize_if_empty=False"
                     )
                 self.population.initialize()
+                reinitialized = True
+            # 连续运行规则：若当前种群在上一轮 run() 中已被评估过，
+            # 且本次没有重新初始化，就先生成下一代再评估，避免重复
+            # 研究同一批 Alpha 并让历史记录出现重复代数编号。
+            if (
+                not reinitialized
+                and self._last_evaluated_generation is not None
+                and self.population.generation
+                == self._last_evaluated_generation
+            ):
+                # 生成下一代失败时直接落入外层统一失败收尾：
+                # 运行标记为失败、异常写入历史后再抛出。
+                self.population = self.population.create_next_generation()
             initial_generation = self.population.generation
             for _ in range(generations_to_run):
                 generation_started = time.monotonic()
@@ -316,6 +333,9 @@ class AlphaEvolutionEngine:
                     )
                     self.generation_reports.append(report)
                     self._consecutive_errors = 0
+                    # 只有成功完成评估才更新最近已评估代数；
+                    # 评估失败不消耗当前代，下一次 run() 仍从该代开始。
+                    self._last_evaluated_generation = report.generation
                 except Exception as exc:
                     self._consecutive_errors += 1
                     message = (

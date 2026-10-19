@@ -565,3 +565,52 @@ def test_repeated_run_reports_only_current_call(
     assert first.generations_completed == 2
     assert second.generations_completed == 1
     assert len(second.generation_reports) == 1
+def test_repeated_run_continues_with_next_generation(
+    tmp_path: Path,
+) -> None:
+    history_path = tmp_path / "history.jsonl"
+    history = make_history(history_path)
+    engine = make_engine(
+        history,
+        max_generations=2,
+    )
+    first = engine.run(max_generations=2)
+    second = engine.run(max_generations=1)
+    assert first.generations_completed == 2
+    assert second.generations_completed == 1
+    first_generations = [
+        item["generation"]
+        for item in first.generation_reports
+    ]
+    second_generations = [
+        item["generation"]
+        for item in second.generation_reports
+    ]
+    assert first_generations == [0, 1]
+    assert second_generations == [2]
+    history_records = history.load_persisted_records(
+        record_type="generation",
+    )
+    recorded_generations = [
+        record["payload"]["generation"]
+        for record in history_records
+    ]
+    assert recorded_generations == [0, 1, 2]
+    assert history.summary()["generations_recorded"] == 3
+def test_repeated_run_preserves_one_run_id(
+    tmp_path: Path,
+) -> None:
+    history_path = tmp_path / "history.jsonl"
+    history = make_history(history_path)
+    engine = make_engine(history, max_generations=2)
+    engine.run(max_generations=2)
+    engine.run(max_generations=1)
+    records = read_jsonl(history_path)
+    generation_records = [
+        record for record in records
+        if record.get("record_type") == "generation"
+    ]
+    assert len(generation_records) == 3
+    assert {
+        record["run_id"] for record in generation_records
+    } == {history.run_id}
