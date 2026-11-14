@@ -873,6 +873,27 @@ class TestCommitteeDecisionRules(InvestmentCommitteeTestCase):
             {status.value for status in ConsensusStatus},
         )
 
+    def test_medium_confidence_keeps_margin_above_threshold(self):
+        """medium 不能恰好等于 minimum_confidence，否则只靠严格比较才通过。"""
+
+        report = make_consensus(confidence="medium")
+
+        decision = self.committee.convene(
+            "TASK-001",
+            consensus_report=report,
+            ballots=make_full_approval_ballots(),
+        )
+
+        self.assertEqual(decision.status, CommitteeStatus.APPROVED)
+        self.assertAlmostEqual(
+            decision.metadata["consensus_confidence"],
+            0.65,
+        )
+        self.assertGreater(
+            decision.metadata["consensus_confidence"],
+            decision.metadata["minimum_confidence"],
+        )
+
     def test_low_text_confidence_produces_insufficient_evidence(self):
         report = make_consensus(confidence="low")
 

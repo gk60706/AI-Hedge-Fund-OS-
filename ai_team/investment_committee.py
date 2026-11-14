@@ -283,9 +283,15 @@ def _safe_filename(value: str) -> str:
 
 # consensus_engine 的 ConsensusReport.confidence 是文字等级（high/medium/low），
 # investment_committee 内部按 0~1 的数值校验与加权，这里做一次等级到分值的映射。
+# 取值对齐 consensus_engine._determine_confidence 的判定带：
+#   high  -> 平均分 ≥0.80 且一致度 ≥0.80 且证据分 ≥0.67
+#   medium-> 平均分 ≥0.55
+#   low   -> 其余
+# 委员会 minimum_confidence 默认 0.5，因此 medium 取 0.65 留出余量，
+# 避免落在一个“刚好等于阈值、只能靠严格小于比较才通过”的边界值上。
 _CONFIDENCE_LEVEL_SCORES: dict[str, float] = {
     "high": 0.8,
-    "medium": 0.5,
+    "medium": 0.65,
     "low": 0.3,
 }
 
