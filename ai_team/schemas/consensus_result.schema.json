@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "consensus_result.schema.json",
+  "title": "AI Team Consensus Result",
+  "description": "A structured consensus result from multiple agents.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "consensus_id",
+    "task_id",
+    "status",
+    "conclusion",
+    "agreement_ratio",
+    "created_at"
+  ],
+  "properties": {
+    "consensus_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "task_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "debate_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 128
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "reached",
+        "partial",
+        "unresolved",
+        "rejected"
+      ]
+    },
+    "conclusion": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 20000
+    },
+    "agreement_ratio": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "participating_agents": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 128
+      },
+      "uniqueItems": true
+    },
+    "supporting_arguments": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 10000
+      }
+    },
+    "opposing_arguments": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 10000
+      }
+    },
+    "unresolved_questions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 5000
+      }
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "metadata": {
+      "type": "object"
+    }
+  }
+}

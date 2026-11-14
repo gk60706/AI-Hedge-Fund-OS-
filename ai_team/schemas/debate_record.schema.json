@@ -1,0 +1,158 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "debate_record.schema.json",
+  "title": "AI Team Debate Record",
+  "description": "A record of a multi-agent debate.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "debate_id",
+    "topic",
+    "status",
+    "rounds",
+    "created_at"
+  ],
+  "properties": {
+    "debate_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "task_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "topic": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1000
+    },
+    "symbol": {
+      "type": "string",
+      "pattern": "^[0-9]{6}$"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "running",
+        "completed",
+        "cancelled",
+        "failed"
+      ]
+    },
+    "max_rounds": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 20
+    },
+    "rounds": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "round_number",
+          "arguments"
+        ],
+        "properties": {
+          "round_number": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 20
+          },
+          "arguments": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "agent_role",
+                "position",
+                "argument"
+              ],
+              "properties": {
+                "agent_role": {
+                  "type": "string",
+                  "enum": [
+                    "CIO",
+                    "INTELLIGENCE",
+                    "ANALYST",
+                    "RISK_MANAGER",
+                    "RESEARCHER",
+                    "GENERAL"
+                  ]
+                },
+                "position": {
+                  "type": "string",
+                  "enum": [
+                    "support",
+                    "oppose",
+                    "neutral"
+                  ]
+                },
+                "argument": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 10000
+                },
+                "evidence": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "maxLength": 5000
+                  }
+                },
+                "confidence": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "response_to": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              }
+            }
+          },
+          "round_summary": {
+            "type": "string",
+            "maxLength": 10000
+          }
+        }
+      }
+    },
+    "final_position": {
+      "type": "string",
+      "enum": [
+        "support",
+        "oppose",
+        "neutral",
+        "unresolved"
+      ]
+    },
+    "final_summary": {
+      "type": "string",
+      "maxLength": 20000
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "completed_at": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    },
+    "metadata": {
+      "type": "object"
+    }
+  }
+}
