@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import math
 import re
 import uuid
 from dataclasses import asdict, dataclass, field, is_dataclass
@@ -304,7 +305,12 @@ def _normalize_confidence(value: Any, default: float = -1.0) -> float:
         key = value.strip().lower()
         if key in _CONFIDENCE_LEVEL_SCORES:
             return _CONFIDENCE_LEVEL_SCORES[key]
-    return _as_float(value, default)
+    result = _as_float(value, default)
+    # NaN/Infinity 会让后续 < minimum_confidence 的比较大小时真时假，
+    # 这里统一回落成默认值，交给上层按“非法置信度”处理。
+    if not math.isfinite(result):
+        return default
+    return result
 
 
 def _as_float(value: Any, default: float = 0.0) -> float:

@@ -838,6 +838,43 @@ class TestCommitteeDecisionRules(InvestmentCommitteeTestCase):
         self.assertEqual(decision.status, CommitteeStatus.REJECTED)
         self.assertTrue(decision.metadata["veto_triggered"])
 
+    def test_status_whitelist_matches_consensus_engine(self):
+        """状态白名单必须与共识层枚举同步，共识层新增状态时这里要失败提醒。"""
+
+        from ai_team.consensus_engine import ConsensusStatus
+        from ai_team.investment_committee import _KNOWN_CONSENSUS_STATUSES
+
+        self.assertEqual(
+            _KNOWN_CONSENSUS_STATUSES,
+            {status.value for status in ConsensusStatus},
+        )
+
+    def test_low_text_confidence_produces_insufficient_evidence(self):
+        report = make_consensus(confidence="low")
+
+        decision = self.committee.convene(
+            "TASK-001",
+            consensus_report=report,
+            ballots=make_full_approval_ballots(),
+        )
+
+        self.assertEqual(
+            decision.status,
+            CommitteeStatus.INSUFFICIENT_EVIDENCE,
+        )
+
+    def test_nan_confidence_is_treated_as_invalid(self):
+        """NaN 无法参与阈值比较，必须按契约错误显式拒绝，而不是静默放行。"""
+
+        report = make_consensus(confidence=float("nan"))
+
+        with self.assertRaises(CommitteeConsensusError):
+            self.committee.convene(
+                "TASK-001",
+                consensus_report=report,
+                ballots=make_full_approval_ballots(),
+            )
+
 
 # ============================================================
 # Persistence and export tests
