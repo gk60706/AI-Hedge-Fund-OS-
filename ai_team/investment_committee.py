@@ -685,6 +685,11 @@ class InvestmentCommittee:
                 + ", ".join(veto_members)
             )
 
+        # 否决票是既成事实，但只有在决议本可成立时才具备决定性；
+        # quorum 不足或共识层判定证据不足时，会议本身不成立，
+        # 这里显式区分“程序性不成立”和“实质否决”，便于审计复核。
+        veto_decisive = veto_triggered and status == CommitteeStatus.REJECTED
+
         recommendation = self._build_recommendation(
             status=status,
             consensus_report=report,
@@ -703,6 +708,13 @@ class InvestmentCommittee:
             decision_rationale += (
                 " Decision was recorded with force=True; "
                 "this does not bypass quorum, confidence, or veto rules."
+            )
+
+        if veto_triggered and not veto_decisive:
+            decision_rationale += (
+                " A risk/compliance veto was cast but is not decisive: "
+                "the motion never reached a decidable state "
+                f"(status={status.value})."
             )
 
         decision = CommitteeDecision(
@@ -734,6 +746,7 @@ class InvestmentCommittee:
                 "minimum_confidence": self.minimum_confidence,
                 "risk_veto_enabled": self.risk_veto_enabled,
                 "veto_triggered": veto_triggered,
+                "veto_decisive": veto_decisive,
                 "force": bool(force),
             },
         )

@@ -838,6 +838,30 @@ class TestCommitteeDecisionRules(InvestmentCommitteeTestCase):
         self.assertEqual(decision.status, CommitteeStatus.REJECTED)
         self.assertTrue(decision.metadata["veto_triggered"])
 
+    def test_veto_without_quorum_is_recorded_but_not_decisive(self):
+        """法定人数不足时，否决票是既成事实但不具备决定性，审计上要能区分。"""
+
+        committee = InvestmentCommittee(
+            self.task_manager,
+            self.consensus_engine,
+            storage_dir=self.storage_dir / "veto-no-quorum",
+            quorum=1.0,
+        )
+
+        decision = committee.convene(
+            "TASK-001",
+            consensus_report=self.consensus,
+            ballots=[
+                make_ballot("cio", "approve"),
+                make_ballot("risk", "reject"),
+            ],
+        )
+
+        self.assertEqual(decision.status, CommitteeStatus.DEFERRED)
+        self.assertTrue(decision.metadata["veto_triggered"])
+        self.assertFalse(decision.metadata["veto_decisive"])
+        self.assertIn("not decisive", decision.rationale)
+
     def test_status_whitelist_matches_consensus_engine(self):
         """状态白名单必须与共识层枚举同步，共识层新增状态时这里要失败提醒。"""
 
