@@ -789,7 +789,54 @@ class TestCommitteeDecisionRules(InvestmentCommitteeTestCase):
         self.assertTrue(decision.quorum_met)
         self.assertLess(decision.approval_score, 1.0)
 
-# tests/ai_team/test_investment_committee.py
+    def test_text_confidence_is_not_treated_as_zero(self):
+        """共识层给的是 high/medium/low 文字等级，不能解析成 0 而误判证据不足。"""
+
+        report = make_consensus(confidence="high")
+
+        decision = self.committee.convene(
+            "TASK-001",
+            consensus_report=report,
+            ballots=make_full_approval_ballots(),
+        )
+
+        self.assertEqual(decision.status, CommitteeStatus.APPROVED)
+        self.assertAlmostEqual(
+            decision.metadata["consensus_confidence"],
+            0.8,
+        )
+
+    def test_unknown_consensus_status_is_rejected(self):
+        """未知 status 不能被当成完全共识放行。"""
+
+        report = make_consensus(status="failed")
+
+        with self.assertRaises(CommitteeConsensusError):
+            self.committee.convene(
+                "TASK-001",
+                consensus_report=report,
+                ballots=make_full_approval_ballots(),
+            )
+
+    def test_veto_wins_over_low_confidence(self):
+        """否决票必须先于置信度判定，避免 veto_triggered=True 却判证据不足。"""
+
+        report = make_consensus(confidence=0.30)
+
+        decision = self.committee.convene(
+            "TASK-001",
+            consensus_report=report,
+            ballots=[
+                make_ballot("cio", "approve"),
+                make_ballot("risk", "reject"),
+                make_ballot("compliance", "approve"),
+                make_ballot("quant", "approve"),
+                make_ballot("fundamental", "approve"),
+            ],
+        )
+
+        self.assertEqual(decision.status, CommitteeStatus.REJECTED)
+        self.assertTrue(decision.metadata["veto_triggered"])
 
 
 # ============================================================

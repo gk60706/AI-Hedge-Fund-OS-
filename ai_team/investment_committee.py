@@ -288,6 +288,14 @@ _CONFIDENCE_LEVEL_SCORES: dict[str, float] = {
     "low": 0.3,
 }
 
+# consensus_engine.ConsensusStatus 的全部合法取值（用字面量避免循环导入）。
+_KNOWN_CONSENSUS_STATUSES: set[str] = {
+    "consensus",
+    "partial_consensus",
+    "no_consensus",
+    "insufficient_evidence",
+}
+
 
 def _normalize_confidence(value: Any, default: float = -1.0) -> float:
     """把文字置信等级或数值统一成 0~1 的 float。"""
@@ -523,7 +531,9 @@ class InvestmentCommittee:
         return str(getattr(status, "value", status)).lower()
 
     def _consensus_confidence(self, report: Any) -> float:
-        return _as_float(_read_field(report, "confidence"), 0.0)
+        # consensus_engine 的 confidence 是 high/medium/low 文字等级，
+        # 判定阶段必须先映射成 0~1 数值，否则会被当成 0 而误判为证据不足。
+        return _normalize_confidence(_read_field(report, "confidence"))
 
     def _consensus_risks(self, report: Any) -> list[str]:
         values = _read_field(report, "risk_warnings", [])
@@ -538,8 +548,6 @@ class InvestmentCommittee:
     def _consensus_conclusion(self, report: Any) -> str:
         value = _read_field(report, "conclusion", "")
         return str(value or "")
-
-# ai_team/investment_committee.py
 
     # --------------------------------------------------------
     # Decision calculation
@@ -618,6 +626,12 @@ class InvestmentCommittee:
         veto_triggered = self.risk_veto_enabled and bool(veto_votes)
 
         consensus_status = self._consensus_status(report)
+        # 共识层只产出这四种状态；未知值（如 failed/pending 或改名）必须报错，
+        # 不能被默认当成“完全共识”放行。
+        if consensus_status not in _KNOWN_CONSENSUS_STATUSES:
+            raise CommitteeConsensusError(
+                f"unknown consensus status: {consensus_status!r}"
+            )
         confidence = self._consensus_confidence(report)
 
         insufficient_consensus = consensus_status in {
@@ -632,11 +646,13 @@ class InvestmentCommittee:
         elif insufficient_consensus:
             status = CommitteeStatus.INSUFFICIENT_EVIDENCE
 
-        elif confidence < self.minimum_confidence:
-            status = CommitteeStatus.INSUFFICIENT_EVIDENCE
-
+        # 一票否决必须先于置信度判定：否则风控/合规 reject 会因置信度不足
+        # 被判成 INSUFFICIENT_EVIDENCE，但 metadata.veto_triggered 仍为 True。
         elif veto_triggered:
             status = CommitteeStatus.REJECTED
+
+        elif confidence < self.minimum_confidence:
+            status = CommitteeStatus.INSUFFICIENT_EVIDENCE
 
         elif not ballots:
             status = CommitteeStatus.DEFERRED
