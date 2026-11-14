@@ -280,6 +280,25 @@ def _safe_filename(value: str) -> str:
     return cleaned or "unknown"
 
 
+# consensus_engine 的 ConsensusReport.confidence 是文字等级（high/medium/low），
+# investment_committee 内部按 0~1 的数值校验与加权，这里做一次等级到分值的映射。
+_CONFIDENCE_LEVEL_SCORES: dict[str, float] = {
+    "high": 0.8,
+    "medium": 0.5,
+    "low": 0.3,
+}
+
+
+def _normalize_confidence(value: Any, default: float = -1.0) -> float:
+    """把文字置信等级或数值统一成 0~1 的 float。"""
+
+    if isinstance(value, str):
+        key = value.strip().lower()
+        if key in _CONFIDENCE_LEVEL_SCORES:
+            return _CONFIDENCE_LEVEL_SCORES[key]
+    return _as_float(value, default)
+
+
 def _as_float(value: Any, default: float = 0.0) -> float:
     if isinstance(value, bool):
         return default
@@ -435,7 +454,9 @@ class InvestmentCommittee:
         report_task_id = _read_field(report, "task_id")
         report_consensus_id = _read_field(report, "consensus_id")
         status = _read_field(report, "status")
-        confidence = _as_float(_read_field(report, "confidence"), -1.0)
+        confidence = _normalize_confidence(
+            _read_field(report, "confidence")
+        )
 
         if report_task_id != task_id:
             raise CommitteeConsensusError(
