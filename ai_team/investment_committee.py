@@ -491,6 +491,14 @@ class InvestmentCommittee:
                 "consensus confidence must be between 0 and 1"
             )
 
+        # 契约校验集中在入口：未知状态在这里就拦下；
+        # _calculate_decision 里保留同样的防御检查，避免绕过校验直接调用。
+        normalized_status = self._consensus_status(report)
+        if normalized_status not in _KNOWN_CONSENSUS_STATUSES:
+            raise CommitteeConsensusError(
+                f"unknown consensus status: {normalized_status!r}"
+            )
+
     def _normalize_ballots(
         self,
         ballots: Optional[Iterable[CommitteeBallot | Mapping[str, Any]]],
