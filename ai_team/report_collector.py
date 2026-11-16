@@ -24,6 +24,7 @@ No live trading interface.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
 import re
@@ -35,8 +36,11 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
+from evolution.file_lock import FileLock
+
 from ai_team.config import get_default_config
 from ai_team.task_manager import (
+    InvalidTaskTransitionError,
     TaskManager,
     TaskNotFoundError,
     TaskStatus,
@@ -634,6 +638,72 @@ class ReportCollector:
         notes: str = "",
         allow_incomplete: bool = True,
     ) -> ReportRecord:
+        """
+        Collect a report under a process-level lock.
+
+        Lock granularity: task_id + agent_id.
+        Same task/agent submissions are serialized, different agents
+        can submit concurrently.
+        """
+
+        task_id = self._safe_identifier(
+            task_id,
+            "task_id",
+        )
+
+        agent_id = self._safe_identifier(
+            agent_id,
+            "agent_id",
+        )
+
+        if agent_id not in AGENT_IDS:
+            raise InvalidReportError(
+                f"Unsupported agent: {agent_id}"
+            )
+
+        lock_key = f"{task_id}\0{agent_id}"
+
+        lock_hash = hashlib.sha256(
+            lock_key.encode("utf-8")
+        ).hexdigest()[:16]
+
+        lock_dir = self.storage_dir / "_locks"
+
+        lock_target = lock_dir / f"report_{lock_hash}"
+
+        with FileLock(
+            lock_target,
+            timeout=10.0,
+            poll_interval=0.05,
+        ):
+
+            return self._collect_report_unlocked(
+                task_id=task_id,
+                agent_id=agent_id,
+                content=content,
+                title=title,
+                report_format=report_format,
+                source=source,
+                notes=notes,
+                allow_incomplete=allow_incomplete,
+            )
+
+    def _collect_report_unlocked(
+        self,
+        task_id: str,
+        agent_id: str,
+        content: str,
+        title: str | None = None,
+        report_format: ReportFormat | str = ReportFormat.MARKDOWN,
+        source: str = "manual",
+        notes: str = "",
+        allow_incomplete: bool = True,
+    ) -> ReportRecord:
+        """
+        Original report collection logic.
+
+        Caller must hold the task_id + agent_id FileLock.
+        """
 
         task_id = self._safe_identifier(
             task_id,
@@ -825,6 +895,17 @@ class ReportCollector:
                 report_path.unlink(
                     missing_ok=True
                 )
+
+            # 兜底处理：即使其他调用路径已经提交，
+            # 也向当前调用者统一报告重复提交。
+            if isinstance(
+                exc,
+                InvalidTaskTransitionError,
+            ):
+                raise DuplicateReportError(
+                    f"Agent {agent_id} has already submitted "
+                    f"a report for task {task_id}."
+                ) from exc
 
             if isinstance(
                 exc,

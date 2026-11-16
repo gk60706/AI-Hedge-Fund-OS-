@@ -36,6 +36,10 @@ _LAZY_EXPORTS = {
     "RetryPolicy": ("ai_team.research_pipeline", "RetryPolicy"),
     "ResearchOutcome": ("ai_team.research_pipeline", "ResearchOutcome"),
     "AgentTimeoutError": ("ai_team.research_pipeline", "AgentTimeoutError"),
+    "HardTimeoutNotSupportedError": (
+        "ai_team.research_pipeline",
+        "HardTimeoutNotSupportedError",
+    ),
     "InsufficientAgentsError": (
         "ai_team.research_pipeline",
         "InsufficientAgentsError",

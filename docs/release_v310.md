@@ -80,13 +80,13 @@ python main_v310.py `
 1. 弃权票计入 `approval_score` 分母（按现有测试规格保留）。
 2. required 委员被 disable 后不再计入法定人数，且 `required_members_met=True`（同上）。
 3. 默认 `timeout_mode="thread"` 仍无法强杀被卡线程；需要硬终止时显式切换 `process`（spawn 子进程，可 terminate/kill，但要求 callable 可 pickle，且调用方脚本需带 `if __name__ == "__main__"` 保护）。详见 `docs/v310_hard_timeout.md`。
-4. 同一 `project_root` 并发运行无互斥锁，需要外部串行化。
+4. 流水线级产物（异议 / 共识 / 决议 JSON、`generation.json`）无跨进程互斥，同一 `project_root` 并发跑完整流水线仍需外部串行化；任务文件与报告提交已加锁（见第 8 节「并发写入加锁」）。
 5. 票源映射为「一位助手 → 两个委员席位」，属研究治理记账，不是真实 6 人投委会。
 6. 报告数据未做第三方核验，合规与投资判断需人工复核。
 
 ## 7. 验收清单（发布前逐项确认）
 
-- [x] `pytest tests/ai_team -q` 全绿（619 passed，含 `test_hard_timeout.py` 4 例）
+- [x] `pytest tests/ai_team -q` 全绿（626 passed，含 `test_hard_timeout.py` 4 例、`test_task_concurrency.py` 2 例、`test_report_concurrency.py` 2 例、`test_public_api.py` 3 例）
 - [x] 十步模块与测试一一对应
 - [x] 一条真实链路跑通并留下完整产物
 - [x] 缺员 / 超时 / 瞬时失败三类容错有测试覆盖
@@ -99,6 +99,7 @@ python main_v310.py `
 
 - **V3.9.3 断点续跑**：已完成（2026-11-16）。新增 `restore_state()` / `save_checkpoint()` / `from_checkpoint()`、4 个 `Checkpoint*` 异常、`FitnessResult.from_dict()`，并对 checkpoint 与 JSONL 历史做代际一致性校验（`strict=True` 抛错 / 非 strict 写入 `run_metadata`）。详见 `docs/v393_checkpoint.md`，回归 `7 passed`。
 - **P3 并发与压测**：已完成（2026-11-16）。`evolution/file_lock.py` 跨进程锁接入历史读写与 checkpoint 保存，并发回归 `4 passed`；`scripts/stress_v310_e2e.py --iterations 20` 实测 **40/40 passed（7.2s）**。详见 `docs/v393_p3.md`。
-- **进程级硬超时**：已完成（2026-11-16）。`RetryPolicy` 新增 `timeout_mode`（`thread` / `process`），`process` 分支用 `multiprocessing.get_context("spawn")` + `Pipe(duplex=False)` 执行，超时后 `_terminate_process` 依次 `terminate()` → `join(1s)` → `kill()` → `join()`，被卡调用不再残留。不可 pickle 的 callable / 子进程启动失败抛 `HardTimeoutNotSupportedError`，不静默退回线程。`_submit_one` 的 lambda 改为可跨进程传递的 `_ReportCollectorCall`。新增 `tests/ai_team/test_hard_timeout.py`（4 例，`4 passed`），全量 `tests/ai_team` **619 passed**，evolution 四文件 **61 passed**；`submit_reports(timeout_mode="process")` 真实链路实测 3/3 报告落盘。详见 `docs/v310_hard_timeout.md`。
+- **进程级硬超时**：已完成（2026-11-16）。`RetryPolicy` 新增 `timeout_mode`（`thread` / `process`），`process` 分支用 `multiprocessing.get_context("spawn")` + `Pipe(duplex=False)` 执行，超时后 `_terminate_process` 依次 `terminate()` → `join(1s)` → `kill()` → `join()`，被卡调用不再残留。不可 pickle 的 callable / 子进程启动失败抛 `HardTimeoutNotSupportedError`，不静默退回线程。`_submit_one` 的 lambda 改为可跨进程传递的 `_ReportCollectorCall`。新增 `tests/ai_team/test_hard_timeout.py`（4 例，`4 passed`），全量 `tests/ai_team` **626 passed**，evolution 四文件 **61 passed**；`submit_reports(timeout_mode="process")` 真实链路实测 3/3 报告落盘。详见 `docs/v310_hard_timeout.md`。
+- **并发写入加锁**：已完成（2026-11-16）。`TaskManager` 复用 `evolution/file_lock.py` 的 `FileLock`：`_save_task_unlocked` 用 uuid 临时名 + `open("x")` + `flush` + `replace` 原子落盘，`_save_task` 外层持锁，新增 `_edit_task` 上下文管理器把「读盘 → 修改 → 写回 → 更新内存缓存」做成一个跨进程事务；`assign_task` / `update_status` / `start_task` / `submit_agent_report` 全部改为事务写法，`start_task` 在同一事务内同时推进任务与全部 assignment。`ReportCollector.collect_report` 在 `storage_dir/_locks/report_<sha256(task_id+agent_id)[:16]>.lock` 上加锁，内部逻辑拆为 `_collect_report_unlocked`，并发输家统一得到 `DuplicateReportError`（含把 `submit_agent_report` 的 `InvalidTaskTransitionError` 映射过去）。新增 `tests/ai_team/test_task_concurrency.py`（2 例）与 `tests/ai_team/test_report_concurrency.py`（2 例，spawn 多进程），全量 **626 passed**。详见 `docs/v310_concurrency.md`。
 
 

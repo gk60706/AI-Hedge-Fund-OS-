@@ -25,11 +25,15 @@ import logging
 import re
 import uuid
 
+from collections.abc import Iterator
+from contextlib import contextmanager
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
 from typing import Any
+
+from evolution.file_lock import FileLock
 
 from ai_team.config import (
     AgentConfig,
@@ -276,17 +280,18 @@ class TaskManager:
     # Persistence
     # --------------------------------------------------------
 
-    def _save_task(self, task: ResearchTask) -> None:
+    def _save_task_unlocked(self, task: ResearchTask) -> None:
+        """调用方必须已经持有该任务的 FileLock。"""
 
         path = self._task_path(task.task_id)
 
-        temp_path = path.with_suffix(".tmp")
+        temp_path = path.with_name(
+            f"{path.stem}.{uuid.uuid4().hex}.tmp"
+        )
 
         try:
-            with temp_path.open(
-                "w",
-                encoding="utf-8",
-            ) as file:
+
+            with temp_path.open("x", encoding="utf-8") as file:
 
                 json.dump(
                     task.to_dict(),
@@ -294,6 +299,8 @@ class TaskManager:
                     ensure_ascii=False,
                     indent=4,
                 )
+
+                file.flush()
 
             temp_path.replace(path)
 
@@ -304,6 +311,45 @@ class TaskManager:
             raise TaskPersistenceError(
                 f"Unable to save task {task.task_id}"
             ) from exc
+
+    def _save_task(self, task: ResearchTask) -> None:
+        """独立保存入口：加锁后原子替换。"""
+
+        path = self._task_path(task.task_id)
+
+        with FileLock(path):
+
+            self._save_task_unlocked(task)
+
+    @contextmanager
+    def _edit_task(self, task_id: str) -> Iterator[ResearchTask]:
+        """跨进程串行化一次完整的读取-修改-写回事务。"""
+
+        path = self._task_path(task_id)
+
+        with FileLock(path):
+
+            try:
+
+                with path.open("r", encoding="utf-8") as file:
+
+                    task = ResearchTask.from_dict(json.load(file))
+
+            except FileNotFoundError as exc:
+
+                raise TaskNotFoundError(task_id) from exc
+
+            except (OSError, json.JSONDecodeError, TypeError, ValueError) as exc:
+
+                raise TaskPersistenceError(
+                    f"Unable to load task {task_id}"
+                ) from exc
+
+            yield task
+
+            self._save_task_unlocked(task)
+
+            self._tasks[task_id] = task
 
     def _load_tasks(self) -> None:
 
@@ -542,66 +588,54 @@ Return a complete, structured report.
         agent_ids: list[str] | None = None,
     ) -> ResearchTask:
 
-        task = self.get_task(task_id)
+        with self._edit_task(task_id) as task:
 
-        if TaskStatus(task.status) not in {
-            TaskStatus.PENDING,
-            TaskStatus.FAILED,
-        }:
-            raise InvalidTaskTransitionError(
-                f"Cannot assign task in status: {task.status}"
+            if TaskStatus(task.status) not in {
+                TaskStatus.PENDING,
+                TaskStatus.FAILED,
+            }:
+                raise InvalidTaskTransitionError(
+                    f"Cannot assign task in status: {task.status}"
+                )
+
+            selected_agents = agent_ids or list(
+                self.config.agents.keys()
             )
 
-        selected_agents = agent_ids or list(
-            self.config.agents.keys()
-        )
+            if not selected_agents:
+                raise ValueError("At least one agent is required.")
 
-        if not selected_agents:
-            raise ValueError("At least one agent is required.")
+            if len(selected_agents) != len(set(selected_agents)):
+                raise ValueError("Duplicate agent IDs are not allowed.")
 
-        if len(selected_agents) != len(set(selected_agents)):
-            raise ValueError("Duplicate agent IDs are not allowed.")
+            for agent_id in selected_agents:
+                if agent_id not in self.config.agents:
+                    raise InvalidAgentError(agent_id)
 
-        for agent_id in selected_agents:
-            if agent_id not in self.config.agents:
-                raise InvalidAgentError(agent_id)
+            now = self._now()
 
-        now = self._now()
+            new_assignments = {}
 
-        new_assignments = {}
+            for agent_id in selected_agents:
 
-        for agent_id in selected_agents:
+                agent = self.config.agents[agent_id]
 
-            agent = self.config.agents[agent_id]
+                new_assignments[agent_id] = AgentAssignment(
+                    agent_id=agent_id,
+                    agent_name=agent.name,
+                    role=agent.role.value,
+                    instruction=self._build_agent_instruction(
+                        task,
+                        agent,
+                    ),
+                    assigned_at=now,
+                )
 
-            new_assignments[agent_id] = AgentAssignment(
-                agent_id=agent_id,
-                agent_name=agent.name,
-                role=agent.role.value,
-                instruction=self._build_agent_instruction(
-                    task,
-                    agent,
-                ),
-                assigned_at=now,
-            )
+            task.assignments = new_assignments
+            task.status = TaskStatus.ASSIGNED.value
+            task.updated_at = now
 
-        old_assignments = task.assignments
-        old_status = task.status
-        old_updated_at = task.updated_at
-
-        task.assignments = new_assignments
-        task.status = TaskStatus.ASSIGNED.value
-        task.updated_at = now
-
-        try:
-            self._save_task(task)
-        except TaskPersistenceError:
-            task.assignments = old_assignments
-            task.status = old_status
-            task.updated_at = old_updated_at
-            raise
-
-        return task
+        return self._tasks[task_id]
 
     # --------------------------------------------------------
     # Status management
@@ -613,49 +647,48 @@ Return a complete, structured report.
         new_status: TaskStatus | str,
     ) -> ResearchTask:
 
-        task = self.get_task(task_id)
-
         new_status_value = TaskStatus(new_status)
 
-        current_status = TaskStatus(task.status)
+        with self._edit_task(task_id) as task:
 
-        allowed = self.VALID_TRANSITIONS[current_status]
+            current_status = TaskStatus(task.status)
 
-        if new_status_value not in allowed:
-            raise InvalidTaskTransitionError(
-                f"Invalid transition: "
-                f"{current_status.value} -> "
-                f"{new_status_value.value}"
-            )
+            allowed = self.VALID_TRANSITIONS[current_status]
 
-        old_status = task.status
-        old_updated_at = task.updated_at
+            if new_status_value not in allowed:
+                raise InvalidTaskTransitionError(
+                    f"Invalid transition: "
+                    f"{current_status.value} -> "
+                    f"{new_status_value.value}"
+                )
 
-        task.status = new_status_value.value
-        task.updated_at = self._now()
+            task.status = new_status_value.value
+            task.updated_at = self._now()
 
-        try:
-            self._save_task(task)
-        except TaskPersistenceError:
-            task.status = old_status
-            task.updated_at = old_updated_at
-            raise
-
-        return task
+        return self._tasks[task_id]
 
     def start_task(self, task_id: str) -> ResearchTask:
+        """同一个事务里同时推进任务状态与全部 assignment 状态。"""
 
-        task = self.update_status(
-            task_id,
-            TaskStatus.IN_PROGRESS,
-        )
+        with self._edit_task(task_id) as task:
 
-        for assignment in task.assignments.values():
-            assignment.status = "in_progress"
+            current_status = TaskStatus(task.status)
 
-        self._save_task(task)
+            if TaskStatus.IN_PROGRESS not in self.VALID_TRANSITIONS[current_status]:
+                raise InvalidTaskTransitionError(
+                    f"Invalid transition: "
+                    f"{current_status.value} -> "
+                    f"{TaskStatus.IN_PROGRESS.value}"
+                )
 
-        return task
+            task.status = TaskStatus.IN_PROGRESS.value
+
+            for assignment in task.assignments.values():
+                assignment.status = "in_progress"
+
+            task.updated_at = self._now()
+
+        return self._tasks[task_id]
 
     def submit_agent_report(
         self,
@@ -664,60 +697,42 @@ Return a complete, structured report.
         report_path: str | Path | None = None,
     ) -> ResearchTask:
 
-        task = self.get_task(task_id)
+        with self._edit_task(task_id) as task:
 
-        if task.status != TaskStatus.IN_PROGRESS.value:
-            raise InvalidTaskTransitionError(
-                "Task must be in progress before report submission."
-            )
+            if task.status != TaskStatus.IN_PROGRESS.value:
+                raise InvalidTaskTransitionError(
+                    "Task must be in progress before report submission."
+                )
 
-        if agent_id not in task.assignments:
-            raise InvalidAgentError(
-                f"Agent {agent_id} is not assigned to this task."
-            )
+            if agent_id not in task.assignments:
+                raise InvalidAgentError(
+                    f"Agent {agent_id} is not assigned to this task."
+                )
 
-        assignment = task.assignments[agent_id]
+            assignment = task.assignments[agent_id]
 
-        if assignment.status == "submitted":
-            raise InvalidTaskTransitionError(
-                f"Agent {agent_id} already submitted a report."
-            )
+            if assignment.status == "submitted":
+                raise InvalidTaskTransitionError(
+                    f"Agent {agent_id} already submitted a report."
+                )
 
-        old_status = assignment.status
-        old_submitted_at = assignment.submitted_at
-        old_report_path = assignment.report_path
-        old_task_status = task.status
-        old_updated_at = task.updated_at
+            assignment.status = "submitted"
+            assignment.submitted_at = self._now()
 
-        assignment.status = "submitted"
-        assignment.submitted_at = self._now()
+            if report_path is not None:
+                assignment.report_path = str(
+                    Path(report_path).expanduser().resolve()
+                )
 
-        if report_path is not None:
-            assignment.report_path = str(
-                Path(report_path).expanduser().resolve()
-            )
+            if all(
+                item.status == "submitted"
+                for item in task.assignments.values()
+            ):
+                task.status = TaskStatus.SUBMITTED.value
 
-        all_submitted = all(
-            item.status == "submitted"
-            for item in task.assignments.values()
-        )
+            task.updated_at = self._now()
 
-        if all_submitted:
-            task.status = TaskStatus.SUBMITTED.value
-
-        task.updated_at = self._now()
-
-        try:
-            self._save_task(task)
-        except TaskPersistenceError:
-            assignment.status = old_status
-            assignment.submitted_at = old_submitted_at
-            assignment.report_path = old_report_path
-            task.status = old_task_status
-            task.updated_at = old_updated_at
-            raise
-
-        return task
+        return self._tasks[task_id]
 
     # --------------------------------------------------------
     # Task queries
