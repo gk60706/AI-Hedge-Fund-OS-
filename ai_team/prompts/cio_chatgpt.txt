@@ -175,3 +175,44 @@
 {{QUESTIONS}}
 
 请以独立、审慎、可验证的 CIO 视角完成评估。
+
+## 结构化证据与可追溯性要求（必须遵守）
+
+报告中的每一项关键事实、数据、财务指标、行业判断和政策信息，都必须尽可能提供可追溯的来源。
+
+除 Markdown 正文中的证据说明外，必须同时输出结构化 sources 数组。每条来源使用以下字段：
+
+- name：来源名称，必填。
+- url：原始来源链接，必须是 HTTP 或 HTTPS 链接。
+- published_at：来源发布日期，使用带时区的 ISO 8601 时间戳，例如 2026-08-15T10:00:00+08:00。
+- description：来源内容说明。
+- data_period：来源数据对应期间，例如 2026-Q2、2026-08、2025-FY。
+- source_type：来源类型，只能使用以下值：
+  - official
+  - company_filing
+  - government
+  - exchange
+  - academic
+  - financial_data
+  - news_media
+  - industry_research
+  - other
+- verification_status：核实状态，只能使用 verified 或 unverified。
+- verification_note：核实说明；如果尚未核实，应说明未核实的原因或待核实事项。
+
+核实状态规则：
+
+- verified：来源内容及其关键数据已经核对，可以作为已核实证据使用。
+- unverified：尚未完成独立核实，只能作为研究线索，不得表述为已经确认的事实。
+- 不得因为来源看起来权威，就自动标记为 verified。
+- 不得编造来源名称、网址、发布日期、数据期间或核实结果。
+- 无法取得原始链接或发布日期时，不得自行猜测或补造；应明确说明来源信息缺失，并避免将其作为已核实证据。
+- 每项关键结论应尽可能关联到对应来源，不能用一个无关来源为整篇报告背书。
+
+最终报告必须区分：
+
+- 已核实事实（Verified Facts）
+- 分析推断（Analytical Inferences）
+- 待核实信息（Unverified Information）
+
+结构化 sources 必须与 Markdown 正文中的来源说明一致，不得出现正文引用了某来源、结构化来源列表却没有记录的情况。

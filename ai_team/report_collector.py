@@ -39,6 +39,7 @@ from typing import Any
 from evolution.file_lock import FileLock
 
 from ai_team.config import get_default_config
+from ai_team.evidence_contract import validate_evidence_contract
 from ai_team.task_manager import (
     InvalidTaskTransitionError,
     TaskManager,
@@ -637,6 +638,7 @@ class ReportCollector:
         source: str = "manual",
         notes: str = "",
         allow_incomplete: bool = True,
+        sources: list[dict[str, Any]] | None = None,
     ) -> ReportRecord:
         """
         Collect a report under a process-level lock.
@@ -686,6 +688,7 @@ class ReportCollector:
                 source=source,
                 notes=notes,
                 allow_incomplete=allow_incomplete,
+                sources=sources,
             )
 
     def _collect_report_unlocked(
@@ -698,6 +701,7 @@ class ReportCollector:
         source: str = "manual",
         notes: str = "",
         allow_incomplete: bool = True,
+        sources: list[dict[str, Any]] | None = None,
     ) -> ReportRecord:
         """
         Original report collection logic.
@@ -807,6 +811,39 @@ class ReportCollector:
                 "Incomplete report submission is not allowed."
             )
 
+        validation_payload = validation.to_dict()
+
+        if sources is None:
+
+            evidence_contract = {
+                "valid": None,
+                "status": "sources_not_provided",
+            }
+
+        else:
+
+            evidence_contract = validate_evidence_contract(
+                sources
+            )
+
+            if not evidence_contract["valid"]:
+
+                messages = "; ".join(
+                    (
+                        f"source[{item['source_index']}].{item['field']}: "
+                        f"{item['message']}"
+                    )
+                    for item in evidence_contract["errors"]
+                )
+
+                raise InvalidReportError(
+                    f"报告证据校验失败: {messages}"
+                )
+
+            evidence_contract["status"] = "validated"
+
+        validation_payload["evidence_contract"] = evidence_contract
+
         report_id = (
             "RPT-"
             + datetime.now(timezone.utc).strftime("%Y%m%d")
@@ -851,7 +888,7 @@ class ReportCollector:
             report_path=str(report_path.resolve()),
             metadata_path=str(metadata_path.resolve()),
             quality=validation.quality,
-            validation=validation.to_dict(),
+            validation=validation_payload,
             total_characters=validation.total_characters,
             total_words=validation.total_words,
             created_at=self._now(),

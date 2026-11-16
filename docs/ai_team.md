@@ -207,3 +207,4 @@ pytest tests\ai_team -q
 3. **默认线程超时仍无法强杀**：`timeout_mode="thread"` 下 `ThreadPoolExecutor` 只能放弃等待，后台线程仍可能跑完；需要硬终止时显式切 `timeout_mode="process"`（受 pickle 约束，见第 7 节）。
 4. **并发锁只覆盖任务与报告**：`TaskManager` 的任务文件与 `ReportCollector` 的（task_id, agent_id）报告提交已用 `FileLock` 串行化；流水线级产物（异议/共识/决议 JSON、`generation.json`）仍是后写覆盖，需要外部串行化。
 5. **票源映射是一人两席**：三位助手映射到六个委员席位，属研究治理记账，不是真实 6 人投委会。
+6. **证据契约只校验元数据**：`sources` 提供时会检查名称、原始链接、发布日期、数据期间、来源类型与核实状态，但 `verified` 只是提交方声明，系统不抓取链接、不比对内容；流水线目前也不传结构化来源，元数据记为 `sources_not_provided`。

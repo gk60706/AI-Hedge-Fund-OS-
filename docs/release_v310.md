@@ -82,17 +82,17 @@ python main_v310.py `
 3. 默认 `timeout_mode="thread"` 仍无法强杀被卡线程；需要硬终止时显式切换 `process`（spawn 子进程，可 terminate/kill，但要求 callable 可 pickle，且调用方脚本需带 `if __name__ == "__main__"` 保护）。详见 `docs/v310_hard_timeout.md`。
 4. 流水线级产物（异议 / 共识 / 决议 JSON、`generation.json`）无跨进程互斥，同一 `project_root` 并发跑完整流水线仍需外部串行化；任务文件与报告提交已加锁（见第 8 节「并发写入加锁」）。
 5. 票源映射为「一位助手 → 两个委员席位」，属研究治理记账，不是真实 6 人投委会。
-6. 报告数据未做第三方核验，合规与投资判断需人工复核。
+6. 报告数据未做第三方核验，合规与投资判断需人工复核。`verified` 只是提交方声明，系统不抓取原始链接、不比对内容。
 
 ## 7. 验收清单（发布前逐项确认）
 
-- [x] `pytest tests/ai_team -q` 全绿（626 passed，含 `test_hard_timeout.py` 4 例、`test_task_concurrency.py` 2 例、`test_report_concurrency.py` 2 例、`test_public_api.py` 3 例）
+- [x] `pytest tests/ai_team -q` 全绿（632 passed，含 `test_hard_timeout.py` 4 例、`test_task_concurrency.py` 2 例、`test_report_concurrency.py` 2 例、`test_public_api.py` 3 例、`test_evidence_contract.py` 6 例）
 - [x] 十步模块与测试一一对应
 - [x] 一条真实链路跑通并留下完整产物
 - [x] 缺员 / 超时 / 瞬时失败三类容错有测试覆盖
 - [x] 无实盘下单接口（`place_order` / `live_trade` / `broker_order` 命中 0）
 - [x] README、`docs/ai_team.md`、发布记录齐备
-- [ ] 连续 20 次端到端场景压测（未做，建议在接入真实 API 后执行）
+- [x] 连续 20 次端到端场景压测（`python scripts/stress_v310_e2e.py --iterations 20` 实测 **40/40 passed（11.4s）**，含研究链路与进化续跑各 20 次）
 - [ ] 全仓 785 项基线测试复跑（当前项目 `.venv` 损坏，无法复现全仓基线）
 
 ## 8. 遗留待办（非 V3.10 范围）
@@ -101,5 +101,6 @@ python main_v310.py `
 - **P3 并发与压测**：已完成（2026-11-16）。`evolution/file_lock.py` 跨进程锁接入历史读写与 checkpoint 保存，并发回归 `4 passed`；`scripts/stress_v310_e2e.py --iterations 20` 实测 **40/40 passed（7.2s）**。详见 `docs/v393_p3.md`。
 - **进程级硬超时**：已完成（2026-11-16）。`RetryPolicy` 新增 `timeout_mode`（`thread` / `process`），`process` 分支用 `multiprocessing.get_context("spawn")` + `Pipe(duplex=False)` 执行，超时后 `_terminate_process` 依次 `terminate()` → `join(1s)` → `kill()` → `join()`，被卡调用不再残留。不可 pickle 的 callable / 子进程启动失败抛 `HardTimeoutNotSupportedError`，不静默退回线程。`_submit_one` 的 lambda 改为可跨进程传递的 `_ReportCollectorCall`。新增 `tests/ai_team/test_hard_timeout.py`（4 例，`4 passed`），全量 `tests/ai_team` **626 passed**，evolution 四文件 **61 passed**；`submit_reports(timeout_mode="process")` 真实链路实测 3/3 报告落盘。详见 `docs/v310_hard_timeout.md`。
 - **并发写入加锁**：已完成（2026-11-16）。`TaskManager` 复用 `evolution/file_lock.py` 的 `FileLock`：`_save_task_unlocked` 用 uuid 临时名 + `open("x")` + `flush` + `replace` 原子落盘，`_save_task` 外层持锁，新增 `_edit_task` 上下文管理器把「读盘 → 修改 → 写回 → 更新内存缓存」做成一个跨进程事务；`assign_task` / `update_status` / `start_task` / `submit_agent_report` 全部改为事务写法，`start_task` 在同一事务内同时推进任务与全部 assignment。`ReportCollector.collect_report` 在 `storage_dir/_locks/report_<sha256(task_id+agent_id)[:16]>.lock` 上加锁，内部逻辑拆为 `_collect_report_unlocked`，并发输家统一得到 `DuplicateReportError`（含把 `submit_agent_report` 的 `InvalidTaskTransitionError` 映射过去）。新增 `tests/ai_team/test_task_concurrency.py`（2 例）与 `tests/ai_team/test_report_concurrency.py`（2 例，spawn 多进程），全量 **626 passed**。详见 `docs/v310_concurrency.md`。
+- **报告证据可追溯性契约**：已完成（2026-11-16）。`agent_report.schema.json` 的 `sources` 增加 `data_period` / `source_type` / `verification_status` / `verification_note` 四个可选字段；四个提示词追加统一的《结构化证据与可追溯性要求》；新增 `ai_team/evidence_contract.py` 的 `validate_evidence_contract()`（缺来源、缺链接、缺发布日期、缺数据期间、来源类型非法、核实状态缺失均给出稳定错误码，`unverified` 合法但必须显式标记）；`collect_report` 新增 `sources` 参数，传入时严格校验并把结果写入元数据 `validation["evidence_contract"]`，未传时记 `sources_not_provided` 以兼容旧调用。新增 `tests/ai_team/test_evidence_contract.py`（6 例），全量 **632 passed**。详见 `docs/v310_evidence_contract.md`。
 
 

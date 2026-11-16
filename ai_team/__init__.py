@@ -22,6 +22,10 @@ _LAZY_EXPORTS = {
     "TaskManager": ("ai_team.task_manager", "TaskManager"),
     "ReportCollector": ("ai_team.report_collector", "ReportCollector"),
     "CrossValidator": ("ai_team.cross_validator", "CrossValidator"),
+    "validate_evidence_contract": (
+        "ai_team.evidence_contract",
+        "validate_evidence_contract",
+    ),
     # 辩论与共识
     "DebateEngine": ("ai_team.debate_engine", "DebateEngine"),
     "DebatePosition": ("ai_team.debate_engine", "DebatePosition"),

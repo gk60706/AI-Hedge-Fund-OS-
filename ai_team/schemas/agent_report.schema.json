@@ -154,6 +154,40 @@
           "description": {
             "type": "string",
             "maxLength": 2000
+          },
+          "data_period": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "description": "The period covered by the source data, e.g. 2026-Q2, 2026-01-01/2026-06-30."
+          },
+          "source_type": {
+            "type": "string",
+            "enum": [
+              "official",
+              "company_filing",
+              "government",
+              "exchange",
+              "academic",
+              "financial_data",
+              "news_media",
+              "industry_research",
+              "other"
+            ],
+            "description": "Classification of the evidence source."
+          },
+          "verification_status": {
+            "type": "string",
+            "enum": [
+              "verified",
+              "unverified"
+            ],
+            "description": "Whether the source and its evidence have been independently verified."
+          },
+          "verification_note": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Reason or limitation when evidence is unverified."
           }
         }
       }
