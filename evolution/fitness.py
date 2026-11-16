@@ -164,6 +164,110 @@ class FitnessResult:
     details: dict[str, Any] = field(default_factory=dict)
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> "FitnessResult":
+        """
+        Restore FitnessResult from serialized data.
+
+        Required fields:
+            genome_id, fitness, valid
+
+        Unknown fields are ignored for forward compatibility.
+        Known fields are type-checked rather than silently coerced.
+        """
+        if not isinstance(data, dict):
+            raise ValueError("FitnessResult data must be a dictionary")
+
+        required = {"genome_id", "fitness", "valid"}
+        missing = sorted(required - set(data))
+        if missing:
+            raise ValueError(
+                f"FitnessResult is missing required fields: {missing}"
+            )
+
+        allowed = set(cls.__dataclass_fields__)
+        values = {
+            key: value
+            for key, value in data.items()
+            if key in allowed
+        }
+
+        def require_bool(name: str) -> None:
+            if name in values and type(values[name]) is not bool:
+                raise ValueError(f"{name} must be a bool")
+
+        def require_number(
+            name: str,
+            *,
+            optional: bool = False,
+        ) -> None:
+            if name not in values:
+                return
+            value = values[name]
+            if optional and value is None:
+                return
+            if (
+                isinstance(value, bool)
+                or not isinstance(value, (int, float))
+                or not math.isfinite(float(value))
+            ):
+                raise ValueError(
+                    f"{name} must be a finite number"
+                    + (" or None" if optional else "")
+                )
+
+        if not isinstance(values["genome_id"], str) or not values["genome_id"]:
+            raise ValueError("genome_id must be a non-empty string")
+
+        require_bool("valid")
+        require_bool("oos_available")
+        require_bool("accepted")
+
+        if "oos_passed" in values:
+            if values["oos_passed"] is not None and type(
+                values["oos_passed"]
+            ) is not bool:
+                raise ValueError("oos_passed must be bool or None")
+
+        require_number("fitness", optional=True)
+        require_number("weighted_score", optional=True)
+        require_number("penalty_total")
+
+        for name in ("component_scores", "penalties"):
+            if name not in values:
+                continue
+            mapping = values[name]
+            if not isinstance(mapping, dict):
+                raise ValueError(f"{name} must be a dictionary")
+            for key, value in mapping.items():
+                if not isinstance(key, str):
+                    raise ValueError(f"{name} keys must be strings")
+                if name == "component_scores" and value is None:
+                    continue
+                if (
+                    isinstance(value, bool)
+                    or not isinstance(value, (int, float))
+                    or not math.isfinite(float(value))
+                ):
+                    raise ValueError(
+                        f"{name}[{key!r}] must be a finite number"
+                        + (" or None" if name == "component_scores" else "")
+                    )
+
+        for name in ("missing_metrics", "failed_checks"):
+            if name in values:
+                sequence = values[name]
+                if (
+                    not isinstance(sequence, list)
+                    or any(not isinstance(item, str) for item in sequence)
+                ):
+                    raise ValueError(f"{name} must be a list of strings")
+
+        if "details" in values and not isinstance(values["details"], dict):
+            raise ValueError("details must be a dictionary")
+
+        return cls(**values)
 def _finite_number(
     value: Any,
     *,

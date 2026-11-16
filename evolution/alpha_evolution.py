@@ -63,10 +63,14 @@ Supply a research_evaluator callback that performs the actual signal
 evaluation, backtesting, and validation using the existing V3.9.2 pipeline.
 No broker integration or live-trading interface is provided.
 """
+import json
 import math
+import os
+import tempfile
 import time
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any, Callable, Mapping, Optional
 # V3.9.3 基于项目的 AlphaGenomeV393。
 from evolution.alpha_genome import (
@@ -120,6 +124,75 @@ class ResearchEvaluatorError(AlphaEvolutionError):
     """Raised when the research evaluator returns invalid data."""
 class EvolutionConfigurationError(AlphaEvolutionError):
     """Raised for invalid evolution configuration."""
+class CheckpointError(AlphaEvolutionError):
+    """Base exception for checkpoint operations."""
+class CheckpointVersionError(CheckpointError):
+    """Raised when a checkpoint uses an unsupported schema version."""
+class CheckpointCorruptionError(CheckpointError):
+    """Raised when checkpoint data is missing, malformed or invalid."""
+class CheckpointConsistencyError(CheckpointError):
+    """Raised when checkpoint state conflicts with persisted history."""
+def _rng_state_to_json(value: Any) -> Any:
+    """Convert random.Random state tuples into JSON-compatible lists."""
+    if isinstance(value, tuple):
+        return [_rng_state_to_json(item) for item in value]
+    if isinstance(value, list):
+        return [_rng_state_to_json(item) for item in value]
+    if value is None or isinstance(value, (str, int, float, bool)):
+        return value
+    raise TypeError(
+        f"Unsupported random state value: {type(value).__name__}"
+    )
+def _rng_state_from_json(value: Any) -> Any:
+    """Rebuild the nested tuple structure required by random.setstate()."""
+    if isinstance(value, list):
+        return tuple(_rng_state_from_json(item) for item in value)
+    if value is None or isinstance(value, (str, int, float, bool)):
+        return value
+    raise ValueError(
+        f"Invalid random state value: {type(value).__name__}"
+    )
+def _json_safe_numbers(value: Any) -> Any:
+    """Recursively convert NaN/Infinity to None.
+
+    未评估的基因以 NaN / -inf 存储（这是内部“无量”标记）。
+    JSON 标准不允许这两个字面量，写盘前必须显式转换；
+    恢复时 AlphaGenome.from_dict 会把 None 还原为同一默认值。
+    """
+    if isinstance(value, dict):
+        return {
+            str(key): _json_safe_numbers(item)
+            for key, item in value.items()
+        }
+    if isinstance(value, (list, tuple)):
+        return [_json_safe_numbers(item) for item in value]
+    if isinstance(value, float) and not math.isfinite(value):
+        return None
+    return value
+def _population_component_rngs(population: AlphaPopulation) -> dict[str, Any]:
+    """Collect all RNG objects that affect offspring generation.
+
+    仅保存 population._rng 不够：交叉/变异/新个体生成器各自持有独立
+    Random 实例，恢复时必须连它们的序列位置一起恢复，否则续跑会在
+    第一代就抽出不同的父代与算子，产生不可复现的分支。
+    """
+    candidates: dict[str, Any] = {
+        "population": getattr(population, "_rng", None),
+        "mutation_engine": getattr(
+            getattr(population, "mutation_engine", None), "rng", None
+        ),
+        "crossover_engine": getattr(
+            getattr(population, "crossover_engine", None), "rng", None
+        ),
+        "generator": getattr(
+            getattr(population, "generator", None), "random", None
+        ),
+    }
+    return {
+        name: rng
+        for name, rng in candidates.items()
+        if rng is not None and hasattr(rng, "getstate")
+    }
 @dataclass
 class AlphaEvolutionConfig:
     """Top-level evolution run configuration."""
@@ -622,19 +695,411 @@ class AlphaEvolutionEngine:
         """Return current-population genomes that passed fitness acceptance."""
         return self._accepted_genomes()
     def export_state(self) -> dict[str, Any]:
-        """Export population and run history for JSON persistence."""
-        return {
+        """Export a complete, JSON-compatible evolution checkpoint."""
+        history_config = asdict(self.history.config)
+
+        state = {
             "schema_version": "3.9.3",
             "experiment_name": self.config.experiment_name,
+            "created_at": self._utc_now(),
             "config": asdict(self.config),
             "population": self.population.to_dict(),
+            "rng_state": _rng_state_to_json(
+                self.population._rng.getstate()
+            ),
+            "component_rng_states": {
+                name: _rng_state_to_json(rng.getstate())
+                for name, rng in _population_component_rngs(
+                    self.population
+                ).items()
+            },
             "generation_reports": self.get_generation_history(),
             "fitness_results": {
                 key: result.to_dict()
                 for key, result in self.fitness_results.items()
             },
             "run_metadata": dict(self.run_metadata),
+            "last_evaluated_generation": (
+                self._last_evaluated_generation
+            ),
+            "_best_fitness_seen": self._best_fitness_seen,
+            "_generations_without_improvement": (
+                self._generations_without_improvement
+            ),
+            "_consecutive_errors": self._consecutive_errors,
+            "history_run_id": self.history.run_id,
+            "history_config": history_config,
         }
+        return _json_safe_numbers(state)
+
+    # ------------------------------------------------------------------
+    # Checkpoint: save / restore / resume
+    # ------------------------------------------------------------------
+    def save_checkpoint(self, path: str | Path) -> Path:
+        """Atomically write the current engine state to a JSON checkpoint."""
+        target = Path(path)
+        try:
+            target.parent.mkdir(parents=True, exist_ok=True)
+            state = self.export_state()
+
+            # Validate JSON serializability before creating/replacing the file.
+            serialized = json.dumps(
+                state,
+                ensure_ascii=False,
+                allow_nan=False,
+                indent=2,
+            )
+
+            fd, temporary_name = tempfile.mkstemp(
+                prefix=f".{target.name}.",
+                suffix=".tmp",
+                dir=str(target.parent),
+                text=True,
+            )
+            temporary_path = Path(temporary_name)
+
+            try:
+                with os.fdopen(fd, "w", encoding="utf-8") as handle:
+                    handle.write(serialized)
+                    handle.write("\n")
+                    handle.flush()
+                    os.fsync(handle.fileno())
+
+                os.replace(temporary_path, target)
+            except Exception:
+                try:
+                    temporary_path.unlink(missing_ok=True)
+                except OSError:
+                    pass
+                raise
+
+            return target
+        except CheckpointError:
+            raise
+        except Exception as exc:
+            raise CheckpointError(
+                f"Could not save checkpoint to {target}: "
+                f"{type(exc).__name__}: {exc}"
+            ) from exc
+
+    def restore_state(self, state: dict[str, Any]) -> None:
+        """Restore engine state. Existing state is not changed on validation failure."""
+        required = {
+            "schema_version",
+            "experiment_name",
+            "config",
+            "population",
+            "rng_state",
+            "generation_reports",
+            "fitness_results",
+            "run_metadata",
+            "last_evaluated_generation",
+            "_best_fitness_seen",
+            "_generations_without_improvement",
+            "_consecutive_errors",
+            "created_at",
+        }
+
+        if not isinstance(state, dict):
+            raise CheckpointCorruptionError(
+                "Checkpoint root must be a dictionary"
+            )
+
+        missing = sorted(required - set(state))
+        if missing:
+            raise CheckpointCorruptionError(
+                f"Checkpoint is missing required fields: {missing}"
+            )
+
+        if state["schema_version"] != "3.9.3":
+            raise CheckpointVersionError(
+                "Unsupported checkpoint schema_version: "
+                f"{state['schema_version']!r}; expected '3.9.3'"
+            )
+
+        if state["experiment_name"] != self.config.experiment_name:
+            raise CheckpointConsistencyError(
+                "Checkpoint experiment_name does not match engine config: "
+                f"{state['experiment_name']!r} != "
+                f"{self.config.experiment_name!r}"
+            )
+
+        try:
+            raw_config = state["config"]
+            if not isinstance(raw_config, dict):
+                raise ValueError("'config' must be a dictionary")
+
+            checkpoint_config = AlphaEvolutionConfig(**raw_config)
+            if (
+                checkpoint_config.experiment_name
+                != self.config.experiment_name
+            ):
+                raise ValueError(
+                    "config.experiment_name conflicts with experiment_name"
+                )
+
+            raw_population = state["population"]
+            if not isinstance(raw_population, dict):
+                raise ValueError("'population' must be a dictionary")
+
+            restored_population = AlphaPopulation.from_dict(raw_population)
+
+            # AlphaPopulation.from_dict() resets RNG from config.seed.
+            # Restore the exact saved random state after population reconstruction.
+            restored_rng_state = _rng_state_from_json(state["rng_state"])
+            restored_population._rng.setstate(restored_rng_state)
+
+            # 交叉/变异/生成器各有独立 RNG，必须一并恢复，否则续跑不可复现。
+            raw_component_states = state.get("component_rng_states")
+            if raw_component_states is not None:
+                if not isinstance(raw_component_states, dict):
+                    raise ValueError(
+                        "'component_rng_states' must be a dictionary"
+                    )
+                component_rngs = _population_component_rngs(
+                    restored_population
+                )
+                for name, raw_state in raw_component_states.items():
+                    rng = component_rngs.get(name)
+                    if rng is None:
+                        raise ValueError(
+                            f"Checkpoint has RNG state for unknown component {name!r}"
+                        )
+                    rng.setstate(_rng_state_from_json(raw_state))
+
+            raw_reports = state["generation_reports"]
+            if not isinstance(raw_reports, list):
+                raise ValueError("'generation_reports' must be a list")
+
+            report_fields = set(GenerationReport.__dataclass_fields__)
+            restored_reports: list[GenerationReport] = []
+            for index, item in enumerate(raw_reports):
+                if not isinstance(item, dict):
+                    raise ValueError(
+                        f"generation_reports[{index}] must be a dictionary"
+                    )
+                unknown = set(item) - report_fields
+                if unknown:
+                    raise ValueError(
+                        f"generation_reports[{index}] has unknown fields: "
+                        f"{sorted(unknown)}"
+                    )
+                restored_reports.append(GenerationReport(**item))
+
+            raw_fitness = state["fitness_results"]
+            if not isinstance(raw_fitness, dict):
+                raise ValueError("'fitness_results' must be a dictionary")
+
+            restored_fitness: dict[str, FitnessResult] = {}
+            for genome_id, item in raw_fitness.items():
+                if not isinstance(genome_id, str) or not isinstance(item, dict):
+                    raise ValueError(
+                        "fitness_results must map string IDs to dictionaries"
+                    )
+                result = FitnessResult.from_dict(item)
+                if result.genome_id != genome_id:
+                    raise ValueError(
+                        f"fitness_results key {genome_id!r} does not match "
+                        f"result.genome_id {result.genome_id!r}"
+                    )
+                restored_fitness[genome_id] = result
+
+            raw_metadata = state["run_metadata"]
+            if not isinstance(raw_metadata, dict):
+                raise ValueError("'run_metadata' must be a dictionary")
+
+            last_generation = state["last_evaluated_generation"]
+            if (
+                last_generation is not None
+                and (
+                    isinstance(last_generation, bool)
+                    or not isinstance(last_generation, int)
+                    or last_generation < 0
+                )
+            ):
+                raise ValueError(
+                    "'last_evaluated_generation' must be None or >= 0"
+                )
+
+            best_fitness = state["_best_fitness_seen"]
+            if best_fitness is not None:
+                if (
+                    isinstance(best_fitness, bool)
+                    or not isinstance(best_fitness, (int, float))
+                ):
+                    raise ValueError(
+                        "'_best_fitness_seen' must be numeric or None"
+                    )
+                if not math.isfinite(float(best_fitness)):
+                    raise ValueError("'_best_fitness_seen' must be finite")
+
+            stagnant = state["_generations_without_improvement"]
+            errors = state["_consecutive_errors"]
+            for name, value in (
+                ("_generations_without_improvement", stagnant),
+                ("_consecutive_errors", errors),
+            ):
+                if (
+                    isinstance(value, bool)
+                    or not isinstance(value, int)
+                    or value < 0
+                ):
+                    raise ValueError(f"{name} must be an integer >= 0")
+
+            created_at = state["created_at"]
+            if not isinstance(created_at, str) or not created_at:
+                raise ValueError("'created_at' must be a non-empty string")
+
+        except CheckpointError:
+            raise
+        except Exception as exc:
+            raise CheckpointCorruptionError(
+                f"Invalid checkpoint state: {type(exc).__name__}: {exc}"
+            ) from exc
+
+        # Commit only after every component has been reconstructed and validated.
+        self.population = restored_population
+        self.generation_reports = restored_reports
+        self.fitness_results = restored_fitness
+        self.run_metadata = dict(raw_metadata)
+        self._last_evaluated_generation = last_generation
+        self._best_fitness_seen = (
+            None if best_fitness is None else float(best_fitness)
+        )
+        self._generations_without_improvement = stagnant
+        self._consecutive_errors = errors
+
+    @classmethod
+    def from_checkpoint(
+        cls,
+        path: str | Path,
+        *,
+        research_evaluator: Optional[ResearchEvaluator] = None,
+        fitness_evaluator: Optional[AlphaFitnessEvaluator] = None,
+        history: Optional[EvolutionHistory] = None,
+        strict: bool = True,
+    ) -> "AlphaEvolutionEngine":
+        """Create an engine from a checkpoint and verify persisted history."""
+        checkpoint_path = Path(path)
+
+        try:
+            with checkpoint_path.open("r", encoding="utf-8") as handle:
+                state = json.load(handle)
+        except Exception as exc:
+            raise CheckpointCorruptionError(
+                f"Could not read checkpoint {checkpoint_path}: "
+                f"{type(exc).__name__}: {exc}"
+            ) from exc
+
+        if not isinstance(state, dict):
+            raise CheckpointCorruptionError(
+                "Checkpoint root must be a JSON object"
+            )
+
+        if state.get("schema_version") != "3.9.3":
+            raise CheckpointVersionError(
+                "Unsupported checkpoint schema_version: "
+                f"{state.get('schema_version')!r}; expected '3.9.3'"
+            )
+
+        try:
+            raw_config = state["config"]
+            if not isinstance(raw_config, dict):
+                raise ValueError("'config' must be a dictionary")
+            config = AlphaEvolutionConfig(**raw_config)
+
+            if state.get("experiment_name") != config.experiment_name:
+                raise ValueError(
+                    "experiment_name conflicts with config.experiment_name"
+                )
+
+            if history is None:
+                raw_history_config = state.get("history_config")
+                if not isinstance(raw_history_config, dict):
+                    raise ValueError(
+                        "history_config is required when history is not supplied"
+                    )
+                history_config = EvolutionHistoryConfig(**raw_history_config)
+                history_run_id = state.get("history_run_id")
+                if not isinstance(history_run_id, str) or not history_run_id:
+                    raise ValueError(
+                        "history_run_id is required when history is not supplied"
+                    )
+                history = EvolutionHistory(
+                    config=history_config,
+                    run_id=history_run_id,
+                    metadata={
+                        "experiment_name": config.experiment_name,
+                        "engine": "AlphaEvolutionEngine",
+                        "version": "3.9.3",
+                        "restored_from_checkpoint": str(checkpoint_path),
+                        "live_trading_enabled": False,
+                    },
+                )
+
+            engine = cls(
+                population=None,
+                research_evaluator=research_evaluator,
+                fitness_evaluator=fitness_evaluator,
+                config=config,
+                history=history,
+            )
+            engine.restore_state(state)
+
+        except CheckpointError:
+            raise
+        except Exception as exc:
+            raise CheckpointCorruptionError(
+                f"Invalid checkpoint configuration: "
+                f"{type(exc).__name__}: {exc}"
+            ) from exc
+
+        # Compare the last persisted generation for this run with the checkpoint.
+        try:
+            records = engine.history.load_persisted_records(
+                record_type="generation",
+                strict=True,
+            )
+            if records:
+                payload = records[-1].get("payload")
+                if not isinstance(payload, dict):
+                    raise ValueError(
+                        "Latest history generation record has no valid payload"
+                    )
+                history_generation = payload.get("generation")
+                checkpoint_generation = engine.population.generation
+
+                if history_generation != checkpoint_generation:
+                    message = (
+                        "Checkpoint/history generation mismatch: "
+                        f"checkpoint={checkpoint_generation}, "
+                        f"history={history_generation}, "
+                        f"run_id={engine.history.run_id}"
+                    )
+                    if strict:
+                        raise CheckpointConsistencyError(message)
+                    engine.run_metadata["checkpoint_history_mismatch"] = {
+                        "checkpoint_generation": checkpoint_generation,
+                        "history_generation": history_generation,
+                        "message": message,
+                    }
+            else:
+                engine.run_metadata["checkpoint_history_records_missing"] = True
+
+        except CheckpointConsistencyError:
+            raise
+        except Exception as exc:
+            if strict:
+                raise CheckpointConsistencyError(
+                    "Could not verify checkpoint against JSONL history: "
+                    f"{type(exc).__name__}: {exc}"
+                ) from exc
+            engine.run_metadata["checkpoint_history_check_error"] = (
+                f"{type(exc).__name__}: {exc}"
+            )
+
+        return engine
+
     # ------------------------------------------------------------------
     # Research evaluator integration
     # ------------------------------------------------------------------

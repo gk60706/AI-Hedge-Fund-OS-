@@ -97,4 +97,6 @@ python main_v310.py `
 
 ## 8. 遗留待办（非 V3.10 范围）
 
-- **V3.9.3 断点续跑**：`evolution/alpha_evolution.py` 目前只有 `export_state()`，缺少 `restore_state()` / `from_checkpoint()`；随机数状态、`_last_evaluated_generation`、checkpoint 与 JSONL 一致性校验、以及中断/损坏/版本不兼容测试均未落地。该项属 V3.9.3 第 15 步，需单独排期。
+- **V3.9.3 断点续跑**：已完成（2026-11-16）。新增 `restore_state()` / `save_checkpoint()` / `from_checkpoint()`、4 个 `Checkpoint*` 异常、`FitnessResult.from_dict()`，并对 checkpoint 与 JSONL 历史做代际一致性校验（`strict=True` 抛错 / 非 strict 写入 `run_metadata`）。详见 `docs/v393_checkpoint.md`，回归 `7 passed`。
+- **进化模块并发**：跨进程写同一 JSONL 历史仍缺文件锁，暂无 20 次端到端压测记录。
+
