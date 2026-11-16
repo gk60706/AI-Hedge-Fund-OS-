@@ -22,12 +22,14 @@ import hashlib
 import json
 import logging
 import math
+import os
 import threading
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable, Mapping, Optional, Sequence
+from evolution.file_lock import FileLock, FileLockTimeoutError
 logger = logging.getLogger(__name__)
 JsonDict = dict[str, Any]
 # ---------------------------------------------------------------------------
@@ -39,6 +41,8 @@ class EvolutionHistorySerializationError(EvolutionHistoryError):
     """Raised when a history record cannot be serialized."""
 class EvolutionHistoryIntegrityError(EvolutionHistoryError):
     """Raised when a persisted history record is invalid."""
+class EvolutionHistoryLockError(EvolutionHistoryError):
+    """Raised when the cross-process history lock cannot be acquired."""
 def _utc_now() -> str:
     return datetime.now(timezone.utc).isoformat()
 # ---------------------------------------------------------------------------
@@ -53,10 +57,15 @@ class EvolutionHistoryConfig:
     enabled: bool = True
     flush_each_record: bool = True
     strict_loading: bool = True
+    lock_timeout: Optional[float] = 10.0
     schema_version: str = "1.0"
     def __post_init__(self) -> None:
         if not self.schema_version.strip():
             raise ValueError("schema_version must not be empty")
+        if self.lock_timeout is not None and self.lock_timeout <= 0:
+            raise ValueError(
+                "lock_timeout must be positive when set"
+            )
 # ---------------------------------------------------------------------------
 # Data models
 # ---------------------------------------------------------------------------
@@ -142,18 +151,25 @@ class EvolutionRunSummary:
 class EvolutionHistoryStore:
     """
     Append-only JSONL store.
-    One line equals one complete history record. This is convenient for
-    auditing and replay, but it is not a transactional database. For
-    multi-process writers, use a database or external locking service.
+
+    One line equals one complete history record. Writes and reads take a
+    cross-process advisory lock on ``<path>.lock`` so multiple experiment
+    processes can share one history file without interleaving partial lines.
+    This is still not a transactional database: readers see a consistent file
+    prefix, not isolation from concurrent appends.
     """
     def __init__(
         self,
         path: str | Path,
         *,
         flush_each_record: bool = True,
+        lock_timeout: Optional[float] = 10.0,
     ) -> None:
         self.path = Path(path)
         self.flush_each_record = flush_each_record
+        if lock_timeout is not None and lock_timeout <= 0:
+            raise ValueError("lock_timeout must be positive when set")
+        self.lock_timeout = lock_timeout
         self._lock = threading.Lock()
     def append(self, record: Mapping[str, Any]) -> str:
         """Append a record and return the absolute path."""
@@ -172,10 +188,17 @@ class EvolutionHistoryStore:
             ) from exc
         self.path.parent.mkdir(parents=True, exist_ok=True)
         with self._lock:
-            with self.path.open("a", encoding="utf-8") as handle:
-                handle.write(line + "\n")
-                if self.flush_each_record:
-                    handle.flush()
+            try:
+                with FileLock(self.path, timeout=self.lock_timeout):
+                    with self.path.open("a", encoding="utf-8") as handle:
+                        handle.write(line + "\n")
+                        if self.flush_each_record:
+                            handle.flush()
+                            os.fsync(handle.fileno())
+            except FileLockTimeoutError as exc:
+                raise EvolutionHistoryLockError(
+                    f"Could not append to {self.path}: {exc}"
+                ) from exc
         return str(self.path.resolve())
     def load(
         self,
@@ -188,8 +211,27 @@ class EvolutionHistoryStore:
         if not self.path.exists():
             return []
         records: list[JsonDict] = []
-        with self.path.open("r", encoding="utf-8") as handle:
-            for line_number, raw_line in enumerate(handle, start=1):
+        try:
+            with FileLock(self.path, timeout=self.lock_timeout):
+                handle = self.path.open("r", encoding="utf-8")
+                with handle:
+                    self._read_lines(handle, records, run_id, record_type, strict)
+        except FileLockTimeoutError as exc:
+            raise EvolutionHistoryLockError(
+                f"Could not read {self.path}: {exc}"
+            ) from exc
+        return records
+
+    @staticmethod
+    def _read_lines(
+        handle,
+        records: list[JsonDict],
+        run_id: Optional[str],
+        record_type: Optional[str],
+        strict: bool,
+    ) -> None:
+        """Parse JSONL lines into ``records`` (caller holds the file lock)."""
+        for line_number, raw_line in enumerate(handle, start=1):
                 if not raw_line.strip():
                     continue
                 try:
@@ -212,7 +254,6 @@ class EvolutionHistoryStore:
                 ):
                     continue
                 records.append(record)
-        return records
 # ---------------------------------------------------------------------------
 # Main history manager
 # ---------------------------------------------------------------------------
@@ -245,6 +286,7 @@ class EvolutionHistory:
             self.store = EvolutionHistoryStore(
                 self.config.output_path,
                 flush_each_record=self.config.flush_each_record,
+                lock_timeout=self.config.lock_timeout,
             )
         self._lock = threading.RLock()
         self._last_best_fitness: Optional[float] = None

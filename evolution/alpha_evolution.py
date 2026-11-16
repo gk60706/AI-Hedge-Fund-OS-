@@ -92,6 +92,7 @@ from evolution.evolution_history import (
     EvolutionHistory,
     EvolutionHistoryConfig,
 )
+from evolution.file_lock import FileLock
 # Expected return shape from the external research evaluator:
 #
 # {
@@ -750,28 +751,31 @@ class AlphaEvolutionEngine:
                 indent=2,
             )
 
-            fd, temporary_name = tempfile.mkstemp(
-                prefix=f".{target.name}.",
-                suffix=".tmp",
-                dir=str(target.parent),
-                text=True,
-            )
-            temporary_path = Path(temporary_name)
+            # 同一路径的并发写必须串行，否则“最后一次原子替换”虽不损坏
+            # 文件，但写入顺序不可控，恢复时可能拿到较旧的状态。
+            with FileLock(target, timeout=30.0):
+                fd, temporary_name = tempfile.mkstemp(
+                    prefix=f".{target.name}.",
+                    suffix=".tmp",
+                    dir=str(target.parent),
+                    text=True,
+                )
+                temporary_path = Path(temporary_name)
 
-            try:
-                with os.fdopen(fd, "w", encoding="utf-8") as handle:
-                    handle.write(serialized)
-                    handle.write("\n")
-                    handle.flush()
-                    os.fsync(handle.fileno())
-
-                os.replace(temporary_path, target)
-            except Exception:
                 try:
-                    temporary_path.unlink(missing_ok=True)
-                except OSError:
-                    pass
-                raise
+                    with os.fdopen(fd, "w", encoding="utf-8") as handle:
+                        handle.write(serialized)
+                        handle.write("\n")
+                        handle.flush()
+                        os.fsync(handle.fileno())
+
+                    os.replace(temporary_path, target)
+                except Exception:
+                    try:
+                        temporary_path.unlink(missing_ok=True)
+                    except OSError:
+                        pass
+                    raise
 
             return target
         except CheckpointError:

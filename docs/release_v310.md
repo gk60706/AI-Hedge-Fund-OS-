@@ -98,5 +98,7 @@ python main_v310.py `
 ## 8. 遗留待办（非 V3.10 范围）
 
 - **V3.9.3 断点续跑**：已完成（2026-11-16）。新增 `restore_state()` / `save_checkpoint()` / `from_checkpoint()`、4 个 `Checkpoint*` 异常、`FitnessResult.from_dict()`，并对 checkpoint 与 JSONL 历史做代际一致性校验（`strict=True` 抛错 / 非 strict 写入 `run_metadata`）。详见 `docs/v393_checkpoint.md`，回归 `7 passed`。
-- **进化模块并发**：跨进程写同一 JSONL 历史仍缺文件锁，暂无 20 次端到端压测记录。
+- **P3 并发与压测**：已完成（2026-11-16）。`evolution/file_lock.py` 跨进程锁接入历史读写与 checkpoint 保存，并发回归 `4 passed`；`scripts/stress_v310_e2e.py --iterations 20` 实测 **40/40 passed（7.2s）**。详见 `docs/v393_p3.md`。
+- **线程级超时无法强杀**：`RetryPolicy.timeout_seconds` 超时后会抛 `AgentTimeoutError`，但被卡线程无法终止；硬终止需子进程化改造，未做。
+
 
