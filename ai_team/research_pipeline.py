@@ -14,6 +14,8 @@ from __future__ import annotations
 
 import argparse
 import json
+import multiprocessing
+import pickle
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import TimeoutError as FutureTimeoutError
 from dataclasses import asdict, dataclass, is_dataclass
@@ -68,17 +70,25 @@ class RetryPolicy:
     """单个助手提交报告的容错策略。
 
     ``attempts`` 是单个助手的最多提交次数（含首次）；
-    ``timeout_seconds`` 为单次提交的墙钟上限，None 表示不限制。
+    ``timeout_seconds`` 为单次提交的墙钟上限，None 表示不限制；
+    ``timeout_mode`` 选择超时实现：``thread`` 为原有线程超时（超时后线程
+    只能被放弃，无法强杀），``process`` 用 spawn 子进程执行，超时后可以
+    真正终止子进程。
     """
 
     attempts: int = 2
     timeout_seconds: float | None = None
+    timeout_mode: str = "thread"
 
     def __post_init__(self) -> None:
         if self.attempts < 1:
             raise ValueError("attempts must be >= 1")
         if self.timeout_seconds is not None and self.timeout_seconds <= 0:
             raise ValueError("timeout_seconds must be positive when set")
+        if self.timeout_mode not in {"thread", "process"}:
+            raise ValueError(
+                "timeout_mode must be either 'thread' or 'process'"
+            )
 
 
 # ============================================================
@@ -105,6 +115,10 @@ class ResearchOutcome:
 
 class AgentTimeoutError(TimeoutError):
     """单个助手在超时时间内没有交回报告。"""
+
+
+class HardTimeoutNotSupportedError(RuntimeError):
+    """process 模式下无法硬终止时抛出（不可 pickle / 子进程启动失败）。"""
 
 
 class InsufficientAgentsError(RuntimeError):
@@ -161,6 +175,202 @@ def _to_jsonable(value: Any) -> Any:
     if hasattr(value, "__dict__"):
         return _to_jsonable(vars(value))
     return str(value)
+
+
+# ============================================================
+# 进程级硬超时
+# ============================================================
+
+
+@dataclass
+class _ReportCollectorCall:
+    """可 pickle 的调用包装，替换原先无法跨进程传递的 lambda。"""
+
+    collector: Any
+    kwargs: dict[str, Any]
+
+    def __call__(self) -> Any:
+        return self.collector.collect_report(**self.kwargs)
+
+
+def _hard_timeout_worker(send_connection: Any, func: Callable[[], Any]) -> None:
+    """spawn 子进程入口，必须留在模块顶层才能被 pickle 引用。
+
+    回传协议：``("result", result, "")`` /
+    ``("unsupported", exception_name, message)`` /
+    ``("error", exception_name, message)``。
+    """
+    try:
+        result = func()
+
+        try:
+            pickle.dumps(result)
+        except Exception as exc:
+            payload: tuple[str, Any, str] = (
+                "unsupported",
+                type(exc).__name__,
+                f"Callable returned a non-pickleable result: {exc}",
+            )
+        else:
+            payload = ("result", result, "")
+
+    except BaseException as exc:  # noqa: BLE001 - 子进程内任何异常都要回传
+        payload = ("error", type(exc).__name__, str(exc))
+
+    try:
+        send_connection.send_bytes(pickle.dumps(payload))
+    except BaseException:  # noqa: BLE001 - 父进程会通过 EOF 判定通信失败
+        pass
+    finally:
+        try:
+            send_connection.close()
+        except Exception:
+            pass
+
+
+def _terminate_process(process: Any) -> None:
+    """terminate → 1 秒等待 → 必要时 kill → 最终 join，避免僵尸进程。"""
+    if process is None:
+        return
+
+    try:
+        if process.is_alive():
+            process.terminate()
+            process.join(timeout=1.0)
+
+        if process.is_alive():
+            kill = getattr(process, "kill", None)
+            if callable(kill):
+                kill()
+            else:
+                process.terminate()
+
+            process.join(timeout=1.0)
+
+        if process.pid is not None:
+            process.join()
+
+    except (AssertionError, ValueError):
+        # 未启动或已关闭的 Process 对象
+        pass
+
+
+def _call_with_process_timeout(
+    func: Callable[[], Any],
+    timeout_seconds: float,
+    description: str,
+) -> Any:
+    """在 spawn 子进程里执行 func，超时后可真正终止。"""
+    try:
+        pickle.dumps(func)
+    except Exception as exc:
+        raise HardTimeoutNotSupportedError(
+            f"Process timeout is unsupported for {description}: "
+            f"callable is not pickleable ({type(exc).__name__}: {exc})"
+        ) from exc
+
+    process = None
+    receive_connection = None
+    send_connection = None
+
+    try:
+        context = multiprocessing.get_context("spawn")
+        receive_connection, send_connection = context.Pipe(duplex=False)
+
+        process = context.Process(
+            target=_hard_timeout_worker,
+            args=(send_connection, func),
+            name="research-pipeline-hard-timeout",
+        )
+
+        try:
+            process.start()
+        except Exception as exc:
+            raise HardTimeoutNotSupportedError(
+                f"Could not start spawn worker for {description}: "
+                f"{type(exc).__name__}: {exc}"
+            ) from exc
+
+        # 父进程必须关掉发送端，否则子进程退出后 EOF 检测会被拖延
+        send_connection.close()
+        send_connection = None
+
+        if not receive_connection.poll(timeout_seconds):
+            _terminate_process(process)
+            raise AgentTimeoutError(
+                f"{description} exceeded timeout of "
+                f"{timeout_seconds:.3f} seconds (process terminated)"
+            )
+
+        try:
+            raw_payload = receive_connection.recv_bytes()
+            payload = pickle.loads(raw_payload)
+        except (EOFError, OSError, pickle.PickleError) as exc:
+            _terminate_process(process)
+            raise RuntimeError(
+                f"Hard-timeout worker communication failed for {description}: "
+                f"{type(exc).__name__}: {exc}"
+            ) from exc
+
+        process.join(timeout=1.0)
+        if process.is_alive():
+            _terminate_process(process)
+
+        if not isinstance(payload, tuple) or len(payload) != 3:
+            raise RuntimeError(f"Invalid worker response for {description}")
+
+        status, value, message = payload
+
+        if status == "result":
+            return value
+
+        if status == "unsupported":
+            raise HardTimeoutNotSupportedError(
+                f"Process timeout is unsupported for {description}: {message}"
+            )
+
+        if status == "error":
+            if value == "AgentTimeoutError":
+                raise AgentTimeoutError(message)
+            if value == "TimeoutError":
+                raise TimeoutError(message)
+            if value == "RuntimeError":
+                raise RuntimeError(message)
+            if value == "ValueError":
+                raise ValueError(message)
+            if value == "TypeError":
+                raise TypeError(message)
+            if value == "KeyError":
+                raise KeyError(message)
+            if value == "AssertionError":
+                raise AssertionError(message)
+            raise RuntimeError(f"Worker raised {value}: {message}")
+
+        raise RuntimeError(
+            f"Unknown worker response status for {description}: {status!r}"
+        )
+
+    finally:
+        if send_connection is not None:
+            try:
+                send_connection.close()
+            except Exception:
+                pass
+
+        if receive_connection is not None:
+            try:
+                receive_connection.close()
+            except Exception:
+                pass
+
+        if process is not None:
+            _terminate_process(process)
+
+            try:
+                if process.pid is not None:
+                    process.close()
+            except (AssertionError, ValueError):
+                pass
 
 
 # ============================================================
@@ -330,18 +540,23 @@ class V310ResearchPipeline:
 
         for _ in range(policy.attempts):
             try:
+                call = _ReportCollectorCall(
+                    collector=self.report_collector,
+                    kwargs={
+                        "task_id": self.task_id,
+                        "agent_id": report.agent_id,
+                        "content": report.content,
+                        "title": report.title,
+                        "source": report.source,
+                        "notes": report.notes,
+                        "allow_incomplete": False,
+                    },
+                )
                 record = self._call_with_timeout(
-                    lambda: self.report_collector.collect_report(
-                        task_id=self.task_id,
-                        agent_id=report.agent_id,
-                        content=report.content,
-                        title=report.title,
-                        source=report.source,
-                        notes=report.notes,
-                        allow_incomplete=False,
-                    ),
+                    call,
                     policy.timeout_seconds,
                     f"report submission for {report.agent_id}",
+                    timeout_mode=policy.timeout_mode,
                 )
                 return record, None
             except BaseException as exc:  # noqa: BLE001 - 记录后按策略重试
@@ -354,19 +569,40 @@ class V310ResearchPipeline:
         func: Callable[[], Any],
         timeout_seconds: float | None,
         description: str,
+        timeout_mode: str = "thread",
     ) -> Any:
-        """在独立线程里执行一次调用，超出墙钟上限即抛 AgentTimeoutError。"""
-        if not timeout_seconds:
+        """按 timeout_mode 执行一次调用。
+
+        ``thread``：保留原有线程超时行为（超时后线程无法强杀，只能放弃）；
+        ``process``：改用 spawn 子进程，超时后 terminate/kill 子进程。
+        """
+        if timeout_mode not in {"thread", "process"}:
+            raise ValueError("timeout_mode must be either 'thread' or 'process'")
+        if timeout_seconds is not None and timeout_seconds <= 0:
+            raise ValueError("timeout_seconds must be greater than zero")
+
+        if timeout_seconds is None:
             return func()
 
-        with ThreadPoolExecutor(max_workers=1) as pool:
-            future = pool.submit(func)
-            try:
-                return future.result(timeout=timeout_seconds)
-            except FutureTimeoutError as exc:
-                raise AgentTimeoutError(
-                    f"{description} exceeded {timeout_seconds}s"
-                ) from exc
+        if timeout_mode == "process":
+            return _call_with_process_timeout(
+                func=func,
+                timeout_seconds=timeout_seconds,
+                description=description,
+            )
+
+        executor = ThreadPoolExecutor(max_workers=1)
+        future = executor.submit(func)
+        try:
+            return future.result(timeout=timeout_seconds)
+        except FutureTimeoutError as exc:
+            future.cancel()
+            raise AgentTimeoutError(
+                f"{description} exceeded {timeout_seconds}s (thread abandoned)"
+            ) from exc
+        finally:
+            # 不等待超时线程结束：Python 无法强杀线程，等它只会拖住调用方
+            executor.shutdown(wait=False, cancel_futures=True)
 
     # --------------------------------------------------------
     # 3. 交叉校验
@@ -740,6 +976,15 @@ def main(argv: Sequence[str] | None = None) -> int:
         help="wall-clock limit per agent submission (default: no limit)",
     )
     parser.add_argument(
+        "--timeout-mode",
+        choices=("thread", "process"),
+        default="thread",
+        help=(
+            "timeout implementation: 'thread' abandons the worker, "
+            "'process' spawns a child and terminates it (default: thread)"
+        ),
+    )
+    parser.add_argument(
         "--allow-missing-agents",
         action="store_true",
         help="continue with a degraded decision when fewer than min reports arrive",
@@ -788,6 +1033,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             retry_policy=RetryPolicy(
                 attempts=args.retry_attempts,
                 timeout_seconds=args.timeout_seconds,
+                timeout_mode=args.timeout_mode,
             ),
             allow_missing_agents=args.allow_missing_agents,
         )
@@ -840,6 +1086,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         retry_policy=RetryPolicy(
             attempts=args.retry_attempts,
             timeout_seconds=args.timeout_seconds,
+            timeout_mode=args.timeout_mode,
         ),
         allow_missing_agents=args.allow_missing_agents,
     )

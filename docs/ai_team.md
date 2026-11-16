@@ -125,7 +125,15 @@ TeamConfig ──► TaskManager ──► ReportCollector ──► CrossValida
 |---|---|---|
 | 重试 | `RetryPolicy.attempts`（默认 2） | 单个助手提交失败后重试，不中断其他助手 |
 | 超时 | `RetryPolicy.timeout_seconds`（默认不限） | 超时抛 `AgentTimeoutError` 并计数 |
+| 超时实现 | `RetryPolicy.timeout_mode`：`thread`（默认）/ `process` | `thread` 只放弃等待，被卡线程仍可能跑完；`process` 用 spawn 子进程执行，超时后 `terminate → join(1s) → kill → join` 真正终止。不可 pickle 的 callable 或子进程启动失败抛 `HardTimeoutNotSupportedError`，不会静默退回线程 |
 | 缺员降级 | `allow_missing` / `--allow-missing-agents` | 成功报告数低于 `min_reports`(默认 2) 时，默认抛 `InsufficientAgentsError`；显式开启才继续，并把缺口写入 `decision.json` 的 `failed_agents` |
+
+`process` 模式的序列化约束：
+
+- 只有模块级函数、或可 pickle 的实例（如 `_ReportCollectorCall`）才能跨进程；lambda / 闭包会被 `pickle.dumps` 预检拦下。
+- 返回值必须先 `pickle.dumps` 预检，不能回传的对象按 `HardTimeoutNotSupportedError` 处理。
+- `spawn` 会重新导入主模块，调用方脚本必须写 `if __name__ == "__main__":`，否则子进程启动失败。pytest 与包内 CLI 不受影响。
+- 每次提交都是一次进程创建，成本明显高于线程：适合「必须能强杀」的场景，不适合高频短调用。
 
 ## 8. 命令行
 
@@ -139,13 +147,14 @@ python -m ai_team.research_pipeline `
   --project-root research\300394_2026-11-16 `
   --retry-attempts 2 `
   --timeout-seconds 90 `
+  --timeout-mode process `
   --allow-missing-agents
 ```
 
 参数说明：
 
 - `--project-root` 决定 `tasks/`、`reports/`、`evaluation/` 落盘位置；指向研究目录可避免污染仓库
-- `--retry-attempts` 默认 2；`--timeout-seconds` 默认不限制；`--allow-missing-agents` 默认关闭
+- `--retry-attempts` 默认 2；`--timeout-seconds` 默认不限制；`--timeout-mode` 默认 `thread`，需要硬终止时传 `process`；`--allow-missing-agents` 默认关闭
 - 退出码非 0 表示阶段失败（缺员、校验不通过、共识违约等）
 
 `decision.json` 顶层字段：`symbol`、`task_id`、`validation`、`debate`、`consensus`、`decision`、`failed_agents`。
@@ -195,7 +204,6 @@ pytest tests\ai_team -q
 
 1. **弃权计入批准率分母**：`approval_score` 的分母包含弃权票，弃权会拉低批准率。
 2. **required 委员被 disable 后不再计入法定人数**，且 `required_members_met=True`。
-3. **超时无法真正终止线程**：`ThreadPoolExecutor` 只能放弃等待，后台线程仍可能跑完；
-   真实部署应把 agent 调用放到可杀死的进程或远端任务里。
+3. **默认线程超时仍无法强杀**：`timeout_mode="thread"` 下 `ThreadPoolExecutor` 只能放弃等待，后台线程仍可能跑完；需要硬终止时显式切 `timeout_mode="process"`（受 pickle 约束，见第 7 节）。
 4. **无跨进程并发锁**：多个流水线同时写同一 `project_root` 时不做互斥，需要外部串行化。
 5. **票源映射是一人两席**：三位助手映射到六个委员席位，属研究治理记账，不是真实 6 人投委会。

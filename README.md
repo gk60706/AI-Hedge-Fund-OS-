@@ -28,7 +28,7 @@ AI 股票研究与量化基础设施（研究 / 模拟用途）。
 - **V3.9.1**：统一量化研究底座（V3.6～V3.9）——Research Pipeline（Data Quality → PIT → Cross Section → Factor → Alpha Search → IC/ICIR/Q5-Q1 → Correlation Dedup → OOS → Transaction Cost → Portfolio Backtest → Risk → Alpha Library）、Alpha 公式树生成器 / 求值器 / 正则化 / 去重、Walk-Forward、OOS 验证、成本模型、`main_v391.py` Demo / 单股票入口
 - **V3.9.2**：独立发布说明见 `README_V392.md` 与 `V392_RELEASE_MANIFEST.json`，配置入口 `configs/v392.yaml`、`main_v392.py`
 - **V3.9.3**：Alpha 进化引擎断点续跑——`export_state()` / `save_checkpoint()` / `restore_state()` / `from_checkpoint()`、4 个 `Checkpoint*` 异常、`FitnessResult.from_dict()`、checkpoint 与 JSONL 历史代际一致性校验（strict / 非 strict），并恢复 4 个独立随机源以保证续跑与不中断运行逐代等价。另含跨进程 JSONL 文件锁与 20 次端到端压测脚本。详见 [`docs/v393_checkpoint.md`](docs/v393_checkpoint.md)、[`docs/v393_p3.md`](docs/v393_p3.md)
-- **V3.10**：多 AI 协作研究引擎（Multi-AI Collaboration Engine）——团队配置与角色、任务派发与状态机、多助手报告收集（必填小节校验 + 重复提交防护）、交叉校验、多 AI 辩论（support / oppose / neutral / clarify）、共识引擎（consensus / partial_consensus / no_consensus / insufficient_evidence）、投资委员会（6 委员加权 + 法定人数 + 风险否决 + 附条件决议）、角色专用 Prompt 与统一 JSON Schema，端到端入口 `ai_team/research_pipeline.py`。**研究治理链路，不含任何实盘交易接口。**
+- **V3.10**：多 AI 协作研究引擎（Multi-AI Collaboration Engine）——团队配置与角色、任务派发与状态机、多助手报告收集（必填小节校验 + 重复提交防护）、交叉校验、多 AI 辩论（support / oppose / neutral / clarify）、共识引擎（consensus / partial_consensus / no_consensus / insufficient_evidence）、投资委员会（6 委员加权 + 法定人数 + 风险否决 + 附条件决议）、角色专用 Prompt 与统一 JSON Schema，端到端入口 `ai_team/research_pipeline.py`。另含可硬终止的进程级超时（`--timeout-mode process`，spawn 子进程 + 超时 terminate/kill）。**研究治理链路，不含任何实盘交易接口。**
 
 ## V3.10 多 AI 协作引擎
 
@@ -70,6 +70,7 @@ python -m ai_team.research_pipeline `
 |---|---|---|
 | `--retry-attempts` | 2 | 单个助手最多提交次数 |
 | `--timeout-seconds` | 无限制 | 单次提交的墙钟上限，超时记 `AgentTimeoutError` |
+| `--timeout-mode` | `thread` | 超时实现：`thread` 只放弃等待（被卡线程杀不掉）；`process` 用 spawn 子进程执行，超时后 terminate/kill 真正终止，要求 callable 可 pickle |
 | `--allow-missing-agents` | 关闭 | 成功报告数低于 `min_reports`（默认 2）时，默认抛 `InsufficientAgentsError`；开启后降级继续并把缺口写进 `failed_agents` |
 
 真实 API 模式（`--live`）：配置 `.env` 中的 `OPENAI_API_KEY` / `XAI_API_KEY` / `HARK_BASE_URL` 等，直接由适配器调用三个助手生成报告：
