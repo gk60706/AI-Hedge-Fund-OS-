@@ -69,3 +69,6 @@ data_cache/*
 alpha_library/*
 !alpha_library/.gitkeep
 *.log
+
+# V3.10 generated runtime artifacts inside research cases
+research/**/ai_team/

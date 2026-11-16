@@ -14,9 +14,11 @@ from __future__ import annotations
 
 import argparse
 import json
+from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import TimeoutError as FutureTimeoutError
 from dataclasses import asdict, dataclass, is_dataclass
 from pathlib import Path
-from typing import Any, Iterable, Mapping, Sequence
+from typing import Any, Callable, Iterable, Mapping, Sequence
 
 from ai_team.config import TeamConfig, get_default_config
 from ai_team.consensus_engine import ConsensusEngine
@@ -60,6 +62,24 @@ class DebateContribution:
     evidence: list[str]
 
 
+@dataclass
+class RetryPolicy:
+    """单个助手提交报告的容错策略。
+
+    ``attempts`` 是单个助手的最多提交次数（含首次）；
+    ``timeout_seconds`` 为单次提交的墙钟上限，None 表示不限制。
+    """
+
+    attempts: int = 2
+    timeout_seconds: float | None = None
+
+    def __post_init__(self) -> None:
+        if self.attempts < 1:
+            raise ValueError("attempts must be >= 1")
+        if self.timeout_seconds is not None and self.timeout_seconds <= 0:
+            raise ValueError("timeout_seconds must be positive when set")
+
+
 # ============================================================
 # 输出数据模型
 # ============================================================
@@ -74,6 +94,35 @@ class ResearchOutcome:
     consensus: Any
     decision: Any
     artifact_path: Path | None = None
+    failed_agents: dict[str, str] | None = None
+
+
+# ============================================================
+# 异常
+# ============================================================
+
+
+class AgentTimeoutError(TimeoutError):
+    """单个助手在超时时间内没有交回报告。"""
+
+
+class InsufficientAgentsError(RuntimeError):
+    """成功提交的助手数量低于流水线要求的下限。"""
+
+    def __init__(
+        self,
+        collected: int,
+        required: int,
+        failures: Mapping[str, str] | None = None,
+    ) -> None:
+        self.collected = collected
+        self.required = required
+        self.failures = dict(failures or {})
+        detail = ", ".join(f"{k}: {v}" for k, v in self.failures.items()) or "none"
+        super().__init__(
+            f"only {collected} agent report(s) collected, "
+            f"but {required} required (failures: {detail})"
+        )
 
 
 # ============================================================
@@ -127,6 +176,7 @@ class V310ResearchPipeline:
         min_reports: int = 2,
         max_rounds: int = 1,
     ) -> None:
+        self.min_reports = min_reports
         self.config: TeamConfig = get_default_config(project_root=project_root)
         self.config.create_directories()
         storage = self.config.evaluation_dir / "v310_pipeline"
@@ -169,6 +219,8 @@ class V310ResearchPipeline:
         self._validation = None
         self._debate = None
         self._consensus = None
+        self.agent_failures: dict[str, str] = {}
+        self.reports_submitted: int = 0
 
     # --------------------------------------------------------
     # 1. 建任务
@@ -232,23 +284,84 @@ class V310ResearchPipeline:
     def submit_reports(
         self,
         reports: Iterable[AgentReport],
+        retry_policy: RetryPolicy | None = None,
+        allow_missing: bool = False,
     ) -> list[Any]:
-        records = []
+        """逐个收集助手报告，带超时与重试。
+
+        单个助手失败不会中断其他助手的提交；成功数量低于 ``min_reports``
+        时，默认抛 ``InsufficientAgentsError``（显式降级），只有显式传入
+        ``allow_missing=True`` 才继续往下走，并把缺口记进 outcome。
+        """
+        policy = retry_policy or RetryPolicy()
+        records: list[Any] = []
+        self.agent_failures = {}
 
         for report in reports:
-            records.append(
-                self.report_collector.collect_report(
-                    task_id=self.task_id,
-                    agent_id=report.agent_id,
-                    content=report.content,
-                    title=report.title,
-                    source=report.source,
-                    notes=report.notes,
-                    allow_incomplete=False,
+            self.reports_submitted += 1
+            record, error = self._submit_one(report, policy)
+            if record is not None:
+                records.append(record)
+            else:
+                self.agent_failures[report.agent_id] = (
+                    f"{type(error).__name__}: {error}"
                 )
+
+        if len(records) < self.min_reports and not allow_missing:
+            raise InsufficientAgentsError(
+                collected=len(records),
+                required=self.min_reports,
+                failures=self.agent_failures,
             )
 
         return records
+
+    def _submit_one(
+        self,
+        report: AgentReport,
+        policy: RetryPolicy,
+    ) -> tuple[Any | None, BaseException | None]:
+        last_error: BaseException | None = None
+
+        for _ in range(policy.attempts):
+            try:
+                record = self._call_with_timeout(
+                    lambda: self.report_collector.collect_report(
+                        task_id=self.task_id,
+                        agent_id=report.agent_id,
+                        content=report.content,
+                        title=report.title,
+                        source=report.source,
+                        notes=report.notes,
+                        allow_incomplete=False,
+                    ),
+                    policy.timeout_seconds,
+                    f"report submission for {report.agent_id}",
+                )
+                return record, None
+            except BaseException as exc:  # noqa: BLE001 - 记录后按策略重试
+                last_error = exc
+
+        return None, last_error
+
+    @staticmethod
+    def _call_with_timeout(
+        func: Callable[[], Any],
+        timeout_seconds: float | None,
+        description: str,
+    ) -> Any:
+        """在独立线程里执行一次调用，超出墙钟上限即抛 AgentTimeoutError。"""
+        if not timeout_seconds:
+            return func()
+
+        with ThreadPoolExecutor(max_workers=1) as pool:
+            future = pool.submit(func)
+            try:
+                return future.result(timeout=timeout_seconds)
+            except FutureTimeoutError as exc:
+                raise AgentTimeoutError(
+                    f"{description} exceeded {timeout_seconds}s"
+                ) from exc
 
     # --------------------------------------------------------
     # 3. 交叉校验
@@ -357,9 +470,15 @@ class V310ResearchPipeline:
         rationale: str = "",
         ballots: Iterable[Any] | None = None,
         artifact_path: str | Path | None = None,
+        retry_policy: RetryPolicy | None = None,
+        allow_missing_agents: bool = False,
     ) -> ResearchOutcome:
         task_id = self.start_task(symbol, participants=participants)
-        self.submit_reports(reports)
+        self.submit_reports(
+            reports,
+            retry_policy=retry_policy,
+            allow_missing=allow_missing_agents,
+        )
         validation = self.validate()
         debate = self.run_debate(
             contributions=contributions,
@@ -378,6 +497,7 @@ class V310ResearchPipeline:
             debate=debate,
             consensus=consensus,
             decision=decision,
+            failed_agents=dict(self.agent_failures),
         )
 
         if artifact_path:
@@ -404,6 +524,7 @@ class V310ResearchPipeline:
             "debate": _to_jsonable(outcome.debate),
             "consensus": _to_jsonable(outcome.consensus),
             "decision": _to_jsonable(outcome.decision),
+            "failed_agents": _to_jsonable(outcome.failed_agents or {}),
         }
 
         target.write_text(
@@ -451,6 +572,23 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--output", type=Path, default=None)
     parser.add_argument("--ballots", type=Path, default=None)
     parser.add_argument("--project-root", type=Path, default=None)
+    parser.add_argument(
+        "--retry-attempts",
+        type=int,
+        default=2,
+        help="max submission attempts per agent (default: 2)",
+    )
+    parser.add_argument(
+        "--timeout-seconds",
+        type=float,
+        default=None,
+        help="wall-clock limit per agent submission (default: no limit)",
+    )
+    parser.add_argument(
+        "--allow-missing-agents",
+        action="store_true",
+        help="continue with a degraded decision when fewer than min reports arrive",
+    )
     args = parser.parse_args(argv)
 
     debate_payload = _load_debate(args.debate)
@@ -479,6 +617,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         rationale=debate_payload.get("rationale", ""),
         ballots=ballots,
         artifact_path=args.output,
+        retry_policy=RetryPolicy(
+            attempts=args.retry_attempts,
+            timeout_seconds=args.timeout_seconds,
+        ),
+        allow_missing_agents=args.allow_missing_agents,
     )
 
     decision = outcome.decision
@@ -491,6 +634,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 "artifact": str(outcome.artifact_path)
                 if outcome.artifact_path
                 else None,
+                "failed_agents": outcome.failed_agents or {},
             },
             ensure_ascii=False,
             default=str,

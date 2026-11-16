@@ -1,5 +1,10 @@
 # AI Hedge Fund OS — 架构文档（V0.1）
 
+> 本文档描述 V0.1 的行情获取 + CIO 报告基线架构。
+> V3.10 多 AI 协作层（`ai_team/`）的模块调用关系、数据契约、判定链与容错设计见
+> [`ai_team.md`](ai_team.md)，发布状态与验收清单见 [`release_v310.md`](release_v310.md)。
+> 两处描述不一致时，以 `ai_team.md` 与 `ai_team/` 代码为准。
+
 ## 1. 目标
 
 构建一个研究用途的 AI 股票研究系统：获取 A 股实时行情，由 CIO Agent 基于 OpenAI Responses API 生成结构化的股票研究报告。**不含自动实盘交易。**

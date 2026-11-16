@@ -1,0 +1,50 @@
+[
+  {
+    "member_id": "cio",
+    "vote": "approve_with_conditions",
+    "rationale": "ChatGPT: attractive business, valuation-sensitive.",
+    "conditions": [
+      "FY26 net profit growth must continue to justify the multiple"
+    ]
+  },
+  {
+    "member_id": "quant",
+    "vote": "approve_with_conditions",
+    "rationale": "ChatGPT: needs inventory-to-revenue conversion evidence.",
+    "conditions": [
+      "Inventory +178.7% must convert into revenue within two quarters"
+    ]
+  },
+  {
+    "member_id": "industry",
+    "vote": "approve_with_conditions",
+    "rationale": "Grok: supply chain constructive into 2027.",
+    "conditions": [
+      "CPO revenue must become separately measurable by FY26"
+    ]
+  },
+  {
+    "member_id": "compliance",
+    "vote": "approve_with_conditions",
+    "rationale": "Grok: US export restriction risk requires monitoring.",
+    "conditions": [
+      "Track US export-control developments on Chinese optics"
+    ]
+  },
+  {
+    "member_id": "risk",
+    "vote": "approve_with_conditions",
+    "rationale": "Hark: cash conversion 0.52x and 178.7% inventory build are material risks.",
+    "conditions": [
+      "Operating cash flow must recover toward 0.9x net profit"
+    ]
+  },
+  {
+    "member_id": "fundamental",
+    "vote": "approve_with_conditions",
+    "rationale": "Hark: 52x TTM versus peers 23x/18x leaves no margin of safety.",
+    "conditions": [
+      "Peer-relative valuation gap must narrow or earnings must beat"
+    ]
+  }
+]

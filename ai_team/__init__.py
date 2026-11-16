@@ -1,6 +1,9 @@
 
 """
-AI Hedge Fund OS - Multi-AI Team Package
+AI Hedge Fund OS - Multi-AI Team Package (V3.10)
+
+顶层保持轻量：只直接导入配置层对象，其余公开接口按需惰性加载，
+避免 ``ai_team.research_pipeline`` 反向导入本包时产生循环依赖。
 """
 
 from ai_team.config import (
@@ -13,6 +16,32 @@ from ai_team.config import (
     get_default_config,
 )
 
+# name -> (module, attribute)
+_LAZY_EXPORTS = {
+    # 任务与报告
+    "TaskManager": ("ai_team.task_manager", "TaskManager"),
+    "ReportCollector": ("ai_team.report_collector", "ReportCollector"),
+    "CrossValidator": ("ai_team.cross_validator", "CrossValidator"),
+    # 辩论与共识
+    "DebateEngine": ("ai_team.debate_engine", "DebateEngine"),
+    "DebatePosition": ("ai_team.debate_engine", "DebatePosition"),
+    "DebateConclusion": ("ai_team.debate_engine", "DebateConclusion"),
+    "ConsensusEngine": ("ai_team.consensus_engine", "ConsensusEngine"),
+    # 投委会
+    "InvestmentCommittee": ("ai_team.investment_committee", "InvestmentCommittee"),
+    # 端到端入口
+    "V310ResearchPipeline": ("ai_team.research_pipeline", "V310ResearchPipeline"),
+    "AgentReport": ("ai_team.research_pipeline", "AgentReport"),
+    "DebateContribution": ("ai_team.research_pipeline", "DebateContribution"),
+    "RetryPolicy": ("ai_team.research_pipeline", "RetryPolicy"),
+    "ResearchOutcome": ("ai_team.research_pipeline", "ResearchOutcome"),
+    "AgentTimeoutError": ("ai_team.research_pipeline", "AgentTimeoutError"),
+    "InsufficientAgentsError": (
+        "ai_team.research_pipeline",
+        "InsufficientAgentsError",
+    ),
+}
+
 __all__ = [
     "AgentConfig",
     "AgentRole",
@@ -21,4 +50,23 @@ __all__ = [
     "TeamConfig",
     "build_default_agents",
     "get_default_config",
+    *sorted(_LAZY_EXPORTS),
 ]
+
+
+def __getattr__(name: str):
+    """按需加载公开接口（PEP 562）。"""
+    target = _LAZY_EXPORTS.get(name)
+    if target is None:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+    from importlib import import_module
+
+    module = import_module(target[0])
+    value = getattr(module, target[1])
+    globals()[name] = value
+    return value
+
+
+def __dir__() -> list[str]:
+    return sorted(set(globals()) | set(__all__))

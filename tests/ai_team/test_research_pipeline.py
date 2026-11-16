@@ -9,7 +9,10 @@ import pytest
 
 from ai_team.research_pipeline import (
     AgentReport,
+    AgentTimeoutError,
     DebateContribution,
+    InsufficientAgentsError,
+    RetryPolicy,
     V310ResearchPipeline,
 )
 
@@ -163,3 +166,101 @@ def test_stage_order_is_enforced(tmp_path):
 
     with pytest.raises(RuntimeError):
         fresh.build_consensus()
+
+
+def test_transient_failure_is_retried(pipeline, monkeypatch):
+    calls = {"grok": 0}
+    original = pipeline.report_collector.collect_report
+
+    def flaky(**kwargs):
+        if kwargs["agent_id"] == "grok":
+            calls["grok"] += 1
+            if calls["grok"] == 1:
+                raise RuntimeError("transient upstream failure")
+        return original(**kwargs)
+
+    monkeypatch.setattr(pipeline.report_collector, "collect_report", flaky)
+
+    pipeline.start_task(SYMBOL)
+    records = pipeline.submit_reports(
+        _reports(),
+        retry_policy=RetryPolicy(attempts=2),
+    )
+
+    assert len(records) == 3
+    assert calls["grok"] == 2
+    assert pipeline.agent_failures == {}
+
+
+def test_persistent_failure_raises_insufficient_agents(pipeline, monkeypatch):
+    original = pipeline.report_collector.collect_report
+
+    def broken(**kwargs):
+        if kwargs["agent_id"] in {"grok", "hark"}:
+            raise RuntimeError("agent offline")
+        return original(**kwargs)
+
+    monkeypatch.setattr(pipeline.report_collector, "collect_report", broken)
+
+    pipeline.start_task(SYMBOL)
+
+    with pytest.raises(InsufficientAgentsError) as excinfo:
+        pipeline.submit_reports(_reports(), retry_policy=RetryPolicy(attempts=2))
+
+    assert excinfo.value.collected == 1
+    assert excinfo.value.required == 2
+    assert set(excinfo.value.failures) == {"grok", "hark"}
+
+
+def test_timeout_is_enforced_and_recorded(pipeline, monkeypatch):
+    import time
+
+    original = pipeline.report_collector.collect_report
+
+    def slow(**kwargs):
+        if kwargs["agent_id"] == "hark":
+            time.sleep(0.4)
+        return original(**kwargs)
+
+    monkeypatch.setattr(pipeline.report_collector, "collect_report", slow)
+
+    pipeline.start_task(SYMBOL)
+    records = pipeline.submit_reports(
+        _reports(),
+        retry_policy=RetryPolicy(attempts=1, timeout_seconds=0.1),
+        allow_missing=True,
+    )
+
+    assert len(records) == 2
+    assert "hark" in pipeline.agent_failures
+    assert "AgentTimeoutError" in pipeline.agent_failures["hark"]
+
+
+def test_degraded_run_records_failed_agents_in_artifact(tmp_path, monkeypatch):
+    degraded = V310ResearchPipeline(project_root=tmp_path / "degraded")
+    original = degraded.report_collector.collect_report
+
+    def broken(**kwargs):
+        if kwargs["agent_id"] == "hark":
+            raise RuntimeError("agent offline")
+        return original(**kwargs)
+
+    monkeypatch.setattr(degraded.report_collector, "collect_report", broken)
+
+    output = tmp_path / "degraded_decision.json"
+    outcome = degraded.run(
+        symbol=SYMBOL,
+        reports=_reports(),
+        contributions=[c for c in _contributions() if c.agent_id != "hark"],
+        conclusion="partial_consensus",
+        conclusion_text="Two agents only; degraded research decision.",
+        rationale="Degraded run after one agent failure.",
+        ballots=_ballots(),
+        artifact_path=output,
+        retry_policy=RetryPolicy(attempts=1),
+        allow_missing_agents=True,
+    )
+
+    assert "hark" in (outcome.failed_agents or {})
+    payload = json.loads(output.read_text(encoding="utf-8"))
+    assert "hark" in payload["failed_agents"]

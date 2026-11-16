@@ -1,4 +1,4 @@
-# AI Hedge Fund OS V2.0
+# AI Hedge Fund OS V3.10
 
 AI 股票研究与量化基础设施（研究 / 模拟用途）。
 
@@ -26,6 +26,50 @@ AI 股票研究与量化基础设施（研究 / 模拟用途）。
 - **V1.8**：真实市场强化学习训练平台（Real Market RL Platform）——AkShare 真实 A 股历史行情加载（data_engine/akshare_loader.py）、股票数据集管理（dataset/stock_dataset.py）、AI 因子流水线（dataset/feature_pipeline.py：日收益/MA5/MA20/量比/动量）、多股票强化学习环境（rl/multi_stock_env.py）、交易成本模型（rl/transaction_cost.py 佣金+印花税）、滑点模拟（rl/slippage.py）、Walk Forward 回测切分（backtest/walk_forward.py）、绩效评价（backtest/performance.py 收益/Sharpe/最大回撤）、AI 策略排行榜（evolution/model_rank.py）、`main_v18.py` 运行入口（真实行情 → 因子 → 训练数据，无实盘接口）
 - **V2.0**：多智能体 AI 基金经理系统（Multi-Agent AI Fund Team）——LangGraph 多 Agent 协作（graph/fund_graph.py：research→quant→risk→cio 工作流）、共享状态 FundState（graph/state.py TypedDict）、CIO Agent（agents/cio_agent.py 投资委员会投票）、研究员 Agent（agents/research_agent.py 基本面/财报/行业/竞争）、量化 Agent（agents/quant_agent.py 因子打分 BUY/SELL/HOLD）、宏观 Agent（agents/macro_agent.py 市场/风险/政策）、交易 Agent（agents/trader_agent.py 模拟建仓/清仓/等待）、风控 Agent（agents/risk_agent.py 单票仓位超限否决）、投资记忆（memory/investment_memory.py 最近 10 条回放）、AI 基金晨报（reports/report_generator.py）、`main_v20.py` 运行入口（委员会投票演示，无实盘接口）
 - **V3.9.1**：统一量化研究底座（V3.6～V3.9）——Research Pipeline（Data Quality → PIT → Cross Section → Factor → Alpha Search → IC/ICIR/Q5-Q1 → Correlation Dedup → OOS → Transaction Cost → Portfolio Backtest → Risk → Alpha Library）、Alpha 公式树生成器 / 求值器 / 正则化 / 去重、Walk-Forward、OOS 验证、成本模型、`main_v391.py` Demo / 单股票入口
+- **V3.9.2**：独立发布说明见 `README_V392.md` 与 `V392_RELEASE_MANIFEST.json`，配置入口 `configs/v392.yaml`、`main_v392.py`
+- **V3.10**：多 AI 协作研究引擎（Multi-AI Collaboration Engine）——团队配置与角色、任务派发与状态机、多助手报告收集（必填小节校验 + 重复提交防护）、交叉校验、多 AI 辩论（support / oppose / neutral / clarify）、共识引擎（consensus / partial_consensus / no_consensus / insufficient_evidence）、投资委员会（6 委员加权 + 法定人数 + 风险否决 + 附条件决议）、角色专用 Prompt 与统一 JSON Schema，端到端入口 `ai_team/research_pipeline.py`。**研究治理链路，不含任何实盘交易接口。**
+
+## V3.10 多 AI 协作引擎
+
+V3.10 把「三个 AI 助手各写一份独立报告 → 互相挑刺 → 收敛共识 → 投委会投票」做成一条可复跑的代码链路。详细设计、字段契约与已知限制见 [`docs/ai_team.md`](docs/ai_team.md)。
+
+| 模块 | 文件 | 职责 |
+|---|---|---|
+| 团队配置 | `ai_team/config.py` | 6 委员权重、法定人数、阈值、目录创建 |
+| 任务管理 | `ai_team/task_manager.py` | 建任务 / 派发 / 状态流转 / 重载 / 重试 |
+| 报告收集 | `ai_team/report_collector.py` | 7 个必填小节校验、重复提交防护 |
+| 交叉校验 | `ai_team/cross_validator.py` | 报告间一致性与证据覆盖检查 |
+| 辩论引擎 | `ai_team/debate_engine.py` | 立场（support / oppose / neutral / clarify）、结论、未决问题 |
+| 共识引擎 | `ai_team/consensus_engine.py` | 四种共识状态 + 置信度分级 |
+| 投资委员会 | `ai_team/investment_committee.py` | 加权投票、法定人数、风险否决、附条件决议 |
+| 端到端入口 | `ai_team/research_pipeline.py` | 串联上述模块 + CLI |
+
+快速运行（`--project-root` 建议指向研究目录，避免污染仓库）：
+
+```powershell
+python -m ai_team.research_pipeline `
+  --symbol 300394 `
+  --reports-dir research\300394_2026-11-16\reports `
+  --debate research\300394_2026-11-16\debate.json `
+  --ballots research\300394_2026-11-16\ballots.json `
+  --output research\300394_2026-11-16\decision.json `
+  --project-root research\300394_2026-11-16
+```
+
+产物：
+
+- `reports/<agent>.md`：三份独立报告（每份须含 Executive Summary / Key Findings / Evidence and Sources / Analytical Reasoning / Risks and Limitations / Independent Conclusion / Confidence Level）
+- `debate.json`：`contributions` + `conclusion` + `unresolved_issues`
+- `ballots.json`：委员票（`member_id` / `vote` / `rationale` / 可选 `conditions`）
+- `decision.json`：`validation`、`debate`、`consensus`、`decision`、`failed_agents`
+
+容错参数（新增）：
+
+| 参数 | 默认 | 说明 |
+|---|---|---|
+| `--retry-attempts` | 2 | 单个助手最多提交次数 |
+| `--timeout-seconds` | 无限制 | 单次提交的墙钟上限，超时记 `AgentTimeoutError` |
+| `--allow-missing-agents` | 关闭 | 成功报告数低于 `min_reports`（默认 2）时，默认抛 `InsufficientAgentsError`；开启后降级继续并把缺口写进 `failed_agents` |
 
 ## 技术栈
 
@@ -777,6 +821,12 @@ copy .env.example .env
 
 ```powershell
 pytest -q
+```
+
+V3.10 专项：
+
+```powershell
+pytest tests\ai_team -q
 ```
 
 ## Demo
