@@ -71,6 +71,15 @@ python -m ai_team.research_pipeline `
 | `--timeout-seconds` | 无限制 | 单次提交的墙钟上限，超时记 `AgentTimeoutError` |
 | `--allow-missing-agents` | 关闭 | 成功报告数低于 `min_reports`（默认 2）时，默认抛 `InsufficientAgentsError`；开启后降级继续并把缺口写进 `failed_agents` |
 
+真实 API 模式（`--live`）：配置 `.env` 中的 `OPENAI_API_KEY` / `XAI_API_KEY` / `HARK_BASE_URL` 等，直接由适配器调用三个助手生成报告：
+
+```powershell
+python main_v310.py --live --symbol 300394.SZ `
+  --reports-dir research\300394_live\reports --project-root research\300394_live
+```
+
+缺任一 key 的助手不会发请求，会被记入 `failed_agents` 与 `generation.json`；不给 `--debate` 时只跑到「报告收集 + 交叉校验」，不伪造辩论与投票。详见 [`docs/ai_team.md`](docs/ai_team.md) 第 9 节。
+
 ## 技术栈
 
 - Python 3.11+

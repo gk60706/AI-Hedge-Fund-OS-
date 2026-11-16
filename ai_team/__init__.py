@@ -40,6 +40,15 @@ _LAZY_EXPORTS = {
         "ai_team.research_pipeline",
         "InsufficientAgentsError",
     ),
+    # 真实 API 适配器
+    "AdapterRegistry": ("ai_team.adapters", "AdapterRegistry"),
+    "OpenAICompatibleAdapter": ("ai_team.adapters", "OpenAICompatibleAdapter"),
+    "build_registry": ("ai_team.adapters", "build_registry"),
+    "generate_reports": ("ai_team.adapters", "generate_reports"),
+    "AdapterError": ("ai_team.adapters", "AdapterError"),
+    "AdapterConfigError": ("ai_team.adapters", "AdapterConfigError"),
+    "AdapterUnavailableError": ("ai_team.adapters", "AdapterUnavailableError"),
+    "AdapterResponseError": ("ai_team.adapters", "AdapterResponseError"),
 }
 
 __all__ = [

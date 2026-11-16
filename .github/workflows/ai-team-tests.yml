@@ -1,0 +1,36 @@
+name: ai_team tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install minimal dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest
+
+      - name: Run V3.10 ai_team suite
+        run: pytest tests/ai_team -q
+
+      - name: Verify entry points import
+        run: |
+          python -c "import ai_team; assert ai_team.V310ResearchPipeline"
+          python -c "import ai_team.adapters; assert ai_team.adapters.REQUIRED_SECTIONS"
+          python main_v310.py --help

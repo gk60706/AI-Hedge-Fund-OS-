@@ -150,7 +150,38 @@ python -m ai_team.research_pipeline `
 
 `decision.json` 顶层字段：`symbol`、`task_id`、`validation`、`debate`、`consensus`、`decision`、`failed_agents`。
 
-## 9. 测试
+## 9. 真实 API 模式（适配器）
+
+`ai_team/adapters.py` 把「人工抄报告」换成可编程调用：只用标准库 HTTP，不新增第三方依赖。
+
+| 助手 | 协议 | 必需环境变量 | 默认 |
+|---|---|---|---|
+| ChatGPT | OpenAI `/chat/completions` | `OPENAI_API_KEY`、`OPENAI_MODEL` | base `https://api.openai.com/v1`、model `gpt-5.5` |
+| Grok | 同上（xAI 兼容） | `XAI_API_KEY`、`XAI_MODEL` | base `https://api.x.ai/v1`；**model 必须显式配置**，不预置猜测值 |
+| Hark | 同上（自建网关） | `HARK_API_KEY`、`HARK_BASE_URL`、`HARK_MODEL` | 全部必填；无公开文档 API，缺配置时该席位转为人工模式 |
+
+行为约定：
+
+- 缺任一配置**不发请求**，登记进 `skipped` 并说明缺哪个变量；不会静默降级
+- 密钥只用于 `Authorization` 头，不出现在日志、异常消息、`describe()` 或产物里
+- 每次生成记录审计：`model`、`base_url`、耗时、prompt/响应字符数、`content_sha256`、`finish_reason`
+- 报告正文强制 7 个英文小节（`REPORT_CONTRACT` 追加在角色提示词后），否则收集阶段整份拒收
+
+运行：
+
+```powershell
+python main_v310.py --live `
+  --symbol 300394.SZ `
+  --reports-dir research\300394_live\reports `
+  --project-root research\300394_live `
+  --as-of 2026-11-16
+```
+
+只给 `--live`、不给 `--debate` 时，流水线跑到「报告收集 + 交叉校验」就停，输出 `stage=reports_collected`，
+并写出 `generation.json`（谁被调用、用了哪个模型、内容哈希、缺少哪些助手）。辩论与投票仍需 `--debate` / `--ballots` 材料，
+不会伪造。
+
+## 10. 测试
 
 ```powershell
 pytest tests\ai_team -q
@@ -160,7 +191,7 @@ pytest tests\ai_team -q
 辩论立场与结论、共识四态与置信度分级、投委会判定链与否决语义、端到端集成、
 流水线重试 / 超时 / 缺员降级。
 
-## 10. 已知限制（按现有测试规格保留）
+## 11. 已知限制（按现有测试规格保留）
 
 1. **弃权计入批准率分母**：`approval_score` 的分母包含弃权票，弃权会拉低批准率。
 2. **required 委员被 disable 后不再计入法定人数**，且 `required_members_met=True`。

@@ -17,6 +17,7 @@ import json
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import TimeoutError as FutureTimeoutError
 from dataclasses import asdict, dataclass, is_dataclass
+from datetime import date
 from pathlib import Path
 from typing import Any, Callable, Iterable, Mapping, Sequence
 
@@ -295,6 +296,8 @@ class V310ResearchPipeline:
         """
         policy = retry_policy or RetryPolicy()
         records: list[Any] = []
+        # 保留此前阶段（例如 API 生成）记录的失败，不被提交阶段覆盖
+        prior_failures = dict(self.agent_failures)
         self.agent_failures = {}
 
         for report in reports:
@@ -306,6 +309,8 @@ class V310ResearchPipeline:
                 self.agent_failures[report.agent_id] = (
                     f"{type(error).__name__}: {error}"
                 )
+
+        self.agent_failures = {**prior_failures, **self.agent_failures}
 
         if len(records) < self.min_reports and not allow_missing:
             raise InsufficientAgentsError(
@@ -506,6 +511,129 @@ class V310ResearchPipeline:
         return outcome
 
     # --------------------------------------------------------
+    # 7b. 真实 API 模式（适配器自动生成报告）
+    # --------------------------------------------------------
+
+    def run_live(
+        self,
+        symbol: str,
+        registry: Any,
+        *,
+        as_of_date: str,
+        reports_dir: str | Path,
+        questions: str = "",
+        debate: Any | None = None,
+        ballots: Iterable[Any] | None = None,
+        participants: Sequence[str] = DEFAULT_PARTICIPANTS,
+        retry_policy: RetryPolicy | None = None,
+        allow_missing_agents: bool = False,
+        rationale: str = "",
+    ) -> ResearchOutcome | dict[str, Any]:
+        """调用真实 AI API 生成报告，再走后续链路。
+
+        未配置的助手不会发请求，缺口写入 ``failed_agents``。
+        没有提供辩论材料时只跑到「报告收集 + 交叉校验」，
+        返回一个状态字典，避免伪造辩论与投票。
+        """
+        from ai_team.adapters import generate_reports as _generate
+
+        task_id = self.start_task(symbol, participants=participants)
+
+        reports_dir = Path(reports_dir)
+        reports_dir.mkdir(parents=True, exist_ok=True)
+
+        generated, failures = _generate(
+            registry,
+            task_id=task_id,
+            subject=symbol,
+            ticker=symbol,
+            as_of_date=as_of_date,
+            questions=questions,
+        )
+        self.agent_failures.update(failures)
+
+        for item in generated:
+            (reports_dir / f"{item.agent_id}.md").write_text(
+                item.content,
+                encoding="utf-8",
+            )
+
+        audit = {
+            "task_id": task_id,
+            "symbol": symbol,
+            "as_of_date": as_of_date,
+            "registry": registry.describe()
+            if hasattr(registry, "describe")
+            else {},
+            "generated": [item.to_dict() for item in generated],
+            "failures": failures,
+        }
+        (reports_dir.parent / "generation.json").write_text(
+            json.dumps(audit, ensure_ascii=False, indent=2, default=str),
+            encoding="utf-8",
+        )
+
+        submitted = self.submit_reports(
+            reports=[
+                AgentReport(
+                    agent_id=item.agent_id,
+                    title=item.title,
+                    content=item.content,
+                    source=item.source,
+                    notes=(
+                        "Research only; not investment advice. "
+                        f"content_sha256={item.record.content_sha256}"
+                    ),
+                )
+                for item in generated
+            ],
+            retry_policy=retry_policy,
+            allow_missing=allow_missing_agents,
+        )
+        validation = self.validate()
+
+        if debate is None:
+            return {
+                "task_id": task_id,
+                "symbol": symbol,
+                "stage": "reports_collected",
+                "reports_collected": len(submitted),
+                "validation": _to_jsonable(validation),
+                "generated": [item.to_dict() for item in generated],
+                "failed_agents": dict(self.agent_failures),
+                "artifact": str(reports_dir.parent / "generation.json"),
+            }
+
+        contributions = [
+            DebateContribution(
+                agent_id=item["agent_id"],
+                position=item["position"],
+                content=item["content"],
+                evidence=list(item.get("evidence", [])),
+            )
+            for item in debate.get("contributions", [])
+        ]
+        debate_result = self.run_debate(
+            contributions=contributions,
+            conclusion=debate.get("conclusion", "partial_consensus"),
+            conclusion_text=debate.get("conclusion_text", ""),
+            unresolved_issues=debate.get("unresolved_issues", []),
+            participants=participants,
+        )
+        consensus = self.build_consensus(participants=participants)
+        decision = self.convene(rationale=rationale, ballots=ballots)
+
+        return ResearchOutcome(
+            task_id=task_id,
+            symbol=symbol,
+            validation=validation,
+            debate=debate_result,
+            consensus=consensus,
+            decision=decision,
+            failed_agents=dict(self.agent_failures),
+        )
+
+    # --------------------------------------------------------
     # 8. 落盘
     # --------------------------------------------------------
 
@@ -568,7 +696,34 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
     parser.add_argument("--symbol", required=True)
     parser.add_argument("--reports-dir", required=True, type=Path)
-    parser.add_argument("--debate", required=True, type=Path)
+    parser.add_argument(
+        "--debate",
+        type=Path,
+        default=None,
+        help="debate.json; required unless --live is used",
+    )
+    parser.add_argument(
+        "--live",
+        action="store_true",
+        help="generate the reports by calling the configured AI APIs first",
+    )
+    parser.add_argument(
+        "--as-of",
+        dest="as_of",
+        default=None,
+        help="research date for the live prompt (default: today)",
+    )
+    parser.add_argument(
+        "--questions",
+        default="",
+        help="extra questions appended to the live prompt",
+    )
+    parser.add_argument(
+        "--adapter-timeout",
+        type=float,
+        default=120.0,
+        help="HTTP timeout for one adapter call (default: 120s)",
+    )
     parser.add_argument("--output", type=Path, default=None)
     parser.add_argument("--ballots", type=Path, default=None)
     parser.add_argument("--project-root", type=Path, default=None)
@@ -590,6 +745,71 @@ def main(argv: Sequence[str] | None = None) -> int:
         help="continue with a degraded decision when fewer than min reports arrive",
     )
     args = parser.parse_args(argv)
+
+    if not args.live and args.debate is None:
+        parser.error("--debate is required unless --live is used")
+
+    # ---------- 真实 API 模式 ----------
+    if args.live:
+        from ai_team.adapters import build_registry
+
+        registry = build_registry(timeout=args.adapter_timeout)
+        if not registry.adapters:
+            print(
+                json.dumps(
+                    {
+                        "stage": "no_adapter_configured",
+                        "skipped": registry.skipped,
+                        "hint": (
+                            "在 .env 中配置 OPENAI_API_KEY / XAI_API_KEY / "
+                            "HARK_BASE_URL 等后再运行 --live"
+                        ),
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                )
+            )
+            return 2
+
+        debate_payload = _load_debate(args.debate) if args.debate else None
+        ballots = None
+        if args.ballots:
+            ballots = json.loads(args.ballots.read_text(encoding="utf-8"))
+
+        live_pipeline = V310ResearchPipeline(project_root=args.project_root)
+        result = live_pipeline.run_live(
+            symbol=args.symbol,
+            registry=registry,
+            as_of_date=args.as_of or date.today().isoformat(),
+            reports_dir=args.reports_dir,
+            questions=args.questions,
+            debate=debate_payload,
+            ballots=ballots,
+            retry_policy=RetryPolicy(
+                attempts=args.retry_attempts,
+                timeout_seconds=args.timeout_seconds,
+            ),
+            allow_missing_agents=args.allow_missing_agents,
+        )
+
+        if isinstance(result, dict):
+            print(json.dumps(result, ensure_ascii=False, default=str, indent=2))
+            return 0
+
+        print(
+            json.dumps(
+                {
+                    "task_id": result.task_id,
+                    "status": _read_value(result.decision, "status"),
+                    "decision_id": _read_value(result.decision, "decision_id"),
+                    "failed_agents": result.failed_agents or {},
+                },
+                ensure_ascii=False,
+                default=str,
+                indent=2,
+            )
+        )
+        return 0
 
     debate_payload = _load_debate(args.debate)
     contributions = [
