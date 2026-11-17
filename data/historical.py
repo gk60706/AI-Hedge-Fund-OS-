@@ -4,8 +4,9 @@
 """
 from __future__ import annotations
 
-import akshare as ak
 import pandas as pd
+
+from data.akshare_compat import _ak_hist
 
 
 class HistoricalDataError(RuntimeError):
@@ -44,7 +45,7 @@ def get_daily_history(
     """
     code = normalize_code(code)
     try:
-        df = ak.stock_zh_a_hist(
+        df = _ak_hist(
             symbol=code,
             period="daily",
             start_date=start_date,

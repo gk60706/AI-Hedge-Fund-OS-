@@ -3,6 +3,13 @@
 import numpy as np
 import pytest
 
+try:
+    import torch
+    torch_ok = True
+except (ImportError, OSError):
+    torch = None
+    torch_ok = False
+
 from ml_engine.feature_engineering import FeatureEngineering
 from ml_engine.trainer import ModelTrainer
 from alpha.factor_library import FactorLibrary
@@ -72,7 +79,8 @@ class TestXGBoostAlpha:
 
 class TestLSTMModel:
     def test_forward_shape(self):
-        import torch
+        if not torch_ok:
+            pytest.skip("PyTorch unavailable")
         from ml_engine.lstm_model import LSTMModel
 
         model = LSTMModel()
@@ -83,7 +91,8 @@ class TestLSTMModel:
 
 class TestMarketTransformer:
     def test_forward_shape(self):
-        import torch
+        if not torch_ok:
+            pytest.skip("PyTorch unavailable")
         from ml_engine.transformer_model import MarketTransformer
 
         model = MarketTransformer()

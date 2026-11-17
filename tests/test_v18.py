@@ -47,7 +47,7 @@ class TestAkShareLoader:
             def stock_zh_a_hist(symbol, period, adjust):
                 return raw
 
-        monkeypatch.setattr("data_engine.akshare_loader.ak", FakeAk())
+        monkeypatch.setattr("data_engine.akshare_loader._ak_hist", FakeAk.stock_zh_a_hist)
         loader = AkShareLoader()
         out = loader.load_daily("600519")
         assert list(out.columns) == ["date", "close", "volume", "high", "low"]
@@ -61,7 +61,7 @@ class TestAkShareLoader:
                     raise RuntimeError("limit")
                 return _make_df()
 
-        monkeypatch.setattr("data_engine.akshare_loader.ak", FakeAk())
+        monkeypatch.setattr("data_engine.akshare_loader._ak_hist", FakeAk.stock_zh_a_hist)
         loader = AkShareLoader()
         result = loader.load_batch(["600519", "BAD", "300394"])
         assert "600519" in result and "300394" in result

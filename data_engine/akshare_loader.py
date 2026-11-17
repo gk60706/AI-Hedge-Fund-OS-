@@ -3,8 +3,9 @@
 从 AkShare 拉取 A 股历史日线行情，列名统一为英文。
 """
 
-import akshare as ak
 import pandas as pd
+
+from data.akshare_compat import _ak_hist
 
 
 class AkShareLoader:
@@ -19,7 +20,7 @@ class AkShareLoader:
         Returns:
             含 date / close / volume / high / low 列的 DataFrame。
         """
-        df = ak.stock_zh_a_hist(
+        df = _ak_hist(
             symbol=symbol,
             period="daily",
             adjust="qfq",

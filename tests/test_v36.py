@@ -32,7 +32,7 @@ class TestAkShareClientV36:
         def fake_hist(**kwargs):
             return df_in.copy()
 
-        monkeypatch.setattr("data.akshare_client.ak.stock_zh_a_hist", fake_hist)
+        monkeypatch.setattr("data.akshare_client._ak_hist", fake_hist)
         client = AkShareClientV36(cache_dir=str(tmp_path))
         df = client.get_daily("000001", "20240101", "20240105")
         assert len(df) == 2
@@ -44,14 +44,14 @@ class TestAkShareClientV36:
             calls.append(1)
             raise AssertionError("should hit cache")
 
-        monkeypatch.setattr("data.akshare_client.ak.stock_zh_a_hist", fake_hist_2)
+        monkeypatch.setattr("data.akshare_client._ak_hist", fake_hist_2)
         df2 = client.get_daily("000001", "20240101", "20240105")
         assert len(df2) == 2
         assert calls == []
 
     def test_get_daily_empty_raises(self, monkeypatch, tmp_path):
         monkeypatch.setattr(
-            "data.akshare_client.ak.stock_zh_a_hist",
+            "data.akshare_client._ak_hist",
             lambda **kwargs: pd.DataFrame(),
         )
         client = AkShareClientV36(cache_dir=str(tmp_path))
@@ -62,7 +62,7 @@ class TestAkShareClientV36:
         def boom(**kwargs):
             raise ConnectionError("network down")
 
-        monkeypatch.setattr("data.akshare_client.ak.stock_zh_a_hist", boom)
+        monkeypatch.setattr("data.akshare_client._ak_hist", boom)
         client = AkShareClientV36(cache_dir=str(tmp_path))
         with pytest.raises(RuntimeError, match="AkShare 获取000001历史数据失败"):
             client.get_daily("000001", "20240101", "20240105")

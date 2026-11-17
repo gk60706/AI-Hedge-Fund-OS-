@@ -3,6 +3,7 @@
 最大回撤与夏普比率（基于 NumPy）。
 """
 import numpy as np
+import pandas as pd
 
 
 def max_drawdown(values) -> float:

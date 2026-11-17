@@ -7,6 +7,8 @@ from typing import Any
 import pandas as pd
 import requests
 
+from data.akshare_compat import _ak_hist
+
 # 数据源说明（多源容灾）：
 # 1) 主源：东财 push2 单股实时接口（AkShare 的 stock_zh_a_spot_em 同源数据）。
 #    AkShare 全市场快照约 60 页分页请求，东财 WAF 对同一 IP 的突发请求会临时重置连接，
@@ -368,10 +370,8 @@ def get_history(code: str, limit: int = 120) -> pd.DataFrame:
 
     数据源不可用时返回空 DataFrame（列结构保持），由调用方按缺失数据处理。
     """
-    import akshare as ak
-
     try:
-        df = ak.stock_zh_a_hist(
+        df = _ak_hist(
             symbol=code, period="daily", adjust="qfq"
         )
         if df is None or df.empty:

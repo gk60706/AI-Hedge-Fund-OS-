@@ -1,6 +1,8 @@
 ﻿"""V1.4 AkShare 行情接口：A 股代码列表 + 日线行情。"""
 import akshare as ak
 
+from data.akshare_compat import _ak_hist
+
 
 class AkShareClient:
     """AkShare 数据客户端。"""
@@ -12,7 +14,7 @@ class AkShareClient:
 
     def get_daily_price(self, code: str):
         """获取个股前复权日线行情。"""
-        df = ak.stock_zh_a_hist(
+        df = _ak_hist(
             symbol=code,
             period="daily",
             adjust="qfq",
@@ -48,7 +50,7 @@ class AkShareClientV36:
             df = pd.read_csv(cache_file, parse_dates=["日期"])
             return df
         try:
-            df = ak.stock_zh_a_hist(
+            df = _ak_hist(
                 symbol=code,
                 period="daily",
                 start_date=start_date,
@@ -78,7 +80,7 @@ class AkShareClientV391:
         cached = self.cache.get(code)
         if cached is not None and len(cached) > 0:
             return cached
-        df = ak.stock_zh_a_hist(
+        df = _ak_hist(
             symbol=code,
             period="daily",
             adjust="qfq",
@@ -268,7 +270,7 @@ class AkShareClientV392:
         last_error = None
         for attempt in range(1, self.config.max_retries + 1):
             try:
-                df = ak.stock_zh_a_hist(
+                df = _ak_hist(
                     symbol=code,
                     period="daily",
                     start_date=start_date,

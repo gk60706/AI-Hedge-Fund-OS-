@@ -93,7 +93,23 @@ python main_v310.py `
 - [x] 无实盘下单接口（`place_order` / `live_trade` / `broker_order` 命中 0）
 - [x] README、`docs/ai_team.md`、发布记录齐备
 - [x] 连续 20 次端到端场景压测（`python scripts/stress_v310_e2e.py --iterations 20` 实测 **40/40 passed（11.4s）**，含研究链路与进化续跑各 20 次）
-- [ ] 全仓 785 项基线测试复跑（当前项目 `.venv` 损坏，无法复现全仓基线）
+- [x] 全仓基线测试复跑（2026-11-17 完成，见 7.1）
+- [ ] 3 个 chromadb 依赖用例未执行（本机 `onnxruntime` 原生崩溃，属环境限制，见 7.1）
+
+### 7.1 全仓基线复跑结果（2026-11-17）
+
+环境：`%TEMP%\v310venv2`（Python 3.13），补齐 24 个缺失依赖后执行。
+
+- 顶层 `tests/test_*.py`：**761 passed**（40 个文件全绿；`test_v09` 12 例、`test_v11` 8 例、`test_v21` 14 例为剔除 chromadb 用例后的计数）
+- `tests/ai_team`：**645 passed**
+- 合计 **1406 passed**
+- 复跑过程修掉的三个真实缺陷：
+  1. `backtest/metrics.py` 只 `import numpy as np`，第 51 行签名用 `pd.Series`，无 `from __future__ import annotations`，import 即 `NameError`，阻断 `test_v05.py` / `test_v12.py` → 补 `import pandas as pd`。
+  2. akshare 1.20.46 把 `stock_zh_a_hist` 改名为 `stock_zh_a_hist_em` 且模块 `__getattr__` 对旧名抛 `AttributeError`；仓库在 `requirements.txt` 声明 `akshare>=1.18,<2` 覆盖了这次改名。新增 `data/akshare_compat.py`（惰性解析 `stock_zh_a_hist_em` → `stock_zh_a_hist`，导入阶段不解析），`data/akshare_client.py`、`data/market_data.py`、`data/historical.py`、`data_engine/akshare_loader.py`、`tools/market_tool.py` 统一改走 `_ak_hist`；`tests/test_v36.py`、`tests/test_v18.py` 打桩目标同步改为各模块自己的 `_ak_hist`。
+  3. `tests/test_v27.py` 两个 PyTorch 用例直接 `import torch`，torch 不可用（缺失或 DLL 加载失败）时是 FAILED 而非 SKIPPED → 改为模块级 `try/except (ImportError, OSError)` + 用例内 `pytest.skip`。
+- 仍是环境限制、无法用代码修掉的两处：
+  - `onnxruntime` 在本机基座 Python 上 `import` 即原生崩溃（退出码 `-1073741819` / `0xC0000005`，`--upgrade` 到 1.32.0 后依旧），chromadb 默认嵌入函数依赖它。受影响用例 3 个：`test_v09.py::TestMemory::test_memory_save_search`、`test_v11.py::test_chromadb_vector_store`、`test_v21.py::TestVectorMemory::test_save_and_search`，故用 `--deselect` 剔除后取计数。
+  - `torch` 在本机装出的 DLL 均为 1 字节且 `import torch` 报 `WinError 126 (shm.dll)`，已卸载；对应 2 个形状用例走 SKIP。
 
 ## 8. 遗留待办（非 V3.10 范围）
 

@@ -6,9 +6,9 @@ from __future__ import annotations
 
 from typing import Any
 
-import akshare as ak
 import pandas as pd
 
+from data.akshare_compat import _ak_hist
 from data.cache import DataCache
 from data.schemas import StockQuote
 
@@ -115,7 +115,7 @@ class MarketData:
     ) -> pd.DataFrame:
         code = self.normalize_code(code)
         try:
-            df = ak.stock_zh_a_hist(
+            df = _ak_hist(
                 symbol=code,
                 period="daily",
                 start_date=start_date,
