@@ -178,6 +178,63 @@ def _to_jsonable(value: Any) -> Any:
     return str(value)
 
 
+def _aggregate_evidence_contract(records: Any) -> dict[str, Any] | None:
+    """汇总多份报告的证据契约状态，供投委会记录审计字段。
+
+    不参与投票：调用方只把结果放进 ``CommitteeDecision.metadata``。
+    """
+    if not records:
+        return None
+    try:
+        contracts: list[dict[str, Any]] = []
+        unverified_report_count = 0
+        for record in records:
+            validation = record.validation or {}
+            contract = validation.get("evidence_contract")
+            if not isinstance(contract, Mapping):
+                contract = {"status": "not_provided"}
+            contracts.append(dict(contract))
+            unverified_count = contract.get("unverified_count")
+            if (
+                isinstance(unverified_count, (int, float))
+                and not isinstance(unverified_count, bool)
+                and unverified_count > 0
+            ):
+                unverified_report_count += 1
+
+        statuses = [item.get("status") for item in contracts]
+        all_validated = all(status == "validated" for status in statuses)
+        if all_validated:
+            status = "validated"
+        elif all(status == "not_provided" for status in statuses):
+            status = "not_provided"
+        else:
+            status = "partial"
+
+        def total(key: str) -> int:
+            return sum(
+                int(value)
+                if isinstance(value, (int, float))
+                and not isinstance(value, bool)
+                else 0
+                for item in contracts
+                for value in [item.get(key)]
+            )
+
+        return {
+            "status": status,
+            "valid": all_validated
+            and all(item.get("valid") is True for item in contracts),
+            "source_count": total("source_count"),
+            "verified_count": total("verified_count"),
+            "unverified_count": total("unverified_count"),
+            "unverified_report_count": unverified_report_count,
+            "report_count": len(records),
+        }
+    except Exception:
+        return {"status": "invalid_payload", "report_count": len(records)}
+
+
 # ============================================================
 # 进程级硬超时
 # ============================================================
@@ -685,6 +742,8 @@ class V310ResearchPipeline:
         rationale: str = "",
         ballots: Iterable[Any] | None = None,
         force: bool = False,
+        *,
+        evidence_contract: Mapping[str, Any] | None = None,
     ) -> Any:
         if self._consensus is None:
             raise RuntimeError("build_consensus must run before convene")
@@ -695,6 +754,7 @@ class V310ResearchPipeline:
             ballots=ballots,
             rationale=rationale,
             force=force,
+            evidence_contract=evidence_contract,
         )
 
     # --------------------------------------------------------
@@ -717,7 +777,7 @@ class V310ResearchPipeline:
         allow_missing_agents: bool = False,
     ) -> ResearchOutcome:
         task_id = self.start_task(symbol, participants=participants)
-        self.submit_reports(
+        submitted = self.submit_reports(
             reports,
             retry_policy=retry_policy,
             allow_missing=allow_missing_agents,
@@ -731,7 +791,11 @@ class V310ResearchPipeline:
             participants=participants,
         )
         consensus = self.build_consensus(participants=participants)
-        decision = self.convene(rationale=rationale, ballots=ballots)
+        decision = self.convene(
+            rationale=rationale,
+            ballots=ballots,
+            evidence_contract=_aggregate_evidence_contract(submitted),
+        )
 
         outcome = ResearchOutcome(
             task_id=task_id,
@@ -860,7 +924,11 @@ class V310ResearchPipeline:
             participants=participants,
         )
         consensus = self.build_consensus(participants=participants)
-        decision = self.convene(rationale=rationale, ballots=ballots)
+        decision = self.convene(
+            rationale=rationale,
+            ballots=ballots,
+            evidence_contract=_aggregate_evidence_contract(submitted),
+        )
 
         return ResearchOutcome(
             task_id=task_id,

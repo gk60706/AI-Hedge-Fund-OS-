@@ -60,3 +60,19 @@
 | 票源 | 调用方自行映射 | ballot 增加 `agent_id` / `report_id`，一助手最多一票，重复来源拒绝 |
 
 本轮建议：维持 A，但在报告层面显式披露「本次决议中有 N 席弃权、M 个 required 席位被禁用」；等真实 API 接入、票源可追溯后再评估 B。以上均未落地，等待拍板。
+
+## 6. 证据状态接入（已落地，2026-11-17）
+
+`InvestmentCommittee.convene` / `_calculate_decision` 增加可选关键字参数 `evidence_contract`，结果只写进 `CommitteeDecision.metadata["evidence_contract"]`：
+
+| 情形 | 写入内容 |
+| --- | --- |
+| 未传 | `{"status": "not_provided"}` |
+| 传 Mapping | `status` / `valid` / `source_count` / `verified_count` / `unverified_count` / `unverified_sources`（计数非数字时给 `None`） |
+| 传非 Mapping | `{"status": "invalid_payload"}`，不抛异常 |
+
+**它不参与任何计算**：`status`、`approval_score`、`participation_rate`、`quorum_met`、`required_members_met`、`veto_triggered` 的判定路径完全不读该参数。测试 `TestCommitteeEvidenceAudit` 3 例显式断言「传与不传，决议结果逐字段相同」。
+
+流水线侧 `ResearchPipeline._aggregate_evidence_contract()` 把多份报告的 `validation["evidence_contract"]` 合并：全部合格 → `validated`，全部缺失 → `not_provided`，混合 → `partial`；同时求和 `source_count` / `verified_count` / `unverified_count`，并给出 `unverified_report_count`（含未核实来源的报告数）与 `report_count`。`run()` 与 `run_with_adapters()` 都把这份汇总传给 `convene()`。
+
+**为什么这一版不让证据影响投票**：`verified` 只是模型自述，系统不抓取链接、不比对内容；在没有回测证据说明「低证据质量报告预测更差」之前，用证据状态改 approval 等于引入无法验证的偏差项。先积累 `metadata`，有真实样本后再评估是否加权或提门槛。

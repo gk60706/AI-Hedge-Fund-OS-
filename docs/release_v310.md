@@ -86,7 +86,7 @@ python main_v310.py `
 
 ## 7. 验收清单（发布前逐项确认）
 
-- [x] `pytest tests/ai_team -q` 全绿（640 passed，含 `test_hard_timeout.py` 4 例、`test_task_concurrency.py` 2 例、`test_report_concurrency.py` 2 例、`test_public_api.py` 3 例、`test_evidence_contract.py` 6 例、`test_source_extraction.py` 6 例、`test_sources_wiring.py` 2 例）
+- [x] `pytest tests/ai_team -q` 全绿（645 passed，含 `test_hard_timeout.py` 4 例、`test_task_concurrency.py` 2 例、`test_report_concurrency.py` 2 例、`test_public_api.py` 3 例、`test_evidence_contract.py` 6 例、`test_source_extraction.py` 6 例、`test_sources_wiring.py` 4 例、`TestCommitteeEvidenceAudit` 3 例）
 - [x] 十步模块与测试一一对应
 - [x] 一条真实链路跑通并留下完整产物
 - [x] 缺员 / 超时 / 瞬时失败三类容错有测试覆盖
@@ -103,5 +103,6 @@ python main_v310.py `
 - **并发写入加锁**：已完成（2026-11-16）。`TaskManager` 复用 `evolution/file_lock.py` 的 `FileLock`：`_save_task_unlocked` 用 uuid 临时名 + `open("x")` + `flush` + `replace` 原子落盘，`_save_task` 外层持锁，新增 `_edit_task` 上下文管理器把「读盘 → 修改 → 写回 → 更新内存缓存」做成一个跨进程事务；`assign_task` / `update_status` / `start_task` / `submit_agent_report` 全部改为事务写法，`start_task` 在同一事务内同时推进任务与全部 assignment。`ReportCollector.collect_report` 在 `storage_dir/_locks/report_<sha256(task_id+agent_id)[:16]>.lock` 上加锁，内部逻辑拆为 `_collect_report_unlocked`，并发输家统一得到 `DuplicateReportError`（含把 `submit_agent_report` 的 `InvalidTaskTransitionError` 映射过去）。新增 `tests/ai_team/test_task_concurrency.py`（2 例）与 `tests/ai_team/test_report_concurrency.py`（2 例，spawn 多进程），全量 **626 passed**。详见 `docs/v310_concurrency.md`。
 - **报告证据可追溯性契约**：已完成（2026-11-16）。`agent_report.schema.json` 的 `sources` 增加 `data_period` / `source_type` / `verification_status` / `verification_note` 四个可选字段；四个提示词追加统一的《结构化证据与可追溯性要求》；新增 `ai_team/evidence_contract.py` 的 `validate_evidence_contract()`（缺来源、缺链接、缺发布日期、缺数据期间、来源类型非法、核实状态缺失均给出稳定错误码，`unverified` 合法但必须显式标记）；`collect_report` 新增 `sources` 参数，传入时严格校验并把结果写入元数据 `validation["evidence_contract"]`，未传时记 `sources_not_provided` 以兼容旧调用。新增 `tests/ai_team/test_evidence_contract.py`（6 例），全量 **632 passed**。详见 `docs/v310_evidence_contract.md`。
 - **结构化来源接线**：已完成（2026-11-17）。新增 `ai_team/source_extraction.py` 从模型正文提取 `sources`（fenced JSON / 裸对象 / 裸数组，取最后一个成功解析的块，失败一律返回 `None` 不抛异常，不使用递归正则）；`GeneratedReport` 与 `AgentReport` 增加 `sources` 字段，`generate_reports` 提取、`_submit_one` 透传、`run_with_adapters` 转换处一并带上，使真实 API 链路的来源真正进入 `collect_report` 校验。新增 `test_source_extraction.py`（6 例）与 `test_sources_wiring.py`（2 例），全量 **640 passed**；20 次端到端压测仍为 40/40（9.4s）。
+- **证据状态进入投委会（只审计、不投票）**：已完成（2026-11-17）。`InvestmentCommittee.convene` / `_calculate_decision` 增加可选 `evidence_contract`，结果只写入 `CommitteeDecision.metadata["evidence_contract"]`（`status` / `valid` / `source_count` / `verified_count` / `unverified_count` / `unverified_sources`；未传记 `not_provided`，非 Mapping 记 `invalid_payload`），完全不参与 `status`、`approval_score`、`quorum`、`veto` 的计算。`ResearchPipeline._aggregate_evidence_contract()` 把多份报告的证据契约合并成一份（`validated` / `partial` / `not_provided`），`run()` 与 `run_with_adapters()` 均传给 `convene()`。新增 `TestCommitteeEvidenceAudit` 3 例 + 汇总函数 2 例，全量 **645 passed**，evolution 61 passed，压测 40/40（9.6s）。详见 `docs/v310_committee_audit.md` 第 6 节。
 
 

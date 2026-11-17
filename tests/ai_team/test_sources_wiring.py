@@ -1,5 +1,7 @@
 import json
 
+from types import SimpleNamespace
+
 from ai_team.adapters import build_registry, generate_reports
 from ai_team.research_pipeline import AgentReport
 
@@ -58,3 +60,45 @@ def test_agent_report_sources_default_none():
         AgentReport(agent_id="chatgpt", title="t", content="c", sources=sources).sources
         == sources
     )
+
+
+def test_aggregate_evidence_contract_empty_returns_none():
+    from ai_team.research_pipeline import _aggregate_evidence_contract
+
+    assert _aggregate_evidence_contract([]) is None
+
+
+def test_aggregate_evidence_contract_mixes_reports():
+    from ai_team.research_pipeline import _aggregate_evidence_contract
+
+    records = [
+        SimpleNamespace(
+            validation={
+                "evidence_contract": {
+                    "status": "validated",
+                    "valid": True,
+                    "source_count": 2,
+                    "verified_count": 1,
+                    "unverified_count": 1,
+                }
+            }
+        ),
+        SimpleNamespace(
+            validation={
+                "evidence_contract": {
+                    "status": "not_provided",
+                    "valid": None,
+                }
+            }
+        ),
+    ]
+
+    result = _aggregate_evidence_contract(records)
+
+    assert result["status"] == "partial"
+    assert result["valid"] is False
+    assert result["source_count"] == 2
+    assert result["verified_count"] == 1
+    assert result["unverified_count"] == 1
+    assert result["unverified_report_count"] == 1
+    assert result["report_count"] == 2

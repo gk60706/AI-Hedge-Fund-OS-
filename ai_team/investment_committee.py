@@ -329,6 +329,36 @@ def _as_float(value: Any, default: float = 0.0) -> float:
     return result
 
 
+def _summarize_evidence_contract(payload: Any) -> dict[str, Any]:
+    if payload is None:
+        return {"status": "not_provided"}
+    if not isinstance(payload, Mapping):
+        return {"status": "invalid_payload"}
+
+    def _count(value: Any) -> int | None:
+        if isinstance(value, bool) or not isinstance(
+            value, (int, float)
+        ):
+            return None
+        try:
+            return int(value)
+        except (ValueError, TypeError, OverflowError):
+            return None
+
+    try:
+        unverified = payload.get("unverified_sources") or []
+        return {
+            "status": payload.get("status"),
+            "valid": payload.get("valid"),
+            "source_count": _count(payload.get("source_count")),
+            "verified_count": _count(payload.get("verified_count")),
+            "unverified_count": _count(payload.get("unverified_count")),
+            "unverified_sources": list(unverified),
+        }
+    except Exception:
+        return {"status": "invalid_payload"}
+
+
 # ============================================================
 # InvestmentCommittee
 # ============================================================
@@ -580,6 +610,7 @@ class InvestmentCommittee:
         ballots: list[CommitteeBallot],
         rationale: str,
         force: bool,
+        evidence_contract: Mapping[str, Any] | None = None,
     ) -> CommitteeDecision:
         member_map = {
             member.member_id: member for member in active_members
@@ -762,6 +793,9 @@ class InvestmentCommittee:
                 "veto_triggered": veto_triggered,
                 "veto_decisive": veto_decisive,
                 "force": bool(force),
+                "evidence_contract": _summarize_evidence_contract(
+                    evidence_contract
+                ),
             },
         )
         return decision
@@ -827,6 +861,8 @@ class InvestmentCommittee:
         members: Optional[Iterable[CommitteeMember]] = None,
         rationale: str = "",
         force: bool = False,
+        *,
+        evidence_contract: Mapping[str, Any] | None = None,
     ) -> CommitteeDecision:
         """
         Convene the committee and record its decision.
@@ -868,6 +904,7 @@ class InvestmentCommittee:
             ballots=normalized_ballots,
             rationale=rationale,
             force=force,
+            evidence_contract=evidence_contract,
         )
 
         self.save_decision(decision)

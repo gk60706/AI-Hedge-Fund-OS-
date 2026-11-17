@@ -1306,5 +1306,61 @@ class TestCommitteeGovernanceBoundaries(InvestmentCommitteeTestCase):
         self.assertEqual(decision.status, CommitteeStatus.DEFERRED)
 
 
+class TestCommitteeEvidenceAudit(InvestmentCommitteeTestCase):
+    def test_evidence_contract_absent_records_not_provided(self):
+        decision = self.committee.convene(
+            task_id="TASK-001",
+            consensus_id="CON-001",
+            ballots=make_full_approval_ballots(),
+        )
+        self.assertEqual(
+            decision.metadata["evidence_contract"],
+            {"status": "not_provided"},
+        )
+
+    def test_evidence_contract_recorded_without_changing_decision(self):
+        baseline = self.committee.convene(
+            task_id="TASK-001",
+            consensus_id="CON-001",
+            ballots=make_full_approval_ballots(),
+        )
+        payload = {
+            "status": "validated",
+            "valid": True,
+            "source_count": 2,
+            "verified_count": 1,
+            "unverified_count": 1,
+            "unverified_sources": [1],
+        }
+        decision = self.committee.convene(
+            task_id="TASK-001",
+            consensus_id="CON-001",
+            ballots=make_full_approval_ballots(),
+            evidence_contract=payload,
+        )
+        for field in (
+            "status",
+            "approval_score",
+            "quorum_met",
+            "required_members_met",
+        ):
+            self.assertEqual(
+                getattr(decision, field), getattr(baseline, field)
+            )
+        self.assertEqual(decision.metadata["evidence_contract"], payload)
+
+    def test_evidence_contract_bad_payload_is_flagged(self):
+        decision = self.committee.convene(
+            task_id="TASK-001",
+            consensus_id="CON-001",
+            ballots=make_full_approval_ballots(),
+            evidence_contract="not-a-mapping",
+        )
+        self.assertEqual(
+            decision.metadata["evidence_contract"],
+            {"status": "invalid_payload"},
+        )
+
+
 if __name__ == "__main__":
     unittest.main()
