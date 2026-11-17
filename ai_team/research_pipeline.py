@@ -17,6 +17,7 @@ import json
 import multiprocessing
 import os
 import pickle
+import sys
 import tempfile
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import TimeoutError as FutureTimeoutError
@@ -1110,9 +1111,10 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     # ---------- 真实 API 模式 ----------
     if args.live:
-        from ai_team.adapters import build_registry
+        from ai_team.adapters import build_registry, describe_seat_status
 
         registry = build_registry(timeout=args.adapter_timeout)
+        print(describe_seat_status(registry), file=sys.stderr)
         if not registry.adapters:
             print(
                 json.dumps(

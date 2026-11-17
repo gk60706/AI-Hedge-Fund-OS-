@@ -469,6 +469,31 @@ class AdapterRegistry:
         }
 
 
+def describe_seat_status(registry: AdapterRegistry) -> str:
+    """启动自检：列出哪些席位可调用、哪些只能人工导入。"""
+    registered = registry.adapters
+    skipped = registry.skipped
+    seats = []
+    for seat in ("chatgpt", "grok", "hark"):
+        if seat in registered:
+            status = "available"
+        elif seat in skipped:
+            status = f"skipped ({skipped[seat]})"
+        else:
+            status = "not_registered"
+        seats.append(f"{seat}={status}")
+    first_line = "Seats: " + ", ".join(seats)
+    skipped_seats = [
+        seat for seat in ("chatgpt", "grok", "hark") if seat in skipped
+    ]
+    second_line = (
+        "Manual import required for: " + ", ".join(skipped_seats)
+        if skipped_seats
+        else "All seats callable."
+    )
+    return f"{first_line}\n{second_line}"
+
+
 def load_env_file(path: str | Path | None = None) -> dict[str, str]:
     """极简 ``.env`` 解析：只读键值，不写回环境，不打印内容。"""
     env_path = Path(path) if path is not None else Path(".env")

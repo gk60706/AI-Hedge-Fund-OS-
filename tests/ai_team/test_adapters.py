@@ -330,3 +330,20 @@ def test_run_live_records_missing_agent_in_failures(env, tmp_path):
 
     assert result["failed_agents"]
     assert "hark" in result["failed_agents"]
+
+
+def test_describe_seat_status_lists_skipped_seats():
+    from ai_team.adapters import AdapterRegistry, describe_seat_status
+
+    registry = AdapterRegistry(
+        adapters={"chatgpt": object()},
+        skipped={
+            "grok": "missing: XAI_API_KEY",
+            "hark": "missing: HARK_MODEL",
+        },
+    )
+    result = describe_seat_status(registry)
+    assert "chatgpt=available" in result
+    assert "grok=skipped" in result
+    assert "Manual import required for: grok, hark" in result
+    assert len(result.splitlines()) == 2

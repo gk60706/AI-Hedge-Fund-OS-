@@ -229,6 +229,24 @@ python scripts\smoke_live.py --task-id TASK-20261117-4CEEE3A1 `
 
 测试：全量 `tests/ai_team` **660 passed, 4 subtests（41.00s）**，CLI 改动无回归（`scripts/` 不在 pytest 覆盖范围内，已用上述真实命令逐条验证）。
 
+### 7.9 启动自检：先说清哪几席真的可调用
+
+三个席位的凭据不是同时具备的，此前只能在调用失败后从异常里反推。现在启动即告知（`ai_team/adapters.py` 由 ChatGPT 出稿）：
+
+- 新增 `describe_seat_status(registry: AdapterRegistry) -> str`：按 `chatgpt` / `grok` / `hark` 固定顺序输出，首行 `Seats: chatgpt=available, grok=skipped (missing: ...)`，未在 registry 中出现的席位标 `not_registered`；有 skipped 时第二行 `Manual import required for: grok, hark`，全部可用时第二行 `All seats callable.`。只输出键名与原因，**不输出任何密钥值**。
+- `research_pipeline` 的 `--live` CLI 在 `build_registry` 之后立即 `print(describe_seat_status(registry), file=sys.stderr)`，写到 stderr 以免污染 stdout 的 JSON 结果。
+
+**真实输出**（本机 `.env` 只有 `OPENAI_API_KEY`）：
+
+```text
+Seats: chatgpt=available, grok=skipped (missing: XAI_API_KEY, XAI_MODEL (...)), hark=skipped (missing: HARK_API_KEY, HARK_BASE_URL, HARK_MODEL (...))
+Manual import required for: grok, hark
+```
+
+自检之后真实 `--live` 仍然失败（OpenAI 直连 `WinError 10060`、账户 `insufficient_quota`），这正说明自检的价值：它把「配置齐了但发不出请求」和「压根没配」区分开，而不再靠猜。
+
+测试：`test_describe_seat_status_lists_skipped_seats`（两行结构 + `Manual import required for: grok, hark` + 不含多余行），全量 `tests/ai_team` **661 passed, 4 subtests（35.68s）**。
+
 ## 8. 遗留待办（非 V3.10 范围）
 
 - **V3.9.3 断点续跑**：已完成（2026-11-16）。新增 `restore_state()` / `save_checkpoint()` / `from_checkpoint()`、4 个 `Checkpoint*` 异常、`FitnessResult.from_dict()`，并对 checkpoint 与 JSONL 历史做代际一致性校验（`strict=True` 抛错 / 非 strict 写入 `run_metadata`）。详见 `docs/v393_checkpoint.md`，回归 `7 passed`。
