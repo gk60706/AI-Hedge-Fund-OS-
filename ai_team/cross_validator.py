@@ -1860,8 +1860,19 @@ class CrossValidator:
             )
 
         analyses = []
+        sourced_ids = []
+        unsourced_ids = []
 
         for record in records:
+
+            contract = (
+                getattr(record, "validation", None) or {}
+            ).get("evidence_contract") or {}
+
+            if contract.get("status") == "validated":
+                sourced_ids.append(record.agent_id)
+            else:
+                unsourced_ids.append(record.agent_id)
 
             analyses.append(
                 self.analyze_report(
@@ -1869,11 +1880,23 @@ class CrossValidator:
                 )
             )
 
+        mixed = bool(sourced_ids and unsourced_ids)
+
+        effective_analyses = (
+            [
+                analysis
+                for analysis in analyses
+                if analysis.agent_id in sourced_ids
+            ]
+            if mixed
+            else analyses
+        )
+
         comparisons = []
 
-        for index, analysis_a in enumerate(analyses):
+        for index, analysis_a in enumerate(effective_analyses):
 
-            for analysis_b in analyses[index + 1:]:
+            for analysis_b in effective_analyses[index + 1:]:
 
                 comparisons.append(
                     self.compare_agents(
@@ -1887,7 +1910,7 @@ class CrossValidator:
         )
 
         consensus = self.detect_consensus(
-            analyses
+            effective_analyses
         )
 
         quality_score = self._score(
@@ -1900,8 +1923,8 @@ class CrossValidator:
         evidence_score = self._score(
             sum(
                 item.evidence_score
-                for item in analyses
-            ) / len(analyses)
+                for item in effective_analyses
+            ) / len(effective_analyses)
         )
 
         agreement_score = self._calculate_agreement(
@@ -1918,6 +1941,16 @@ class CrossValidator:
         if not consensus:
             warnings.append(
                 "No sufficiently supported common claims detected."
+            )
+
+        if mixed:
+            warnings.append(
+                f"Seats excluded from consensus (no structured sources): {', '.join(unsourced_ids)}"
+            )
+
+        if not sourced_ids:
+            warnings.append(
+                "No structured sources for any seat; agreement is model-self-reported."
             )
 
         for analysis in analyses:
@@ -1986,6 +2019,8 @@ class CrossValidator:
                 "seats_active": seats_active,
                 "seats_assigned": seats_assigned,
                 "seats_missing": seats_missing,
+                "seats_sourced": sourced_ids,
+                "seats_unsourced": unsourced_ids,
             },
         )
 

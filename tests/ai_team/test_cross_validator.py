@@ -2431,3 +2431,34 @@ def test_missing_seat_is_disclosed(
     result = validator.validate_task(research_task.task_id)
     assert result.status != "not_performed"
     assert any(w.startswith("Seats not reporting") for w in result.warnings)
+
+def test_unsourced_seats_are_excluded_from_consensus(
+    research_task, report_collector, validator, bullish_report,
+    bearish_report
+):
+    source = {
+        "name": "Official company filing",
+        "url": "https://example.com/report",
+        "published_at": "2026-11-17T10:00:00+08:00",
+        "data_period": "2026Q3",
+        "source_type": "company_filing",
+        "verification_status": "verified",
+    }
+    report_collector.collect_report(
+        task_id=research_task.task_id,
+        agent_id="chatgpt",
+        content=bullish_report,
+        sources=[source],
+    )
+    submit_report(report_collector, research_task.task_id, "grok", bearish_report)
+    submit_report(report_collector, research_task.task_id, "hark", bullish_report)
+
+
+    result = validator.validate_task(research_task.task_id)
+    metadata = result.metadata
+    assert metadata["seats_sourced"] == ["chatgpt"]
+    assert set(metadata["seats_unsourced"]) == {"grok", "hark"}
+    assert any(
+        warning.startswith("Seats excluded from consensus")
+        for warning in result.warnings
+    )

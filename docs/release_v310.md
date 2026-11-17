@@ -162,6 +162,20 @@ python scripts\smoke_live.py --task-id TASK-20261117-4CEEE3A1 `
 
 测试：`tests/ai_team/test_cross_validator.py` 新增 `test_single_seat_marks_not_performed`（单席 `not_performed` + 警告前缀）、`test_missing_seat_is_disclosed`（两席 + `Seats not reporting` 警告），原 `test_min_reports_must_be_at_least_two` 按新契约改写为 `test_min_reports_must_be_at_least_one`（`min_reports=0` 拒绝），`test_validate_task_rejects_invalid_min_reports` 的入参由 `1` 改为 `0`。实测 `test_cross_validator.py` 94 passed，全量 `tests/ai_team` **657 passed, 4 subtests（39.45s）**。
 
+### 7.5 无结构化来源的席位不计票
+
+三家审计共同点名「零来源报告仍被当作有效票」。本轮按「不计票 + 不硬拒」的口径落地（代码由 ChatGPT 出稿）：
+
+1. **来源状态来自证据契约**：`validate_task` 逐条读 `record.validation["evidence_contract"]["status"]`，只有 `validated` 才算「有结构化来源」，其余（`sources_not_provided` 等）进 `unsourced_ids`。
+2. **混合场景只按有来源席位投票**：当有来源与无来源席位同时存在（`mixed`），`comparisons` 与 `consensus` 只使用有来源子集；整体 `evidence_score` 也只对该子集取平均。`conflicts` 仍用全部席位，缺来源不能把冲突藏起来。
+3. **全无来源不伪造结论**：所有席位都没有结构化来源时，保持原有全量比对（否则任何历史任务都会变 partial），但强制追加 `No structured sources for any seat; agreement is model-self-reported.`，并在 `metadata["seats_unsourced"]` 列出全部席位。
+4. **结果可审计**：`metadata` 新增 `seats_sourced` / `seats_unsourced`；混合场景追加 `Seats excluded from consensus (no structured sources): grok, hark`。
+5. **CLI 侧打通来源提取**：`scripts/smoke_live.py` 导入人工报告时调用 `extract_sources_from_content()`，把解析到的来源传给 `collect_report(sources=...)`，并在产物里记 `sources_detected`；来源格式不合法（`InvalidReportError`）时**降级为无来源重试**，报告照常入库并记 `sources_invalid: true`，不再整份丢弃。另补 `--import-report` 与 `--file` 数量不等时显式 `return 2`（原先 `zip` 会静默截断）。
+
+测试：新增 `test_unsourced_seats_are_excluded_from_consensus`（chatgpt 带合法来源、grok/hark 无来源 → `seats_sourced == ["chatgpt"]`、`seats_unsourced` 含 grok/hark、出现 `Seats excluded from consensus` 警告），`test_cross_validator.py` 95 passed，全量 `tests/ai_team` **658 passed, 4 subtests（42.43s）**。
+
+**本轮真实链路实测又暴露一个契约缺口**（未修，列为下一步）：新建 `TASK-20261117-E9218E6D` 走 CLI 导入三份真实报告，`sources_detected` 三席全为 false —— ChatGPT 那份的 4 条来源本身是真实的（巨潮三季报 / 国泰海通点评 / 回购进展 / 中财网行情），但被证据契约拒绝：`published_at` 是日期（`2026-10-29`）不带时区，`source_type` 用了 `research_report` / `exchange_data` 这两个不在 `ALLOWED_SOURCE_TYPES` 里的写法。也就是说**契约比模型的实际输出更严，正确来源会被判成无来源**，需要下一步做来源标准化（别名映射 + 日期精度处理），而不是继续加严。
+
 ## 8. 遗留待办（非 V3.10 范围）
 
 - **V3.9.3 断点续跑**：已完成（2026-11-16）。新增 `restore_state()` / `save_checkpoint()` / `from_checkpoint()`、4 个 `Checkpoint*` 异常、`FitnessResult.from_dict()`，并对 checkpoint 与 JSONL 历史做代际一致性校验（`strict=True` 抛错 / 非 strict 写入 `run_metadata`）。详见 `docs/v393_checkpoint.md`，回归 `7 passed`。
