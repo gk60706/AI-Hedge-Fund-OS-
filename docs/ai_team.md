@@ -202,8 +202,8 @@ pytest tests\ai_team -q
 
 ## 11. 已知限制（按现有测试规格保留）
 
-1. **弃权计入批准率分母**：`approval_score` 的分母包含弃权票，弃权会拉低批准率。
-2. **required 委员被 disable 后不再计入法定人数**，且 `required_members_met=True`。
+1. **弃权仍计入批准率分母**：`approval_score` 的分母包含弃权票；但 `metadata` 已强制披露 `abstain_count` / `abstain_weight` / `abstain_rate` / `vote_breakdown`。
+2. **required 委员被 disable 后决议强制 `deferred`**：不再降门槛、不再免到场，`required_members_met=False`。
 3. **默认线程超时仍无法强杀**：`timeout_mode="thread"` 下 `ThreadPoolExecutor` 只能放弃等待，后台线程仍可能跑完；需要硬终止时显式切 `timeout_mode="process"`（受 pickle 约束，见第 7 节）。
 4. **并发锁只覆盖任务与报告**：`TaskManager` 的任务文件与 `ReportCollector` 的（task_id, agent_id）报告提交已用 `FileLock` 串行化；流水线级产物（异议/共识/决议 JSON、`generation.json`）仍是后写覆盖，需要外部串行化。
 5. **票源映射是一人两席**：三位助手映射到六个委员席位，属研究治理记账，不是真实 6 人投委会。

@@ -106,6 +106,8 @@ class CommitteeBallot:
     rationale: str = ""
     conditions: tuple[str, ...] = ()
     risk_flags: tuple[str, ...] = ()
+    agent_id: str | None = field(default=None, kw_only=True)
+    report_id: str | None = field(default=None, kw_only=True)
     created_at: str = field(
         default_factory=lambda: datetime.now(timezone.utc).isoformat()
     )
@@ -119,6 +121,16 @@ class CommitteeBallot:
             raise CommitteeValidationError("conditions must be a tuple")
         if not isinstance(self.risk_flags, tuple):
             raise CommitteeValidationError("risk_flags must be a tuple")
+        for name, value in (
+            ("agent_id", self.agent_id),
+            ("report_id", self.report_id),
+        ):
+            if value is not None and (
+                not isinstance(value, str) or not value.strip()
+            ):
+                raise CommitteeValidationError(
+                    f"ballot {name} must be a non-empty string or None"
+                )
 
 
 @dataclass
@@ -170,6 +182,8 @@ class CommitteeDecision:
                     rationale=item.get("rationale", ""),
                     conditions=tuple(item.get("conditions", [])),
                     risk_flags=tuple(item.get("risk_flags", [])),
+                    agent_id=item.get("agent_id"),
+                    report_id=item.get("report_id"),
                     created_at=item.get("created_at", ""),
                 )
                 for item in data["ballots"]
@@ -540,6 +554,7 @@ class InvestmentCommittee:
         member_map = {member.member_id: member for member in active_members}
         normalized: list[CommitteeBallot] = []
         seen: set[str] = set()
+        seen_agents: set[str] = set()
 
         for item in ballots:
             if isinstance(item, CommitteeBallot):
@@ -552,6 +567,12 @@ class InvestmentCommittee:
                         rationale=str(item.get("rationale", "")),
                         conditions=tuple(item.get("conditions", [])),
                         risk_flags=tuple(item.get("risk_flags", [])),
+                        agent_id=item.get("agent_id"),
+                        report_id=item.get("report_id"),
+                        created_at=item.get(
+                            "created_at",
+                            datetime.now(timezone.utc).isoformat(),
+                        ),
                     )
                 except (KeyError, TypeError, ValueError) as exc:
                     raise CommitteeValidationError(
@@ -570,6 +591,12 @@ class InvestmentCommittee:
                 raise CommitteeValidationError(
                     f"duplicate ballot from member: {ballot.member_id}"
                 )
+            if ballot.agent_id is not None:
+                if ballot.agent_id in seen_agents:
+                    raise CommitteeValidationError(
+                        f"duplicate ballot from agent: {ballot.agent_id}"
+                    )
+                seen_agents.add(ballot.agent_id)
 
             seen.add(ballot.member_id)
             normalized.append(ballot)
@@ -611,7 +638,19 @@ class InvestmentCommittee:
         rationale: str,
         force: bool,
         evidence_contract: Mapping[str, Any] | None = None,
+        declared_members: list[CommitteeMember] | None = None,
+        required_disabled_members: list[str] | None = None,
     ) -> CommitteeDecision:
+        if declared_members is None:
+            declared_members = active_members
+        if required_disabled_members is None:
+            required_disabled_members = [
+                member.member_id
+                for member in declared_members
+                if member.required and not member.enabled
+            ]
+        else:
+            required_disabled_members = list(required_disabled_members)
         member_map = {
             member.member_id: member for member in active_members
         }
@@ -629,11 +668,12 @@ class InvestmentCommittee:
 
         required_ids = {
             member.member_id
-            for member in active_members
+            for member in declared_members
             if member.required
         }
-        required_members_met = required_ids.issubset(
-            set(ballot_map.keys())
+        required_members_met = (
+            not required_disabled_members
+            and required_ids.issubset(set(ballot_map.keys()))
         )
 
         total_weight = sum(
@@ -653,6 +693,39 @@ class InvestmentCommittee:
         approval_score = (
             positive_weight / total_weight if total_weight > 0 else 0.0
         )
+
+        vote_breakdown = {
+            "approve": sum(
+                ballot.vote == CommitteeVote.APPROVE for ballot in ballots
+            ),
+            "approve_with_conditions": sum(
+                ballot.vote == CommitteeVote.APPROVE_WITH_CONDITIONS
+                for ballot in ballots
+            ),
+            "reject": sum(
+                ballot.vote == CommitteeVote.REJECT for ballot in ballots
+            ),
+            "abstain": sum(
+                ballot.vote == CommitteeVote.ABSTAIN for ballot in ballots
+            ),
+        }
+
+        abstain_weight = sum(
+            member_map[ballot.member_id].weight
+            for ballot in ballots
+            if ballot.vote == CommitteeVote.ABSTAIN
+        )
+
+        abstain_rate = (
+            abstain_weight / total_weight if total_weight > 0 else 0.0
+        )
+
+        source_breakdown: dict[str, list[str]] = {}
+        for ballot in ballots:
+            if ballot.agent_id is not None:
+                source_breakdown.setdefault(ballot.agent_id, []).append(
+                    ballot.member_id
+                )
 
         conditions: list[str] = []
         risk_flags: list[str] = self._consensus_risks(report)
@@ -789,6 +862,17 @@ class InvestmentCommittee:
                 "approval_threshold": self.approval_threshold,
                 "quorum_threshold": self.quorum,
                 "minimum_confidence": self.minimum_confidence,
+                "abstain_count": vote_breakdown["abstain"],
+                "abstain_weight": round(abstain_weight, 6),
+                "abstain_rate": round(abstain_rate, 6),
+                "vote_breakdown": vote_breakdown,
+                "source_breakdown": source_breakdown,
+                "required_disabled_members": list(required_disabled_members),
+                "required_members_declared": [
+                    member.member_id
+                    for member in declared_members
+                    if member.required
+                ],
                 "risk_veto_enabled": self.risk_veto_enabled,
                 "veto_triggered": veto_triggered,
                 "veto_decisive": veto_decisive,
@@ -885,12 +969,19 @@ class InvestmentCommittee:
         )
         self._validate_consensus(task_id, report)
 
-        active_members = list(
+        declared_members = list(
             members if members is not None else self.members
         )
-        self._validate_members(active_members)
+        self._validate_members(declared_members)
+
+        required_disabled_members = [
+            member.member_id
+            for member in declared_members
+            if member.required and not member.enabled
+        ]
+
         active_members = [
-            member for member in active_members if member.enabled
+            member for member in declared_members if member.enabled
         ]
 
         normalized_ballots = self._normalize_ballots(
@@ -905,6 +996,8 @@ class InvestmentCommittee:
             rationale=rationale,
             force=force,
             evidence_contract=evidence_contract,
+            declared_members=declared_members,
+            required_disabled_members=required_disabled_members,
         )
 
         self.save_decision(decision)

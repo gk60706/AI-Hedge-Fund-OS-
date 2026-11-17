@@ -1260,8 +1260,16 @@ class TestCommitteeGovernanceBoundaries(InvestmentCommitteeTestCase):
         )
 
         self.assertTrue(decision.quorum_met)
-        self.assertTrue(decision.required_members_met)
-        self.assertEqual(decision.status, CommitteeStatus.APPROVED)
+        self.assertFalse(decision.required_members_met)
+        self.assertEqual(decision.status, CommitteeStatus.DEFERRED)
+        self.assertEqual(
+            decision.metadata["required_disabled_members"],
+            ["risk"],
+        )
+        self.assertEqual(
+            decision.metadata["required_members_declared"],
+            ["chair", "risk"],
+        )
 
     def test_required_member_must_vote(self):
         members = [
@@ -1359,6 +1367,131 @@ class TestCommitteeEvidenceAudit(InvestmentCommitteeTestCase):
         self.assertEqual(
             decision.metadata["evidence_contract"],
             {"status": "invalid_payload"},
+        )
+
+
+# ============================================================
+# Governance tightening tests (V3.10 P2)
+# ============================================================
+
+class TestCommitteeGovernanceTightening(InvestmentCommitteeTestCase):
+
+    def test_abstain_weight_and_vote_breakdown_are_disclosed(self):
+        decision = self.committee.convene(
+            "TASK-001",
+            consensus_report=self.consensus,
+            ballots=[
+                make_ballot("cio", "approve"),
+                make_ballot("risk", "approve"),
+                make_ballot("compliance", "approve"),
+                make_ballot("quant", "abstain"),
+                make_ballot("fundamental", "reject"),
+            ],
+        )
+
+        self.assertAlmostEqual(decision.approval_score, 4.0 / 6.0, places=6)
+        self.assertEqual(decision.metadata["abstain_count"], 1)
+        self.assertEqual(decision.metadata["abstain_weight"], 1.0)
+        self.assertEqual(
+            decision.metadata["abstain_rate"],
+            round(1.0 / 6.0, 6),
+        )
+        self.assertEqual(
+            decision.metadata["vote_breakdown"],
+            {
+                "approve": 3,
+                "approve_with_conditions": 0,
+                "reject": 1,
+                "abstain": 1,
+            },
+        )
+        self.assertEqual(decision.status, CommitteeStatus.REJECTED)
+
+    def test_duplicate_agent_id_is_rejected_but_none_is_allowed(self):
+        with self.assertRaises(CommitteeValidationError):
+            self.committee.convene(
+                "TASK-001",
+                consensus_report=self.consensus,
+                ballots=[
+                    CommitteeBallot(
+                        "cio", CommitteeVote.APPROVE, agent_id="agent-1"
+                    ),
+                    CommitteeBallot(
+                        "risk", CommitteeVote.APPROVE, agent_id="agent-1"
+                    ),
+                ],
+            )
+
+        decision = self.committee.convene(
+            "TASK-001",
+            consensus_report=self.consensus,
+            ballots=[
+                CommitteeBallot("cio", CommitteeVote.APPROVE),
+                CommitteeBallot("risk", CommitteeVote.APPROVE),
+            ],
+        )
+        self.assertEqual(len(decision.ballots), 2)
+        self.assertEqual(decision.metadata["source_breakdown"], {})
+
+    def test_agent_id_and_report_id_must_be_non_empty_strings(self):
+        for field_name in ("agent_id", "report_id"):
+            for value in ("", 123):
+                with self.subTest(field=field_name, value=value):
+                    with self.assertRaises(CommitteeValidationError):
+                        CommitteeBallot(
+                            member_id="cio",
+                            vote=CommitteeVote.APPROVE,
+                            **{field_name: value},
+                        )
+
+    def test_legacy_ballot_json_defaults_source_fields_to_none(self):
+        decision = self.committee.convene(
+            "TASK-001",
+            consensus_report=self.consensus,
+            ballots=make_full_approval_ballots(),
+        )
+        data = decision.to_dict()
+        for ballot in data["ballots"]:
+            ballot.pop("agent_id", None)
+            ballot.pop("report_id", None)
+
+        restored = CommitteeDecision.from_dict(data)
+        self.assertIsNone(restored.ballots[0].agent_id)
+        self.assertIsNone(restored.ballots[0].report_id)
+
+    def test_disabled_required_member_defers_even_with_force_and_quorum(self):
+        members = [
+            CommitteeMember(
+                "chair", "Chair",
+                CommitteeRole.CHIEF_INVESTMENT_OFFICER,
+                required=True,
+            ),
+            CommitteeMember(
+                "risk", "Risk",
+                CommitteeRole.RISK_OFFICER,
+                required=True,
+                enabled=False,
+            ),
+        ]
+        committee = InvestmentCommittee(
+            self.task_manager,
+            self.consensus_engine,
+            storage_dir=self.storage_dir / "required-disabled-force",
+            members=members,
+            quorum=1.0,
+        )
+        decision = committee.convene(
+            "TASK-001",
+            consensus_report=self.consensus,
+            ballots=[make_ballot("chair")],
+            force=True,
+        )
+        self.assertTrue(decision.quorum_met)
+        self.assertFalse(decision.required_members_met)
+        self.assertEqual(decision.status, CommitteeStatus.DEFERRED)
+        self.assertEqual(
+            decision.metadata["required_disabled_members"],
+            ["risk"],
         )
 
 

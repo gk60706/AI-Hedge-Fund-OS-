@@ -77,16 +77,16 @@ python main_v310.py `
 
 ## 6. 已知限制
 
-1. 弃权票计入 `approval_score` 分母（按现有测试规格保留）。
-2. required 委员被 disable 后不再计入法定人数，且 `required_members_met=True`（同上）。
+1. 弃权票仍计入 `approval_score` 分母（弃权≈半个反对），但已强制披露 `abstain_count` / `abstain_weight` / `abstain_rate` / `vote_breakdown`（2026-11-17 决策，见 `docs/v310_committee_audit.md` 第 5 节）。
+2. required 委员被 disable 后**不再降门槛、不再免到场**：决议强制 `DEFERRED`，`required_members_met=False`（同上）。
 3. 默认 `timeout_mode="thread"` 仍无法强杀被卡线程；需要硬终止时显式切换 `process`（spawn 子进程，可 terminate/kill，但要求 callable 可 pickle，且调用方脚本需带 `if __name__ == "__main__"` 保护）。详见 `docs/v310_hard_timeout.md`。
 4. 流水线级产物（异议 / 共识 / 决议 JSON、`generation.json`）无跨进程互斥，同一 `project_root` 并发跑完整流水线仍需外部串行化；任务文件与报告提交已加锁（见第 8 节「并发写入加锁」）。
-5. 票源映射为「一位助手 → 两个委员席位」，属研究治理记账，不是真实 6 人投委会。
+5. 票源映射为「一位助手 → 两个委员席位」，属研究治理记账，不是真实 6 人投委会。`CommitteeBallot` 已支持 `agent_id` / `report_id`，显式提供时同一助手不得投多票，可从决议追溯到来源；不提供时行为与旧版一致（向后兼容）。
 6. 报告数据未做第三方核验，合规与投资判断需人工复核。`verified` 只是提交方声明，系统不抓取原始链接、不比对内容。
 
 ## 7. 验收清单（发布前逐项确认）
 
-- [x] `pytest tests/ai_team -q` 全绿（645 passed，含 `test_hard_timeout.py` 4 例、`test_task_concurrency.py` 2 例、`test_report_concurrency.py` 2 例、`test_public_api.py` 3 例、`test_evidence_contract.py` 6 例、`test_source_extraction.py` 6 例、`test_sources_wiring.py` 4 例、`TestCommitteeEvidenceAudit` 3 例）
+- [x] `pytest tests/ai_team -q` 全绿（650 passed，含 `test_hard_timeout.py` 4 例、`test_task_concurrency.py` 2 例、`test_report_concurrency.py` 2 例、`test_public_api.py` 3 例、`test_evidence_contract.py` 6 例、`test_source_extraction.py` 6 例、`test_sources_wiring.py` 4 例、`TestCommitteeEvidenceAudit` 3 例、`TestCommitteeGovernanceTightening` 5 例）
 - [x] 十步模块与测试一一对应
 - [x] 一条真实链路跑通并留下完整产物
 - [x] 缺员 / 超时 / 瞬时失败三类容错有测试覆盖
@@ -101,8 +101,8 @@ python main_v310.py `
 环境：`%TEMP%\v310venv2`（Python 3.13），补齐 24 个缺失依赖后执行。
 
 - 顶层 `tests/test_*.py`：**761 passed**（40 个文件全绿；`test_v09` 12 例、`test_v11` 8 例、`test_v21` 14 例为剔除 chromadb 用例后的计数）
-- `tests/ai_team`：**645 passed**
-- 合计 **1406 passed**
+- `tests/ai_team`：**650 passed**（治理收紧后新增 5 例）
+- 合计 **1411 passed**
 - 复跑过程修掉的三个真实缺陷：
   1. `backtest/metrics.py` 只 `import numpy as np`，第 51 行签名用 `pd.Series`，无 `from __future__ import annotations`，import 即 `NameError`，阻断 `test_v05.py` / `test_v12.py` → 补 `import pandas as pd`。
   2. akshare 1.20.46 把 `stock_zh_a_hist` 改名为 `stock_zh_a_hist_em` 且模块 `__getattr__` 对旧名抛 `AttributeError`；仓库在 `requirements.txt` 声明 `akshare>=1.18,<2` 覆盖了这次改名。新增 `data/akshare_compat.py`（惰性解析 `stock_zh_a_hist_em` → `stock_zh_a_hist`，导入阶段不解析），`data/akshare_client.py`、`data/market_data.py`、`data/historical.py`、`data_engine/akshare_loader.py`、`tools/market_tool.py` 统一改走 `_ak_hist`；`tests/test_v36.py`、`tests/test_v18.py` 打桩目标同步改为各模块自己的 `_ak_hist`。
