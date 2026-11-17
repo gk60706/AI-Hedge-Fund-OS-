@@ -1,0 +1,68 @@
+{
+  "task_id": "TASK-20261117-9A3D7FCD",
+  "imported": [
+    {
+      "agent_id": "chatgpt",
+      "status": "success",
+      "sources_detected": true
+    },
+    {
+      "agent_id": "grok",
+      "status": "success",
+      "sources_detected": false,
+      "sources_invalid": true
+    }
+  ],
+  "failures": {},
+  "report_count": 2,
+  "validation": {
+    "status": "partial",
+    "validation_id": "VAL-20261117-6D4FD85220",
+    "seats": [
+      {
+        "agent_id": "grok",
+        "quality_score": 100.0,
+        "evidence_score": 100.0,
+        "claims": 9,
+        "warnings": 0
+      },
+      {
+        "agent_id": "chatgpt",
+        "quality_score": 100.0,
+        "evidence_score": 100.0,
+        "claims": 21,
+        "warnings": 0
+      }
+    ],
+    "warnings": [
+      "No sufficiently supported common claims detected.",
+      "Seats excluded from consensus (no structured sources): grok"
+    ],
+    "metadata": {
+      "task_title": "300394.SZ 2026-11-17",
+      "task_status": "submitted",
+      "agents": [
+        "grok",
+        "chatgpt"
+      ],
+      "algorithm": "deterministic_heuristic_v1",
+      "semantic_verification": false,
+      "factual_verification": false,
+      "seats_active": [
+        "grok",
+        "chatgpt"
+      ],
+      "seats_assigned": [
+        "chatgpt",
+        "grok"
+      ],
+      "seats_missing": [],
+      "seats_sourced": [
+        "chatgpt"
+      ],
+      "seats_unsourced": [
+        "grok"
+      ]
+    }
+  }
+}

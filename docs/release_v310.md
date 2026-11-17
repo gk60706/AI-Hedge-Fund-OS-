@@ -212,6 +212,23 @@ python scripts\smoke_live.py --task-id TASK-20261117-4CEEE3A1 `
 
 测试：新增 `test_atomic_write_leaves_no_temp_files`（内容正确 + 无点号开头残留），`test_research_pipeline.py` 10 passed，全量 `tests/ai_team` **660 passed, 4 subtests（37.92s）**。
 
+### 7.8 验收 CLI：新建任务、演练模式与披露落盘
+
+`scripts/smoke_live.py` 从「只能校验已存在的任务」扩成可独立完成一次验收（代码由 ChatGPT 出稿）：
+
+1. **新增参数**：`--task existing|new`（默认 `existing`）、`--symbol`、`--as-of`、`--max-agents`（默认 3，取 `DEFAULT_PARTICIPANTS` 前 N 席）、`--dry-run`；`--task-id` 改为非必填。互斥校验用 `parser.error`：`--task new` 缺 `--symbol`、`--task existing` 缺 `--task-id`、`--max-agents < 1` 都直接报错退出。
+2. **新建任务路径**：`--task new` 时按 `--max-agents` 截取席次调用 `start_task()`，`--as-of` 非空则写进任务标题（`"{symbol} {as_of}"`）。
+3. **演练真正只读**：`--dry-run` 的分支提到建任务之前，只打印 `task_id / task / participants / file_count / dry_run` 就返回，**不建任务、不导入、不校验、不写产物**。实测 `ai_team/tasks` 下的任务文件数在演练前后均为 6，确认无副作用。
+4. **披露信息落盘**：`validation` 块新增 `warnings`（整体级警告）与 `metadata`（`seats_active` / `seats_assigned` / `seats_missing` / `seats_sourced` / `seats_unsourced`），用 `getattr(..., default)` 取值，缺属性时降级为空列表 / 空字典，不影响已有键。此前这些披露只存在于内存结果里，文件上看不到。
+
+**真实验收**（两席、真实报告）：`--task new --symbol 300394.SZ --as-of 2026-11-17 --max-agents 2` 导入 ChatGPT + Grok 两份真实报告，得到 `TASK-20261117-9A3D7FCD` / `VAL-20261117-6D4FD85220`：
+
+- ChatGPT `sources_detected: true`，Grok `sources_invalid: true` 并降级为无来源；
+- `status = partial`，`warnings` 落盘为 `["No sufficiently supported common claims detected.", "Seats excluded from consensus (no structured sources): grok"]`；
+- `metadata` 落盘 `seats_sourced: ["chatgpt"]`、`seats_unsourced: ["grok"]`、`seats_missing: []`。
+
+测试：全量 `tests/ai_team` **660 passed, 4 subtests（41.00s）**，CLI 改动无回归（`scripts/` 不在 pytest 覆盖范围内，已用上述真实命令逐条验证）。
+
 ## 8. 遗留待办（非 V3.10 范围）
 
 - **V3.9.3 断点续跑**：已完成（2026-11-16）。新增 `restore_state()` / `save_checkpoint()` / `from_checkpoint()`、4 个 `Checkpoint*` 异常、`FitnessResult.from_dict()`，并对 checkpoint 与 JSONL 历史做代际一致性校验（`strict=True` 抛错 / 非 strict 写入 `run_metadata`）。详见 `docs/v393_checkpoint.md`，回归 `7 passed`。
