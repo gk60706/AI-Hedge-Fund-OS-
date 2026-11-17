@@ -640,9 +640,9 @@ class CrossValidator:
                 "report_collector cannot be None."
             )
 
-        if min_reports < 2:
+        if min_reports < 1:
             raise ValueError(
-                "min_reports must be at least 2."
+                "min_reports must be at least 1."
             )
 
         if min_claim_words < 1:
@@ -1824,10 +1824,10 @@ class CrossValidator:
         if (
             not isinstance(required_reports, int)
             or isinstance(required_reports, bool)
-            or required_reports < 2
+            or required_reports < 1
         ):
             raise ValueError(
-                "min_reports must be an integer >= 2."
+                "min_reports must be an integer >= 1."
             )
 
         try:
@@ -1939,6 +1939,19 @@ class CrossValidator:
         if not comparisons:
             status = ValidationStatus.PARTIAL.value
 
+        seats_active = [a.agent_id for a in analyses]
+        seats_assigned = list(task.assignments.keys())
+        seats_missing = [s for s in seats_assigned if s not in seats_active]
+        multi_seat_performed = len(seats_active) >= 2
+
+        if not multi_seat_performed:
+            status = "not_performed"
+            warnings.append(
+                f"Multi-AI not performed: {len(seats_active)}/{len(seats_assigned) or len(seats_active)} seats reported."
+            )
+        elif seats_missing:
+            warnings.append(f"Seats not reporting: {', '.join(seats_missing)}")
+
         validation_id = (
             "VAL-"
             + datetime.now(timezone.utc).strftime("%Y%m%d")
@@ -1970,6 +1983,9 @@ class CrossValidator:
                 "algorithm": "deterministic_heuristic_v1",
                 "semantic_verification": False,
                 "factual_verification": False,
+                "seats_active": seats_active,
+                "seats_assigned": seats_assigned,
+                "seats_missing": seats_missing,
             },
         )
 

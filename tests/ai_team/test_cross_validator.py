@@ -365,18 +365,11 @@ def test_validator_requires_report_collector(
         )
 
 
-def test_min_reports_must_be_at_least_two(
-    task_manager,
-    report_collector,
+def test_min_reports_must_be_at_least_one(
+    task_manager, report_collector
 ):
-
-    with pytest.raises(ValueError):
-
-        CrossValidator(
-            task_manager=task_manager,
-            report_collector=report_collector,
-            min_reports=1,
-        )
+    with pytest.raises(ValueError, match="min_reports must be at least 1"):
+        CrossValidator(task_manager, report_collector, min_reports=0)
 
 
 def test_invalid_claim_limit(
@@ -1846,7 +1839,7 @@ def test_validate_task_rejects_invalid_min_reports(
 
         validator.validate_task(
             research_task.task_id,
-            min_reports=1,
+            min_reports=0,
         )
 
 
@@ -2417,3 +2410,24 @@ def test_list_results_rejects_invalid_task_id(
 # ============================================================
 # End of test suite
 # ============================================================
+
+
+def test_single_seat_marks_not_performed(
+    task_manager, research_task, report_collector, bullish_report
+):
+    validator = CrossValidator(task_manager, report_collector, min_reports=1)
+    submit_report(report_collector, research_task.task_id, "chatgpt", bullish_report)
+    result = validator.validate_task(research_task.task_id)
+    assert result.status == "not_performed"
+    assert any(w.startswith("Multi-AI not performed") for w in result.warnings)
+
+
+def test_missing_seat_is_disclosed(
+    task_manager, research_task, report_collector, bullish_report, bearish_report
+):
+    validator = CrossValidator(task_manager, report_collector)
+    submit_report(report_collector, research_task.task_id, "chatgpt", bullish_report)
+    submit_report(report_collector, research_task.task_id, "grok", bearish_report)
+    result = validator.validate_task(research_task.task_id)
+    assert result.status != "not_performed"
+    assert any(w.startswith("Seats not reporting") for w in result.warnings)

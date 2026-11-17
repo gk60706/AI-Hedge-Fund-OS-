@@ -117,7 +117,7 @@ python main_v310.py `
 
 1. **修掉一个静默失败缺陷**：`ai_team/adapters.py::load_env_file` 原先用 `encoding="utf-8"` 读取 `.env`。Windows 记事本保存的 `.env` 带 UTF-8 BOM（`EF BB BF`），首行键会变成 `"\ufeffOPENAI_API_KEY"`，被 `isalnum()` 校验挡掉后**静默丢弃**，于是 `build_registry()` 报 `missing: OPENAI_API_KEY` —— 即使 key 已经填好，live 模式也永远启动不了。改为 `encoding="utf-8-sig"` 后 `build_registry()` 正确返回 `available: ['chatgpt']`。新增 `tests/ai_team/test_env_file.py`（2 例，BOM / 无 BOM）锁定该行为。
 2. **网络需要代理**：本机直连 `api.openai.com` 是 `WinError 10060`（连接超时），首轮 live 因此 0 份报告、`generation.json` 记录 `AdapterResponseError: network error`。设 `HTTPS_PROXY=http://127.0.0.1:7897` 后同一地址返回 401（未带鉴权头），说明链路已通。**live 运行必须先设代理**，否则表现为「模型没产出」，极易被误判成提示词或解析问题。
-3. **单模型在结构上过不了校验**：`CrossValidator.__init__` 硬性要求 `min_reports >= 2`，`V310ResearchPipeline(min_reports=1)` 直接抛 `ValueError: min_reports must be at least 2.`。也就是说只有 OpenAI 一席时，`validate()` 必然失败（`InsufficientReportsError`）。这不是 bug，而是「多 AI 协作」的下限设计；单席位只能停在 `reports_collected`，`run_live` 也已对此显式返回该阶段状态而不伪造辩论与投票。
+3. **单模型在结构上过不了校验**：本轮之前 `CrossValidator` 两处硬性要求 `min_reports >= 2`，`V310ResearchPipeline(min_reports=1)` 直接抛 `ValueError`，只有 OpenAI 一席时 `validate()` 必然失败（`InsufficientReportsError`）。**该契约本轮已按 Hark 的建议调整**：`min_reports` 下限放开到 1，单席位跑完后不再报错，而是返回 `status="not_performed"` 并附 `Multi-AI not performed: 1/3 seats reported.` 警告，绝不输出「多模型一致」；`min_reports=0` 仍直接拒绝。详见 7.4。
 4. **因此 live 全链路验收的充要条件是「≥2 个真实席位」**：一是补 `XAI_API_KEY` / `XAI_MODEL` 让 Grok 上桌；二是走 hybrid——ChatGPT 走 API、Hark 走人工报告导入（Hark 未提供可当模型后端的 API，仓库 `.env.example` 与 Hark 自身答复一致）。两条路径都未在 evidence 上做过真实样本验收，故本轮仍标记为未完成。
 5. **三个 API 席位当天全部不可用**（2026-11-17 实测）：`chatgpt` 的 key 有效但 `HTTP 429 insufficient_quota`（`credit_balance_exhausted`，账户无余额）；`grok` 免费版不提供 API key，传入的 36 位 UUID 被 xAI 判为 `Incorrect API key provided`；`hark` 本就不提供模型后端 API。结论：**V3.10 的「多 AI」在当前账号条件下只能靠人工席位成立**。
 6. **人工席位链路已实测跑通**：`ReportCollector.collect_report(task_id, agent_id, content, source="manual")` 是现成的导入入口，`start_task` 默认给 `chatgpt / grok / hark` 三席都建 assignment，因此人工报告无需额外接线。实测 `TASK-20261117-1E0CC2F2` 依次导入三份真实报告（ChatGPT、Grok 各一份完整报告，Hark 一份在「Evidence and Sources」处被页面截断的残缺报告），`CrossValidator.validate_task()` 返回 `status=success`、`report_count=3`、`conflict_count=0`，三席 quality 分别 100 / 100 / 76，`hark` 因残缺被判 `incomplete` 并带 1 条 warning。证据见 `reports/hybrid_smoke/validation_3seats.json`。
@@ -149,6 +149,18 @@ python scripts\smoke_live.py --task-id TASK-20261117-4CEEE3A1 `
 - 产物为 tmp + `os.replace` 原子写（`artifacts/smoke/run_*.json`），文件内不含密钥。
 
 仍未覆盖：其他阶段（辩论 / 共识 / 投委会）在本机已可通过 `V310ResearchPipeline.resume(task_id)` 续接同一任务；该入口本轮已补齐（新建进程 `resume` 后 `validate()` 实测通过，见 `artifacts/smoke/run_resume.json`），CLI 也已从「直接构造 `CrossValidator`」改为走这条正式接口。
+
+### 7.4 席位诚实披露（多 AI 只有一席时不能再叫「一致」）
+
+三家 AI 交叉审计的共同结论是：单席位 / 缺席席位必须显式披露，不能靠「1 个模型说好」冒充「多 AI 协作」。本轮落地规则（代码由 ChatGPT 出稿）：
+
+1. **`min_reports` 下限 1**：`CrossValidator.__init__` 与 `validate_task` 两处硬约束都从 `< 2` 改为 `< 1`，报错文案分别对齐到 `min_reports must be at least 1.` / `min_reports must be an integer >= 1.`；`0` 与非整数仍拒绝。
+2. **低于 2 席即 `not_performed`**：`validate_task` 统计 `seats_active`（实际有报告的 `agent_id`）、`seats_assigned`（任务 assignment 的 `agent_id`）、`seats_missing`；当活跃席位 < 2 时把 `status` 覆盖为 `"not_performed"` 并追加 `Multi-AI not performed: N/M seats reported.`。这一判定放在原有 `SUCCESS` / `PARTIAL` 逻辑之后，只降级、不改写原判定。
+3. **缺席席位逐一点名**：活跃席位 ≥ 2 但仍有席位未交报告时，追加 `Seats not reporting: grok, hark`。
+4. **结果可审计**：`CrossValidationResult.metadata` 新增 `seats_active` / `seats_assigned` / `seats_missing` 三个列表，调用方不必再靠 warnings 猜席位。
+5. **CLI 与流水线口径**：`V310ResearchPipeline` 默认仍为 `min_reports=2`（正式流水线要求 ≥2 席成立），单席位只在显式 `min_reports=1` 时出现，且必然带 `not_performed`。
+
+测试：`tests/ai_team/test_cross_validator.py` 新增 `test_single_seat_marks_not_performed`（单席 `not_performed` + 警告前缀）、`test_missing_seat_is_disclosed`（两席 + `Seats not reporting` 警告），原 `test_min_reports_must_be_at_least_two` 按新契约改写为 `test_min_reports_must_be_at_least_one`（`min_reports=0` 拒绝），`test_validate_task_rejects_invalid_min_reports` 的入参由 `1` 改为 `0`。实测 `test_cross_validator.py` 94 passed，全量 `tests/ai_team` **657 passed, 4 subtests（39.45s）**。
 
 ## 8. 遗留待办（非 V3.10 范围）
 
