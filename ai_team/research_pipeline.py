@@ -53,6 +53,7 @@ class AgentReport:
     content: str
     source: str = "ai_team_pipeline"
     notes: str = "Research only; not investment advice."
+    sources: list[dict] | None = None
 
 
 @dataclass
@@ -550,6 +551,7 @@ class V310ResearchPipeline:
                         "source": report.source,
                         "notes": report.notes,
                         "allow_incomplete": False,
+                        "sources": report.sources,
                     },
                 )
                 record = self._call_with_timeout(
@@ -820,6 +822,7 @@ class V310ResearchPipeline:
                         "Research only; not investment advice. "
                         f"content_sha256={item.record.content_sha256}"
                     ),
+                    sources=item.sources,
                 )
                 for item in generated
             ],

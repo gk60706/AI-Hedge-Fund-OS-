@@ -27,6 +27,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Mapping, Sequence
 
+from ai_team.source_extraction import extract_sources_from_content
+
 # ============================================================
 # 常量
 # ============================================================
@@ -266,6 +268,7 @@ class GeneratedReport:
     title: str
     content: str
     record: GenerationRecord
+    sources: list[dict] | None = None
 
     @property
     def source(self) -> str:
@@ -277,6 +280,7 @@ class GeneratedReport:
             "title": self.title,
             "content": self.content,
             "generation": self.record.to_dict(),
+            "sources": self.sources,
         }
 
 
@@ -663,6 +667,7 @@ def generate_reports(
             continue
 
         digest = hashlib.sha256(content.encode("utf-8")).hexdigest()
+        sources = extract_sources_from_content(content)
         record = GenerationRecord(
             agent_id=agent_id,
             model=adapter.model,
@@ -679,6 +684,7 @@ def generate_reports(
                 title=f"{agent_id} research report ({adapter.model})",
                 content=content,
                 record=record,
+                sources=sources,
             )
         )
 

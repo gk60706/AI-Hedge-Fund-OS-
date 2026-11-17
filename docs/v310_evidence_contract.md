@@ -74,6 +74,27 @@ validate_evidence_contract(sources) -> {
 
 与 ChatGPT 原始方案（无 `sources` 即拒绝）的差异：现有仓库有约 40 处 `collect_report` 调用（测试与 `research_pipeline._ReportCollectorCall`）都不传 `sources`，硬性必填会让全部旧链路立即失败。当前落地为「传了就严格查，没传就显式记账」，并在元数据里留下 `sources_not_provided` 供后续审计；等适配器/流水线开始产出结构化来源后，可把该状态升级为拒绝。
 
+## 5b. 从模型回答里提取 sources
+
+新增 `ai_team/source_extraction.py`（纯标准库）：
+
+- `extract_sources_from_content(content)`：优先 ```` ```json ```` 代码块里的 `{"sources": [...]}`，其次裸 JSON 对象，最后裸数组；取**最后一个**可解析的候选（模型常先给示例、后给正式数据）；只保留 dict 元素；任何异常或找不到都返回 `None`，不抛出；
+- `extract_sources_or_empty(content)`：同上但返回 `[]`。
+
+实现上不使用递归正则（Python 标准库 `re` 不支持 `(?R)`），而是用 `json.JSONDecoder().raw_decode` 从每个 `{` / `[` 位置尝试解析。
+
+接线：
+
+| 位置 | 改动 |
+| --- | --- |
+| `adapters.GeneratedReport` | 新增 `sources: list[dict] | None = None`，`to_dict()` 输出 `sources` |
+| `adapters.generate_reports` | 拿到 `content` 后调 `extract_sources_from_content(content)`，传入 `GeneratedReport` |
+| `research_pipeline.AgentReport` | 新增 `sources` 字段（默认 `None`，保持旧的位置/关键字构造不破） |
+| `research_pipeline._submit_one` | `collect_report` 的 kwargs 增加 `"sources": report.sources` |
+| `research_pipeline.run_with_adapters` | `AgentReport(...)` 转换处传 `sources=item.sources`，否则提取结果到不了收集器 |
+
+因此走真实 API 链路时：模型正文里的 `sources` 会被提取 → 随报告提交 → 严格校验 → 写入 `validation["evidence_contract"]`。提取不到（模型没输出结构化来源）时仍走 `sources_not_provided`，不会误拒报告。
+
 ## 6. 测试
 
 `tests/ai_team/test_evidence_contract.py` 6 例：
@@ -85,10 +106,15 @@ validate_evidence_contract(sources) -> {
 5. 缺 `verification_status` → `missing_or_invalid_verification_status`；
 6. `sources=[]` → `missing_sources`。
 
+`tests/ai_team/test_source_extraction.py` 6 例：多个 fenced 块取最后一个、裸 JSON 对象、裸数组、非 dict 元素过滤、无 JSON 返回 `None`/`[]`、坏 JSON 不抛异常。
+
+`tests/ai_team/test_sources_wiring.py` 2 例：假 transport 返回带 `sources` 的正文时 `GeneratedReport.sources` 与 `to_dict()["sources"]` 都有值；`AgentReport` 不传 `sources` 时默认 `None`、传了则原样保留。
+
 另用临时脚本做过一次接线验证：完整来源 → 报告落盘且 `validation["evidence_contract"]["status"] == "validated"`；删掉 `url` → `InvalidReportError: 报告证据校验失败: source[0].url: 必须提供原始来源链接。`
 
 ## 7. 明确未做
 
 - **没有验证来源真实性**：`verified` 只是提交方的声明，系统没有抓取原始链接、比对内容或检查结论—来源对应关系；
-- **流水线尚未传结构化来源**：`research_pipeline._ReportCollectorCall` 仍只传正文，适配器也还没有解析 `sources`；因此线上链路目前写入的是 `sources_not_provided`；
-- **`unverified` 不影响投票**：投委会与共识引擎没有读取 `validation["evidence_contract"]`，未核实报告仍按普通报告计分。
+- **提取是启发式**：模型若把 `sources` 写成不规范 JSON（注释、尾逗号、中文标点），`extract_sources_from_content` 会解析失败并退回 `None`，此时报告仍按 `sources_not_provided` 收下，不会被拒；
+- **`unverified` 不影响投票**：投委会与共识引擎没有读取 `validation["evidence_contract"]`，未核实报告仍按普通报告计分；
+- **`sources_not_provided` 尚未升级为拒绝**：等线上真实调用稳定产出结构化来源后，才考虑把「模型未给来源」判为不合格。
