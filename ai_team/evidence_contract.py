@@ -5,7 +5,7 @@ Pure validation helpers, no third-party dependencies.
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date, datetime
 from typing import Any
 from urllib.parse import urlsplit
 
@@ -26,6 +26,22 @@ ALLOWED_VERIFICATION_STATUSES = frozenset({
     "verified",
     "unverified",
 })
+
+
+SOURCE_TYPE_ALIASES = {
+    "research_report": "industry_research",
+    "broker_report": "industry_research",
+    "exchange_data": "financial_data",
+    "market_data": "financial_data",
+    "news": "news_media",
+    "news_article": "news_media",
+    "filing": "company_filing",
+    "company_announcement": "company_filing",
+    "official_site": "official",
+    "government_site": "government",
+    "website": "other",
+    "web": "other",
+}
 
 
 def validate_evidence_contract(
@@ -158,25 +174,25 @@ def validate_evidence_contract(
             try:
                 normalized = published_at.strip()
                 if "T" not in normalized:
-                    raise ValueError("missing time component")
+                    date.fromisoformat(normalized)
+                else:
+                    if normalized.endswith("Z"):
+                        normalized = normalized[:-1] + "+00:00"
 
-                if normalized.endswith("Z"):
-                    normalized = normalized[:-1] + "+00:00"
+                    parsed_datetime = datetime.fromisoformat(normalized)
 
-                parsed_datetime = datetime.fromisoformat(normalized)
-
-                if (
-                    parsed_datetime.tzinfo is None
-                    or parsed_datetime.utcoffset() is None
-                ):
-                    raise ValueError("timezone is required")
+                    if (
+                        parsed_datetime.tzinfo is None
+                        or parsed_datetime.utcoffset() is None
+                    ):
+                        raise ValueError("timezone is required")
 
             except (TypeError, ValueError, OverflowError):
                 add_error(
                     index,
                     "published_at",
                     "invalid_published_at",
-                    "发布日期必须是带时区的 ISO 8601 时间戳。",
+                    "发布日期必须是带时区的 ISO 8601 时间戳，或 YYYY-MM-DD 日期精度。",
                 )
 
         # 4. Data period.
@@ -191,10 +207,18 @@ def validate_evidence_contract(
 
         # 5. Source type.
         source_type = source.get("source_type")
-        if (
-            not isinstance(source_type, str)
-            or source_type not in ALLOWED_SOURCE_TYPES
-        ):
+        if isinstance(source_type, str):
+            normalized_type = (
+                source_type.strip().lower()
+                .replace(" ", "_")
+                .replace("-", "_")
+            )
+            if normalized_type not in ALLOWED_SOURCE_TYPES:
+                normalized_type = SOURCE_TYPE_ALIASES.get(normalized_type)
+        else:
+            normalized_type = None
+
+        if normalized_type not in ALLOWED_SOURCE_TYPES:
             add_error(
                 index,
                 "source_type",

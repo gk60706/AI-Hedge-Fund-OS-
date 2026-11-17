@@ -174,7 +174,27 @@ python scripts\smoke_live.py --task-id TASK-20261117-4CEEE3A1 `
 
 测试：新增 `test_unsourced_seats_are_excluded_from_consensus`（chatgpt 带合法来源、grok/hark 无来源 → `seats_sourced == ["chatgpt"]`、`seats_unsourced` 含 grok/hark、出现 `Seats excluded from consensus` 警告），`test_cross_validator.py` 95 passed，全量 `tests/ai_team` **658 passed, 4 subtests（42.43s）**。
 
-**本轮真实链路实测又暴露一个契约缺口**（未修，列为下一步）：新建 `TASK-20261117-E9218E6D` 走 CLI 导入三份真实报告，`sources_detected` 三席全为 false —— ChatGPT 那份的 4 条来源本身是真实的（巨潮三季报 / 国泰海通点评 / 回购进展 / 中财网行情），但被证据契约拒绝：`published_at` 是日期（`2026-10-29`）不带时区，`source_type` 用了 `research_report` / `exchange_data` 这两个不在 `ALLOWED_SOURCE_TYPES` 里的写法。也就是说**契约比模型的实际输出更严，正确来源会被判成无来源**，需要下一步做来源标准化（别名映射 + 日期精度处理），而不是继续加严。
+**本轮真实链路实测又暴露一个契约缺口**（已修，见 7.6）：新建 `TASK-20261117-E9218E6D` 走 CLI 导入三份真实报告，`sources_detected` 三席全为 false —— ChatGPT 那份的 4 条来源本身是真实的（巨潮三季报 / 国泰海通点评 / 回购进展 / 中财网行情），但被证据契约拒绝：`published_at` 是日期（`2026-10-29`）不带时区，`source_type` 用了 `research_report` / `exchange_data` 这两个不在 `ALLOWED_SOURCE_TYPES` 里的写法。也就是说**契约比模型的实际输出更严，正确来源会被判成无来源**。
+
+### 7.6 来源标准化：别名映射 + 日期精度
+
+按「标准化而不是继续加严」修（代码由 ChatGPT 出稿），只放宽两处可确定的写法差异，不替模型编造任何信息：
+
+1. **来源类型别名**：新增 `SOURCE_TYPE_ALIASES`，把模型常用的近义写法映射到白名单规范值 —— `research_report` / `broker_report` → `industry_research`，`exchange_data` / `market_data` → `financial_data`，`news` / `news_article` → `news_media`，`filing` / `company_announcement` → `company_filing`，`official_site` → `official`，`government_site` → `government`，`website` / `web` → `other`。校验时先做归一（`strip` + 小写 + 空格/连字符转下划线），命中白名单直接用，否则查别名表，两处都不中才报 `invalid_source_type`。
+2. **发布日期精度**：原本只认「带 `T` 且带时区」的完整时间戳。现在额外接受纯日期 `YYYY-MM-DD`（`date.fromisoformat` 判定，合法即通过，**不补时分秒、不猜时区**）；带时间但缺时区的仍拒绝，失败文案改为「发布日期必须是带时区的 ISO 8601 时间戳，或 YYYY-MM-DD 日期精度。」
+
+**同一条真实数据重放的对照**（同一批三份真实报告）：
+
+| 项 | `TASK-20261117-E9218E6D`（标准化前） | `TASK-20261117-B7124A1F`（标准化后） |
+| --- | --- | --- |
+| ChatGPT 来源 | `sources_detected: false`，`sources_invalid: true` | `sources_detected: true`（4 条来源全部通过契约） |
+| Grok 来源 | `sources_invalid: true`（URL 被拼接损坏，属真损坏） | 同前，仍 `sources_invalid: true` 并降级为无来源导入 |
+| Hark 来源 | 无结构化来源 | 同前，无结构化来源 |
+| 校验结果 | `success`（三席全无来源，只发模型自述警告） | **`partial`**（`VAL-20261117-E2031C0C27`，只有 ChatGPT 计入共识） |
+
+即：契约放宽后，真实可用的 4 条来源第一次被正确识别，混合场景按「只有有来源的席位投票」执行，Grok 的损坏 URL 与 Hark 的无来源都被如实披露而不是整份丢弃。
+
+测试：新增 `test_date_only_and_alias_source_types_are_accepted`（日期精度 + 连字符别名 `research-report` 必须通过），`test_evidence_contract.py` + `test_cross_validator.py` 合计 **102 passed**，全量 `tests/ai_team` **659 passed, 4 subtests**。
 
 ## 8. 遗留待办（非 V3.10 范围）
 

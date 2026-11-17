@@ -1,0 +1,50 @@
+{
+  "task_id": "TASK-20261117-B7124A1F",
+  "imported": [
+    {
+      "agent_id": "chatgpt",
+      "status": "success",
+      "sources_detected": true
+    },
+    {
+      "agent_id": "grok",
+      "status": "success",
+      "sources_detected": false,
+      "sources_invalid": true
+    },
+    {
+      "agent_id": "hark",
+      "status": "success",
+      "sources_detected": false
+    }
+  ],
+  "failures": {},
+  "report_count": 3,
+  "validation": {
+    "status": "partial",
+    "validation_id": "VAL-20261117-E2031C0C27",
+    "seats": [
+      {
+        "agent_id": "hark",
+        "quality_score": 76.0,
+        "evidence_score": 100.0,
+        "claims": 5,
+        "warnings": 1
+      },
+      {
+        "agent_id": "grok",
+        "quality_score": 100.0,
+        "evidence_score": 100.0,
+        "claims": 9,
+        "warnings": 0
+      },
+      {
+        "agent_id": "chatgpt",
+        "quality_score": 100.0,
+        "evidence_score": 100.0,
+        "claims": 21,
+        "warnings": 0
+      }
+    ]
+  }
+}

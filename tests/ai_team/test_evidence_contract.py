@@ -79,3 +79,14 @@ def test_empty_sources_is_rejected():
     assert result["valid"] is False
     assert result["source_count"] == 0
     assert result["errors"][0]["code"] == "missing_sources"
+
+
+def test_date_only_and_alias_source_types_are_accepted():
+    source = _valid_source()
+    source["published_at"] = "2026-10-29"
+    source["source_type"] = "research-report"
+
+    result = validate_evidence_contract([source])
+
+    assert result["valid"] is True
+    assert result["errors"] == []
