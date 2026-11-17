@@ -11,7 +11,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from ai_team.research_pipeline import V310ResearchPipeline
 from ai_team.report_collector import ReportFormat
-from ai_team.cross_validator import CrossValidator
 
 
 def atomic_write(path: Path, content: str) -> None:
@@ -73,10 +72,8 @@ def main() -> int:
 
     validation = {"status": None, "validation_id": None, "seats": []}
     try:
-        result = CrossValidator(
-            task_manager=pipeline.task_manager,
-            report_collector=pipeline.report_collector,
-        ).validate_task(args.task_id)
+        pipeline.resume(args.task_id)
+        result = pipeline.validate()
         validation = {
             "status": result.status,
             "validation_id": result.validation_id,

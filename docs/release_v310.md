@@ -148,7 +148,7 @@ python scripts\smoke_live.py --task-id TASK-20261117-4CEEE3A1 `
 - 新任务 `TASK-20261117-4CEEE3A1` 走完整导入路径 → 三席 `success`、`report_count=3`、`status=success`、`VAL-20261117-B0B74C5593`，退出码 0。
 - 产物为 tmp + `os.replace` 原子写（`artifacts/smoke/run_*.json`），文件内不含密钥。
 
-仍未覆盖：`pipeline` 自身依旧没有 `resume(task_id)` 公开方法，`existing` 模式是在 CLI 层绕过（直接构造 `CrossValidator`），所以**其他调用方（辩论/共识/投委会）在新进程里续接同一 task 仍缺入口**。
+仍未覆盖：其他阶段（辩论 / 共识 / 投委会）在本机已可通过 `V310ResearchPipeline.resume(task_id)` 续接同一任务；该入口本轮已补齐（新建进程 `resume` 后 `validate()` 实测通过，见 `artifacts/smoke/run_resume.json`），CLI 也已从「直接构造 `CrossValidator`」改为走这条正式接口。
 
 ## 8. 遗留待办（非 V3.10 范围）
 

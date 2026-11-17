@@ -264,3 +264,23 @@ def test_degraded_run_records_failed_agents_in_artifact(tmp_path, monkeypatch):
     assert "hark" in (outcome.failed_agents or {})
     payload = json.loads(output.read_text(encoding="utf-8"))
     assert "hark" in payload["failed_agents"]
+
+
+def test_resume_binds_existing_task(tmp_path: Path):
+    original = V310ResearchPipeline(project_root=tmp_path)
+    task_id = original.start_task(SYMBOL)
+    resumed = V310ResearchPipeline(project_root=tmp_path)
+    assert resumed.resume(task_id) == task_id
+    assert resumed.task_id == task_id
+
+
+def test_resume_rejects_empty_task_id(tmp_path: Path):
+    instance = V310ResearchPipeline(project_root=tmp_path)
+    with pytest.raises(ValueError):
+        instance.resume("   ")
+
+
+def test_resume_rejects_unknown_task(tmp_path: Path):
+    instance = V310ResearchPipeline(project_root=tmp_path)
+    with pytest.raises(ValueError):
+        instance.resume("TASK-NOT-EXIST")

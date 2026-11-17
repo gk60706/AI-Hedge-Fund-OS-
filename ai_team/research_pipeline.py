@@ -540,6 +540,19 @@ class V310ResearchPipeline:
         self._task_id = task_id
         return task_id
 
+    def resume(self, task_id: str) -> str:
+        """跨进程续接既有任务，不做 create/assign/start"""
+        task_id = str(task_id).strip()
+        if not task_id:
+            raise ValueError("task_id must not be empty")
+        try:
+            self.task_manager.get_task(task_id)
+        except Exception as exc:
+            raise ValueError(f"unknown task: {task_id}") from exc
+        # 不校验状态，交给后续阶段报错
+        self._task_id = task_id
+        return task_id
+
     @property
     def task_id(self) -> str:
         if not self._task_id:
