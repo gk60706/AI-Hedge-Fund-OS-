@@ -119,6 +119,10 @@ python main_v310.py `
 2. **网络需要代理**：本机直连 `api.openai.com` 是 `WinError 10060`（连接超时），首轮 live 因此 0 份报告、`generation.json` 记录 `AdapterResponseError: network error`。设 `HTTPS_PROXY=http://127.0.0.1:7897` 后同一地址返回 401（未带鉴权头），说明链路已通。**live 运行必须先设代理**，否则表现为「模型没产出」，极易被误判成提示词或解析问题。
 3. **单模型在结构上过不了校验**：`CrossValidator.__init__` 硬性要求 `min_reports >= 2`，`V310ResearchPipeline(min_reports=1)` 直接抛 `ValueError: min_reports must be at least 2.`。也就是说只有 OpenAI 一席时，`validate()` 必然失败（`InsufficientReportsError`）。这不是 bug，而是「多 AI 协作」的下限设计；单席位只能停在 `reports_collected`，`run_live` 也已对此显式返回该阶段状态而不伪造辩论与投票。
 4. **因此 live 全链路验收的充要条件是「≥2 个真实席位」**：一是补 `XAI_API_KEY` / `XAI_MODEL` 让 Grok 上桌；二是走 hybrid——ChatGPT 走 API、Hark 走人工报告导入（Hark 未提供可当模型后端的 API，仓库 `.env.example` 与 Hark 自身答复一致）。两条路径都未在 evidence 上做过真实样本验收，故本轮仍标记为未完成。
+5. **三个 API 席位当天全部不可用**（2026-11-17 实测）：`chatgpt` 的 key 有效但 `HTTP 429 insufficient_quota`（`credit_balance_exhausted`，账户无余额）；`grok` 免费版不提供 API key，传入的 36 位 UUID 被 xAI 判为 `Incorrect API key provided`；`hark` 本就不提供模型后端 API。结论：**V3.10 的「多 AI」在当前账号条件下只能靠人工席位成立**。
+6. **人工席位链路已实测跑通**：`ReportCollector.collect_report(task_id, agent_id, content, source="manual")` 是现成的导入入口，`start_task` 默认给 `chatgpt / grok / hark` 三席都建 assignment，因此人工报告无需额外接线。实测 `TASK-20261117-1E0CC2F2` 依次导入三份真实报告（ChatGPT、Grok 各一份完整报告，Hark 一份在「Evidence and Sources」处被页面截断的残缺报告），`CrossValidator.validate_task()` 返回 `status=success`、`report_count=3`、`conflict_count=0`，三席 quality 分别 100 / 100 / 76，`hark` 因残缺被判 `incomplete` 并带 1 条 warning。证据见 `reports/hybrid_smoke/validation_3seats.json`。
+7. **该次验收同时暴露两个产品级缺口**：`research_pipeline` 没有「续接既有 task_id」的公开入口（新进程里 `validate()` 直接抛 `RuntimeError: start_task must run before this stage`，只能用 `CrossValidator` 手工接），以及人工席位没有 CLI / 脚本化导入手段，只能写代码调用 `collect_report`。这两点正是三家 AI 都点名的 `scripts/smoke_live.py` 缺失的具体形态。
+8. 本次导入的三份报告均为模型自述、数值未与交易所原始数据核对（`verification_status=verified` 只是模型自己声明），**不得当作投资结论使用**，仅作链路验收样本。
 
 ## 8. 遗留待办（非 V3.10 范围）
 
