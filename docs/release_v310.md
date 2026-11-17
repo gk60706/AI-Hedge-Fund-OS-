@@ -124,6 +124,32 @@ python main_v310.py `
 7. **该次验收同时暴露两个产品级缺口**：`research_pipeline` 没有「续接既有 task_id」的公开入口（新进程里 `validate()` 直接抛 `RuntimeError: start_task must run before this stage`，只能用 `CrossValidator` 手工接），以及人工席位没有 CLI / 脚本化导入手段，只能写代码调用 `collect_report`。这两点正是三家 AI 都点名的 `scripts/smoke_live.py` 缺失的具体形态。
 8. 本次导入的三份报告均为模型自述、数值未与交易所原始数据核对（`verification_status=verified` 只是模型自己声明），**不得当作投资结论使用**，仅作链路验收样本。
 
+### 7.3 人工席位 CLI：`scripts/smoke_live.py`
+
+第 7.2 节第 7 条点名的「人工席位没有 CLI」已补齐，代码取自 ChatGPT 会话（本轮多段输出拼接，含一处仓库级修复：`sys.path.insert` 对齐 `scripts/run_research.py` 约定，否则直接运行会 `ModuleNotFoundError: ai_team`）。
+
+用途：把「导入人工报告 → 续接既有任务 → 交叉校验」固化成一条命令，不再需要手写 `collect_report` / `CrossValidator`。
+
+```powershell
+# 只校验既有任务（不导入）
+python scripts\smoke_live.py --task-id TASK-20261117-1E0CC2F2 --artifact artifacts\smoke\run_existing.json
+
+# 三席人工报告导入 + 校验（--import-report 与 --file 一一对应）
+python scripts\smoke_live.py --task-id TASK-20261117-4CEEE3A1 `
+  --import-report chatgpt --file report_chatgpt.md `
+  --import-report grok    --file report_grok.md `
+  --import-report hark    --file report_hark.md `
+  --artifact artifacts\smoke\run_import.json
+```
+
+实测结果：
+
+- 既有任务 `TASK-20261117-1E0CC2F2` → `report_count=3`、`status=success`、`VAL-20261117-7862E97D8D`，退出码 0。
+- 新任务 `TASK-20261117-4CEEE3A1` 走完整导入路径 → 三席 `success`、`report_count=3`、`status=success`、`VAL-20261117-B0B74C5593`，退出码 0。
+- 产物为 tmp + `os.replace` 原子写（`artifacts/smoke/run_*.json`），文件内不含密钥。
+
+仍未覆盖：`pipeline` 自身依旧没有 `resume(task_id)` 公开方法，`existing` 模式是在 CLI 层绕过（直接构造 `CrossValidator`），所以**其他调用方（辩论/共识/投委会）在新进程里续接同一 task 仍缺入口**。
+
 ## 8. 遗留待办（非 V3.10 范围）
 
 - **V3.9.3 断点续跑**：已完成（2026-11-16）。新增 `restore_state()` / `save_checkpoint()` / `from_checkpoint()`、4 个 `Checkpoint*` 异常、`FitnessResult.from_dict()`，并对 checkpoint 与 JSONL 历史做代际一致性校验（`strict=True` 抛错 / 非 strict 写入 `run_metadata`）。详见 `docs/v393_checkpoint.md`，回归 `7 passed`。

@@ -1,0 +1,33 @@
+{
+  "task_id": "TASK-20261117-1E0CC2F2",
+  "imported": [],
+  "failures": {},
+  "report_count": 3,
+  "validation": {
+    "status": "success",
+    "validation_id": "VAL-20261117-7862E97D8D",
+    "seats": [
+      {
+        "agent_id": "chatgpt",
+        "quality_score": 100.0,
+        "evidence_score": 100.0,
+        "claims": 21,
+        "warnings": 0
+      },
+      {
+        "agent_id": "hark",
+        "quality_score": 76.0,
+        "evidence_score": 100.0,
+        "claims": 5,
+        "warnings": 1
+      },
+      {
+        "agent_id": "grok",
+        "quality_score": 100.0,
+        "evidence_score": 100.0,
+        "claims": 9,
+        "warnings": 0
+      }
+    ]
+  }
+}
