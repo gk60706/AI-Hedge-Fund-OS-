@@ -15,7 +15,9 @@ from __future__ import annotations
 import argparse
 import json
 import multiprocessing
+import os
 import pickle
+import tempfile
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import TimeoutError as FutureTimeoutError
 from dataclasses import asdict, dataclass, is_dataclass
@@ -34,9 +36,37 @@ from ai_team.debate_engine import (
 from ai_team.investment_committee import InvestmentCommittee
 from ai_team.report_collector import ReportCollector
 from ai_team.task_manager import TaskManager
+from evolution.file_lock import FileLock
 
 
 DEFAULT_PARTICIPANTS = ("chatgpt", "grok", "hark")
+
+
+def _write_text_atomic(
+    path: Path,
+    text: str,
+    *,
+    timeout: float = 30.0,
+) -> None:
+    """在 FileLock 内以「同目录临时文件 + os.replace」原子写入文本。"""
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temp_path = None
+    with FileLock(path, timeout=timeout):
+        try:
+            fd, temp_name = tempfile.mkstemp(
+                dir=str(path.parent),
+                prefix=f".{path.name}.",
+            )
+            temp_path = Path(temp_name)
+            with os.fdopen(fd, "w", encoding="utf-8") as f:
+                f.write(text)
+                f.flush()
+                os.fsync(f.fileno())
+            os.replace(temp_path, path)
+        finally:
+            if temp_path is not None:
+                temp_path.unlink(missing_ok=True)
 
 
 # ============================================================
@@ -868,9 +898,9 @@ class V310ResearchPipeline:
         self.agent_failures.update(failures)
 
         for item in generated:
-            (reports_dir / f"{item.agent_id}.md").write_text(
+            _write_text_atomic(
+                reports_dir / f"{item.agent_id}.md",
                 item.content,
-                encoding="utf-8",
             )
 
         audit = {
@@ -883,9 +913,9 @@ class V310ResearchPipeline:
             "generated": [item.to_dict() for item in generated],
             "failures": failures,
         }
-        (reports_dir.parent / "generation.json").write_text(
+        _write_text_atomic(
+            reports_dir.parent / "generation.json",
             json.dumps(audit, ensure_ascii=False, indent=2, default=str),
-            encoding="utf-8",
         )
 
         submitted = self.submit_reports(
@@ -975,9 +1005,9 @@ class V310ResearchPipeline:
             "failed_agents": _to_jsonable(outcome.failed_agents or {}),
         }
 
-        target.write_text(
+        _write_text_atomic(
+            target,
             json.dumps(payload, ensure_ascii=False, indent=2),
-            encoding="utf-8",
         )
         return target
 

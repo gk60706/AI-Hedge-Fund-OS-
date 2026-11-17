@@ -284,3 +284,14 @@ def test_resume_rejects_unknown_task(tmp_path: Path):
     instance = V310ResearchPipeline(project_root=tmp_path)
     with pytest.raises(ValueError):
         instance.resume("TASK-NOT-EXIST")
+
+
+def test_atomic_write_leaves_no_temp_files(tmp_path):
+    from ai_team.research_pipeline import _write_text_atomic
+
+    target = tmp_path / "out.json"
+    _write_text_atomic(target, "{\"a\": 1}")
+
+    assert target.exists()
+    assert target.read_text(encoding="utf-8") == "{\"a\": 1}"
+    assert not [p for p in tmp_path.iterdir() if p.name.startswith(".")]

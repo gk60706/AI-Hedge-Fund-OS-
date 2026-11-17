@@ -196,6 +196,21 @@ python scripts\smoke_live.py --task-id TASK-20261117-4CEEE3A1 `
 
 测试：新增 `test_date_only_and_alias_source_types_are_accepted`（日期精度 + 连字符别名 `research-report` 必须通过），`test_evidence_contract.py` + `test_cross_validator.py` 合计 **102 passed**，全量 `tests/ai_team` **659 passed, 4 subtests**。
 
+### 7.7 流水线产物：原子写 + 跨进程互斥
+
+三家审计都点名「产物写入没有跨进程互斥，并发或中途崩溃会留下半截 JSON」。按「锁只加在真正的产物写入点」的口径修（代码由 ChatGPT 出稿），不动 `TaskManager` / `ReportCollector` 已有的锁：
+
+1. **新增模块级辅助函数** `_write_text_atomic(path, text, *, timeout=30.0)`：父目录 `mkdir(parents=True, exist_ok=True)`，在 `FileLock(path, timeout)`（`evolution.file_lock`，目标文件旁的 `.lock` 侧车文件）内，用 `tempfile.mkstemp` 在**同目录**建临时文件，写入 UTF-8 后 `flush` + `os.fsync`，再 `os.replace` 覆盖目标；任一步失败都 `unlink` 临时文件，不留残片。
+2. **三处裸写改为调用它**：`run_live` 的 `reports/<agent>.md`、`reports/generation.json`（审计记录），以及 `save_artifact()` 的结果 JSON。
+
+**真实路径验证**（不依赖 API key，走真实 `run_live` 代码路径）：在临时目录跑 `run_live`，三席因无可用凭据全部失败、`submit_reports` 抛出 `InsufficientAgentsError`，但落盘已经完成 ——
+
+- `generation.json` 存在且 1188 字节，`json.loads` 可解析，顶层键为 `task_id / symbol / as_of_date / registry / generated / failures`；
+- 目录内**没有** `.generation.json.*` 形式的残留临时文件；
+- 只有设计内的 `generation.json.lock` 侧车文件。
+
+测试：新增 `test_atomic_write_leaves_no_temp_files`（内容正确 + 无点号开头残留），`test_research_pipeline.py` 10 passed，全量 `tests/ai_team` **660 passed, 4 subtests（37.92s）**。
+
 ## 8. 遗留待办（非 V3.10 范围）
 
 - **V3.9.3 断点续跑**：已完成（2026-11-16）。新增 `restore_state()` / `save_checkpoint()` / `from_checkpoint()`、4 个 `Checkpoint*` 异常、`FitnessResult.from_dict()`，并对 checkpoint 与 JSONL 历史做代际一致性校验（`strict=True` 抛错 / 非 strict 写入 `run_metadata`）。详见 `docs/v393_checkpoint.md`，回归 `7 passed`。
