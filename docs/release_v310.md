@@ -111,6 +111,15 @@ python main_v310.py `
   - `onnxruntime` 在本机基座 Python 上 `import` 即原生崩溃（退出码 `-1073741819` / `0xC0000005`，`--upgrade` 到 1.32.0 后依旧），chromadb 默认嵌入函数依赖它。受影响用例 3 个：`test_v09.py::TestMemory::test_memory_save_search`、`test_v11.py::test_chromadb_vector_store`、`test_v21.py::TestVectorMemory::test_save_and_search`，故用 `--deselect` 剔除后取计数。
   - `torch` 在本机装出的 DLL 均为 1 字节且 `import torch` 报 `WinError 126 (shm.dll)`，已卸载；对应 2 个形状用例走 SKIP。
 
+### 7.2 真实 API live 验收实测（2026-11-17）
+
+`V310ResearchPipeline.run_live()` 是现成的真实链路入口，本轮直接用它做了一次 live 冒烟（标的 `300394.SZ`，`as_of_date=2026-11-17`）。四条实测结论：
+
+1. **修掉一个静默失败缺陷**：`ai_team/adapters.py::load_env_file` 原先用 `encoding="utf-8"` 读取 `.env`。Windows 记事本保存的 `.env` 带 UTF-8 BOM（`EF BB BF`），首行键会变成 `"\ufeffOPENAI_API_KEY"`，被 `isalnum()` 校验挡掉后**静默丢弃**，于是 `build_registry()` 报 `missing: OPENAI_API_KEY` —— 即使 key 已经填好，live 模式也永远启动不了。改为 `encoding="utf-8-sig"` 后 `build_registry()` 正确返回 `available: ['chatgpt']`。新增 `tests/ai_team/test_env_file.py`（2 例，BOM / 无 BOM）锁定该行为。
+2. **网络需要代理**：本机直连 `api.openai.com` 是 `WinError 10060`（连接超时），首轮 live 因此 0 份报告、`generation.json` 记录 `AdapterResponseError: network error`。设 `HTTPS_PROXY=http://127.0.0.1:7897` 后同一地址返回 401（未带鉴权头），说明链路已通。**live 运行必须先设代理**，否则表现为「模型没产出」，极易被误判成提示词或解析问题。
+3. **单模型在结构上过不了校验**：`CrossValidator.__init__` 硬性要求 `min_reports >= 2`，`V310ResearchPipeline(min_reports=1)` 直接抛 `ValueError: min_reports must be at least 2.`。也就是说只有 OpenAI 一席时，`validate()` 必然失败（`InsufficientReportsError`）。这不是 bug，而是「多 AI 协作」的下限设计；单席位只能停在 `reports_collected`，`run_live` 也已对此显式返回该阶段状态而不伪造辩论与投票。
+4. **因此 live 全链路验收的充要条件是「≥2 个真实席位」**：一是补 `XAI_API_KEY` / `XAI_MODEL` 让 Grok 上桌；二是走 hybrid——ChatGPT 走 API、Hark 走人工报告导入（Hark 未提供可当模型后端的 API，仓库 `.env.example` 与 Hark 自身答复一致）。两条路径都未在 evidence 上做过真实样本验收，故本轮仍标记为未完成。
+
 ## 8. 遗留待办（非 V3.10 范围）
 
 - **V3.9.3 断点续跑**：已完成（2026-11-16）。新增 `restore_state()` / `save_checkpoint()` / `from_checkpoint()`、4 个 `Checkpoint*` 异常、`FitnessResult.from_dict()`，并对 checkpoint 与 JSONL 历史做代际一致性校验（`strict=True` 抛错 / 非 strict 写入 `run_metadata`）。详见 `docs/v393_checkpoint.md`，回归 `7 passed`。

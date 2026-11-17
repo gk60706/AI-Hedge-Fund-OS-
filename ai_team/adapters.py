@@ -477,7 +477,7 @@ def load_env_file(path: str | Path | None = None) -> dict[str, str]:
     if not env_path.is_file():
         return values
 
-    for raw in env_path.read_text(encoding="utf-8", errors="replace").splitlines():
+    for raw in env_path.read_text(encoding="utf-8-sig", errors="replace").splitlines():
         line = raw.strip()
         if not line or line.startswith("#") or "=" not in line:
             continue
