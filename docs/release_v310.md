@@ -259,6 +259,17 @@ Manual import required for: grok, hark
 
 测试：新增 `test_validate_task_persists_result`（不显式调 `save_result`，只断言 `validate_task` 后路径存在且内容是可解析 JSON、含 `validation_id`），全量 `tests/ai_team` **662 passed, 4 subtests（52.92s）**。
 
+### 7.11 429 限流：分类、Retry-After 与有上限的退避
+
+此前 `_urllib_transport` 把 4xx/5xx 一律包成 `AdapterResponseError`，provider 的限流响应被当成普通失败直接记入 `failures`，完全没有重试机会。现在（Grok 出稿、助手只做落盘）：
+
+- 新增 `AdapterRateLimitError(AdapterError)`，带 `retry_after: float | None`；
+- 429 时解析 `Retry-After`：纯秒数字符串转 `float`；HTTP-date 用 `email.utils.parsedate_to_datetime` 折算成剩余秒数（naive 时间按 UTC 处理），解析失败记 `None`；其余状态码行为不变；
+- `generate_reports` 新增 `rate_limit_retries=2` / `base_retry_wait=5.0` / `max_retry_wait=60.0`：逐席调用改为 `while True`，`AdapterRateLimitError` 时按 `retry_after` 等待重试；没有 `retry_after` 用 `base_retry_wait`；单次等待超过 `max_retry_wait` 时**不等待**，直接记 `rate limit retry_after exceeds cap (<秒>)` 并退出；`AdapterError` 行为不变；
+- 失败分支保持 `continue` 语义：`content` 以 `None` 初始化，重试耗尽或异常后不再用上一席的正文生成报告（这是落盘时补的机械修正，Grok 原稿把 `continue` 写成了 `break`）。
+
+测试（ChatGPT 出稿、助手按可注入 transport 调整）：`test_http_429_raises_rate_limit_error` 直接 monkeypatch `urllib.request.urlopen`，验证 429 + `Retry-After: 3` → `retry_after == 3.0`；`test_429_beyond_cap_records_failure` 用 `retry_after=999` 且把 `time.sleep` 换成 `pytest.fail`，证明超上限时真的不睡、只记失败。全量 `tests/ai_team` **664 passed, 4 subtests（38.67s）**。
+
 ## 8. 遗留待办（非 V3.10 范围）
 
 - **V3.9.3 断点续跑**：已完成（2026-11-16）。新增 `restore_state()` / `save_checkpoint()` / `from_checkpoint()`、4 个 `Checkpoint*` 异常、`FitnessResult.from_dict()`，并对 checkpoint 与 JSONL 历史做代际一致性校验（`strict=True` 抛错 / 非 strict 写入 `run_metadata`）。详见 `docs/v393_checkpoint.md`，回归 `7 passed`。

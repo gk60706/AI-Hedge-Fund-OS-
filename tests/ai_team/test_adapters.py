@@ -9,6 +9,7 @@ import pytest
 
 from ai_team.adapters import (
     AdapterConfigError,
+    AdapterRateLimitError,
     AdapterResponseError,
     AdapterUnavailableError,
     OpenAICompatibleAdapter,
@@ -347,3 +348,46 @@ def test_describe_seat_status_lists_skipped_seats():
     assert "grok=skipped" in result
     assert "Manual import required for: grok, hark" in result
     assert len(result.splitlines()) == 2
+
+
+def test_http_429_raises_rate_limit_error(monkeypatch):
+    import urllib.error
+    from email.message import Message
+
+    from ai_team.adapters import _urllib_transport
+
+    def fake_urlopen(request, timeout=None):
+        response_headers = Message()
+        response_headers["Retry-After"] = "3"
+        raise urllib.error.HTTPError(
+            "https://example.com", 429, "Too Many Requests", response_headers, None
+        )
+
+    monkeypatch.setattr("urllib.request.urlopen", fake_urlopen)
+    with pytest.raises(AdapterRateLimitError) as exc:
+        _urllib_transport("https://example.com", {}, {}, 5)
+    assert exc.value.retry_after == 3.0
+
+
+def test_429_beyond_cap_records_failure(tmp_path, monkeypatch):
+    def transport(url, headers, payload, timeout):
+        raise AdapterRateLimitError("HTTP 429 from provider", retry_after=999)
+
+    monkeypatch.setattr(
+        "ai_team.adapters.time.sleep",
+        lambda _: pytest.fail("unexpected sleep"),
+    )
+    registry = build_registry(
+        env={"OPENAI_API_KEY": "test", "OPENAI_MODEL": "test"},
+        env_file=tmp_path / "missing.env",
+        transport=transport,
+    )
+    _, failures = generate_reports(
+        registry,
+        task_id="test",
+        subject="test",
+        ticker="600000",
+        as_of_date="2026-11-18",
+        only=["chatgpt"],
+    )
+    assert "retry_after exceeds cap" in failures["chatgpt"]

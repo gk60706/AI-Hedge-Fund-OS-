@@ -17,6 +17,7 @@ AI Hedge Fund OS V3.10 - 多 AI API 适配器
 
 from __future__ import annotations
 
+import email.utils
 import hashlib
 import json
 import os
@@ -24,6 +25,7 @@ import time
 import urllib.error
 import urllib.request
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Mapping, Sequence
 
@@ -111,6 +113,18 @@ class AdapterResponseError(AdapterError):
     """网络或响应格式错误。"""
 
 
+class AdapterRateLimitError(AdapterError):
+    """服务端限流（HTTP 429）；``retry_after`` 为建议等待秒数。"""
+
+    def __init__(
+        self,
+        message: str,
+        retry_after: float | None = None,
+    ) -> None:
+        super().__init__(message)
+        self.retry_after = retry_after
+
+
 # ============================================================
 # 传输层
 # ============================================================
@@ -142,6 +156,31 @@ def _urllib_transport(
             detail = exc.read().decode("utf-8", errors="replace")[:300]
         except Exception:  # noqa: BLE001 - 读错误体失败不应掩盖原始错误
             detail = ""
+        if exc.code == 429:
+            retry_after = None
+            raw_retry_after = exc.headers.get("Retry-After")
+            if raw_retry_after:
+                try:
+                    retry_after = float(raw_retry_after)
+                except ValueError:
+                    try:
+                        moment = email.utils.parsedate_to_datetime(
+                            raw_retry_after
+                        )
+                        if moment.tzinfo is None:
+                            moment = moment.replace(tzinfo=timezone.utc)
+                        retry_after = max(
+                            0.0,
+                            (
+                                moment - datetime.now(timezone.utc)
+                            ).total_seconds(),
+                        )
+                    except Exception:  # noqa: BLE001 - 解析失败退化为 None
+                        retry_after = None
+            raise AdapterRateLimitError(
+                f"HTTP 429 from {url}: {detail}",
+                retry_after=retry_after,
+            ) from exc
         raise AdapterResponseError(
             f"HTTP {exc.code} from {url}: {detail}"
         ) from exc
@@ -651,6 +690,9 @@ def generate_reports(
     team_reports: str = "",
     library: Any = None,
     only: Sequence[str] | None = None,
+    rate_limit_retries: int = 2,
+    base_retry_wait: float = 5.0,
+    max_retry_wait: float = 60.0,
 ) -> tuple[list[GeneratedReport], dict[str, str]]:
     """逐个助手生成报告。
 
@@ -685,10 +727,34 @@ def generate_reports(
             library=library,
         )
 
-        try:
-            content = adapter.complete(prompt)
-        except AdapterError as exc:
-            failures[agent_id] = f"{type(exc).__name__}: {exc}"
+        retries = 0
+        content: str | None = None
+        while True:
+            try:
+                content = adapter.complete(prompt)
+                break
+            except AdapterRateLimitError as exc:
+                if retries >= rate_limit_retries:
+                    failures[agent_id] = f"{type(exc).__name__}: {exc}"
+                    break
+                wait = (
+                    exc.retry_after
+                    if exc.retry_after is not None
+                    else base_retry_wait
+                )
+                if wait > max_retry_wait:
+                    failures[agent_id] = (
+                        f"{type(exc).__name__}: rate limit retry_after "
+                        f"exceeds cap ({wait})"
+                    )
+                    break
+                time.sleep(wait)
+                retries += 1
+            except AdapterError as exc:
+                failures[agent_id] = f"{type(exc).__name__}: {exc}"
+                break
+
+        if content is None:
             continue
 
         digest = hashlib.sha256(content.encode("utf-8")).hexdigest()
@@ -738,6 +804,7 @@ __all__ = [
     "AGENT_ROLE_NAMES",
     "AdapterConfigError",
     "AdapterError",
+    "AdapterRateLimitError",
     "AdapterRegistry",
     "AdapterResponseError",
     "AdapterSpec",
