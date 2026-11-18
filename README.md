@@ -947,3 +947,46 @@ python scripts/smoke_live.py --task new --symbol 300394.SZ --as-of 2026-11-17 --
 
 > 只有三席全绿（全部真实出报告且带来源）时，“一致 / 共识”这种表述才有意义。
 > 缺席或没有来源的席位会被标为 `seats_unsourced`，不计入共识。此时结论只能写成“单席观点”或“部分席位观点”。
+
+## V3.10 自定义大模型配置（YAML）
+
+不用改代码，就能接入任意多家 OpenAI 兼容的大模型，比如 DeepSeek、Kimi、Qwen、智谱、MiniMax、硅基流动、OpenRouter、Groq、xAI，以及自建网关。
+
+**1. 改哪个文件**
+
+- 模型清单：`configs/ai_providers.yaml`。选模型、开关厂商（`enabled`）、改 `base_url` 都在这里。
+- 密钥：只放在 `.env`，变量名为 `AIH_<ID>_API_KEY`，可以参考 `.env.example`。**不要把 key 写进 YAML 或提交到仓库。**
+- 没填 key 的厂商只会被标为 `skipped`，不影响其他厂商。
+
+**2. 加一家新厂商**
+
+```yaml
+  - {provider_id: mycorp, display_name: MyCorp, protocol: openai, enabled: true, tags: [custom],
+     base_url: "${AIH_MYCORP_BASE_URL:-https://api.mycorp.com/v1}",
+     model: "${AIH_MYCORP_MODEL:-mycorp-chat}", api_key_env: AIH_MYCORP_API_KEY}
+```
+
+然后在 `.env` 里加上 `AIH_MYCORP_API_KEY=...`。注意几点：
+
+- `protocol` 只支持 `openai`（兼容 `/chat/completions`）。
+- `${VAR:-默认值}` 在变量为空时用默认值。
+- `provider_id` 不要用 `on` / `off` / `yes` / `no`，YAML 会把它们读成布尔值。
+
+**3. 离线自检（不联网）**
+
+```bash
+python -m ai_team.providers list    # 输出每家的 JSON 状态（不含 key）
+python -m ai_team.providers check   # 可用的厂商打印 OK <id> <model>，全部不可用时退出码为 1
+```
+
+**4. 在流水线里使用**
+
+```bash
+python -m ai_team.research_pipeline --live --symbol 300394.SZ --reports-dir reports --project-root . --providers-file configs/ai_providers.yaml --allow-missing-agents
+```
+
+**5. 和内置三席的关系**
+
+- 不传 `--providers-file` 时，还是按原来的内置三席（chatgpt / grok / hark）运行，行为不变。
+- 传了之后，席位来自 YAML 里所有 `enabled` 且有 key 的厂商，不再固定为三席。
+- "一致 / 共识"的口径不变：只统计真实出报告且带来源的席位，缺席或没有来源的仍标 `seats_unsourced`。

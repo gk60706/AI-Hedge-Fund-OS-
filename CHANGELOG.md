@@ -17,6 +17,8 @@
 - live 调用次数与 token 预算上限。
 - `scripts/smoke_live.py`：支持 `--task new/existing` 和 `--dry-run`，并支持用 `--import-report/--file` 人工导入报告。
 - `pytest.ini`：登记 `live` 与 `slow` 两个 marker。
+- 新增 `ai_team/providers.py` 与 `configs/ai_providers.yaml`：用 YAML 自定义任意多家 OpenAI 兼容大模型（内置 DeepSeek / Kimi / Qwen / 智谱 / MiniMax / 硅基流动 / OpenRouter / Groq / xAI / 自建网关模板）；支持 `${VAR:-默认值}` 展开；缺 key 的厂商记为 skipped；输出中不含密钥。
+- `research_pipeline` 新增 `--providers-file` 参数；新增离线自检命令 `python -m ai_team.providers list/check`。
 
 ### Changed
 - 没有来源的报告不再计入投票或共识，统一标记为 `seats_unsourced`。

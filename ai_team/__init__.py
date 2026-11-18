@@ -60,6 +60,11 @@ _LAZY_EXPORTS = {
     "AdapterUnavailableError": ("ai_team.adapters", "AdapterUnavailableError"),
     "AdapterResponseError": ("ai_team.adapters", "AdapterResponseError"),
     "AdapterRateLimitError": ("ai_team.adapters", "AdapterRateLimitError"),
+    # 自定义多 provider 配置
+    "ProviderConfig": ("ai_team.providers", "ProviderConfig"),
+    "load_providers": ("ai_team.providers", "load_providers"),
+    "build_custom_registry": ("ai_team.providers", "build_custom_registry"),
+    "describe_providers": ("ai_team.providers", "describe_providers"),
 }
 
 __all__ = [

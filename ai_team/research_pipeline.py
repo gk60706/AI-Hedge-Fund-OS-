@@ -1120,6 +1120,15 @@ def main(argv: Sequence[str] | None = None) -> int:
         default=None,
         help="max estimated prompt tokens for this run (default: unlimited)",
     )
+    parser.add_argument(
+        "--providers-file",
+        type=Path,
+        default=None,
+        help=(
+            "YAML file listing custom OpenAI-compatible providers "
+            "(default: built-in chatgpt/grok/hark specs)"
+        ),
+    )
     args = parser.parse_args(argv)
 
     if not args.live and args.debate is None:
@@ -1127,10 +1136,38 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     # ---------- 真实 API 模式 ----------
     if args.live:
-        from ai_team.adapters import build_registry, describe_seat_status
+        from ai_team.adapters import (
+            build_registry,
+            describe_seat_status,
+            load_env_file,
+        )
 
-        registry = build_registry(timeout=args.adapter_timeout)
-        print(describe_seat_status(registry), file=sys.stderr)
+        if args.providers_file is not None:
+            from ai_team.providers import (
+                build_custom_registry,
+                describe_providers,
+                load_providers,
+            )
+
+            provider_env = load_env_file()
+            provider_env.update(os.environ)
+            registry = build_custom_registry(
+                args.providers_file,
+                provider_env,
+                timeout=args.adapter_timeout,
+            )
+            providers = load_providers(args.providers_file, provider_env)
+            print(
+                json.dumps(
+                    describe_providers(registry, providers),
+                    ensure_ascii=False,
+                    indent=2,
+                ),
+                file=sys.stderr,
+            )
+        else:
+            registry = build_registry(timeout=args.adapter_timeout)
+            print(describe_seat_status(registry), file=sys.stderr)
         if not registry.adapters:
             print(
                 json.dumps(

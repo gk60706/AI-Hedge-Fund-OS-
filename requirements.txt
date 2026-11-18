@@ -48,3 +48,6 @@ redis>=5,<9
 
 # V3.9.2 data/cache.py Parquet 缓存引擎
 fastparquet>=2024.5,<2027
+
+# V3.10 自定义大模型 YAML 配置（ai_team/providers.py）
+PyYAML>=6.0
