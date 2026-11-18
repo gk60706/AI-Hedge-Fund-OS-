@@ -12,13 +12,19 @@
 
 因此：**“三席全绿”的完整自动验收尚未在本机完成**；已完成的真实验收是「两席人工报告导入 + 校验 + 落盘」，见 `docs/release_v310.md` 7.2、7.10。
 
-## 2. 本机环境受限的测试用例
+## 2. 环境受限的测试用例（已在 Linux 云主机验证通过）
 
-- chromadb 向量库 3 例：`tests/test_v09.py::TestMemory::test_memory_save_search`、`tests/test_v11.py::test_chromadb_vector_store`、`tests/test_v21.py::TestVectorMemory::test_save_and_search`。本机 chromadb 依赖的原生运行时不可用，**未在本机执行**；`tests/ai_team` 全量不受影响。
-- torch 相关 2 个形状用例：CPU wheel 安装后 `torch\lib` 下 `c10.dll` / `c10.lib` / `cpuinfo.lib` / `libshm` / `mimalloc-2.5` 均为 1 字节，`import torch` 报 `OSError: [WinError 126] shm.dll`；已卸载 torch，**未在本机执行**。
-- `import onnxruntime` 在本机会直接触发原生崩溃（退出码 `-1073741819`），因此整套 `pytest` 不能在单进程里全仓跑；`tests/ai_team` 用 `--import-mode=importlib` 单独跑是安全的。
+本机（Windows）无法执行的 5 个用例，已在云主机 Linux + 干净 venv（Python 3.12、chromadb 1.5.9、torch 2.15.0+cpu、xgboost、scikit-learn）跑通：**5 passed**。
 
-以上三项属于**环境限制，不是代码回归**；如需要在 CI 或 Linux 上验证，应在干净虚拟环境里单独跑这三组用例。
+| 用例 | 本机（Windows） | 云主机（Linux） |
+|---|---|---|
+| `tests/test_v11.py::test_chromadb_vector_store` | 未执行 | passed |
+| `tests/test_v09.py::TestMemory::test_memory_save_search` | 未执行 | passed |
+| `tests/test_v21.py::TestVectorMemory::test_save_and_search` | 原代码 import 不存在的 `memory.vector_memory`，任何平台都无法收集 | passed（已改为调用 `brain.memory.save_memory/search_memory`） |
+| `tests/test_v27.py::TestMarketTransformer::test_forward_shape` | torch DLL 全 1 字节，`import torch` 报 `WinError 126 shm.dll` | passed |
+| `tests/test_v27.py::TestXGBoostAlpha::test_train_predict` | 受同一 torch 问题影响 | passed |
+
+本机 Windows 的限制仍然存在：torch CPU wheel 的 `c10.dll` / `cpuinfo.lib` 等为 1 字节，`import onnxruntime` 会原生崩溃（退出码 `-1073741819`），所以整套 `pytest` 不能在单进程里全仓跑；`tests/ai_team` 用 `--import-mode=importlib` 单独跑是安全的。
 
 ## 3. 超时语义
 

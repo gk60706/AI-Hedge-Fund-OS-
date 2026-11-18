@@ -28,3 +28,4 @@
 - 任务、报告、历史三类产物改为原子写加跨进程文件锁，并发写入不再互相覆盖。
 - 429 重试改为有上限的退避，避免无限重试。
 - 两个同名的 `test_config.py` 整套运行时会冲突，现固定使用 `--import-mode=importlib`。
+- `test_v21` 引用了仓库里不存在的 `memory.vector_memory`，改为调用真实的 `brain.memory` 接口。
