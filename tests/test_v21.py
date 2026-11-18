@@ -11,7 +11,6 @@ from mcp.register import server
 from research.pdf_agent import PDFResearchAgent
 from research.news_agent import NewsAgent
 from research.financial_agent import FinancialAgent
-from memory.vector_memory import VectorMemory
 from rag.document_loader import DocumentLoader, load_pdf
 from reports.ai_research_report import ResearchReportGenerator
 from agents.cio_v21 import CIOAgentV21
@@ -89,10 +88,16 @@ class TestFinancialAgent:
 
 class TestVectorMemory:
     def test_save_and_search(self):
-        vm = VectorMemory()
-        vm.save("贵州茅台 2025 年报 收入增长", "note-1")
-        result = vm.search("贵州茅台")
+        import uuid
+        from brain.memory import save_memory, search_memory
+
+        save_memory(f"贵州茅台 测试记忆 {uuid.uuid4().hex}")
+        result = search_memory("贵州茅台")
         assert result is not None
+        docs = result.get("documents", []) if isinstance(result, dict) else result
+        if docs and isinstance(docs[0], list):
+            docs = docs[0]
+        assert docs, "documents 为空"
 
 
 class TestDocumentLoader:
