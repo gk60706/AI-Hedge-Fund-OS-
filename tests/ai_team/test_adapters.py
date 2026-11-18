@@ -391,3 +391,39 @@ def test_429_beyond_cap_records_failure(tmp_path, monkeypatch):
         only=["chatgpt"],
     )
     assert "retry_after exceeds cap" in failures["chatgpt"]
+
+
+@pytest.mark.parametrize("kwargs", [
+    {"timeout": 0},
+    {"max_tokens": 0},
+    {"temperature": 3},
+    {"base_url": "ftp://example.com"},
+])
+def test_adapter_rejects_invalid_boundaries(kwargs):
+    from ai_team.adapters import ADAPTER_SPECS, OpenAICompatibleAdapter
+
+    spec = ADAPTER_SPECS["chatgpt"]
+    params = {
+        "timeout": 5.0, "max_tokens": 16,
+        "temperature": 0.3, "base_url": "https://api.openai.com/v1",
+    }
+    params.update(kwargs)
+    with pytest.raises(AdapterConfigError):
+        OpenAICompatibleAdapter(
+            spec, "test-key", params["base_url"], "test-model",
+            timeout=params["timeout"], max_tokens=params["max_tokens"],
+            temperature=params["temperature"],
+        )
+
+
+def test_call_budget_skips_remaining_seats(tmp_path, env):
+    transport = RecordingTransport()
+    registry = build_registry(
+        env=env, env_file=tmp_path / "missing.env", transport=transport
+    )
+    reports, failures = generate_reports(
+        registry, task_id="test", subject="test", ticker="600000",
+        as_of_date="2026-11-18", only=["chatgpt", "grok"], call_budget=1,
+    )
+    assert len(reports) == 1
+    assert any("call budget exhausted" in error for error in failures.values())

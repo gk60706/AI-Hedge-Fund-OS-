@@ -270,6 +270,15 @@ Manual import required for: grok, hark
 
 测试（ChatGPT 出稿、助手按可注入 transport 调整）：`test_http_429_raises_rate_limit_error` 直接 monkeypatch `urllib.request.urlopen`，验证 429 + `Retry-After: 3` → `retry_after == 3.0`；`test_429_beyond_cap_records_failure` 用 `retry_after=999` 且把 `time.sleep` 换成 `pytest.fail`，证明超上限时真的不睡、只记失败。全量 `tests/ai_team` **664 passed, 4 subtests（38.67s）**。
 
+### 7.12 配置边界与 live 预算护栏
+
+适配器此前只校验 key / base_url / model 非空，`temperature=99`、`max_tokens=0`、`base_url="ftp://..."` 之类配置能一路走到发请求才报错。现在（ChatGPT 出稿）：
+
+- `OpenAICompatibleAdapter.__init__` 增加边界校验：`timeout > 0`；`max_tokens` 必须是 `int` 且落在 `[1, 32768]`；`temperature` 必须是数字（`bool` 不算）且落在 `[0, 2]`；`base_url` 必须能被 `urlsplit` 解出 `http`/`https` 且 `hostname` 非空。失败一律 `AdapterConfigError`，消息带席位前缀与允许范围。
+- `generate_reports` 新增 `call_budget` / `token_budget`（`None` 表示不限）：逐席按 `prompt_chars // 4` 估 token，超预算的席位不发请求，`failures` 记 `budget: call budget exhausted (已用/上限)` 或 `budget: token budget exhausted (估算/上限)`；`run_live` 与 CLI 同步透传 `--call-budget` / `--token-budget`。
+
+测试（ChatGPT 出稿、助手修正 `AdapterSpec` 取法）：`test_adapter_rejects_invalid_boundaries` 覆盖 4 组非法边界；`test_call_budget_skips_remaining_seats` 证明 `call_budget=1` 时只发出 1 次请求、余下席位记预算耗尽。
+
 ## 8. 遗留待办（非 V3.10 范围）
 
 - **V3.9.3 断点续跑**：已完成（2026-11-16）。新增 `restore_state()` / `save_checkpoint()` / `from_checkpoint()`、4 个 `Checkpoint*` 异常、`FitnessResult.from_dict()`，并对 checkpoint 与 JSONL 历史做代际一致性校验（`strict=True` 抛错 / 非 strict 写入 `run_metadata`）。详见 `docs/v393_checkpoint.md`，回归 `7 passed`。

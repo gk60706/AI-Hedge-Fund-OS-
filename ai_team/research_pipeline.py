@@ -874,6 +874,8 @@ class V310ResearchPipeline:
         retry_policy: RetryPolicy | None = None,
         allow_missing_agents: bool = False,
         rationale: str = "",
+        call_budget: int | None = None,
+        token_budget: int | None = None,
     ) -> ResearchOutcome | dict[str, Any]:
         """调用真实 AI API 生成报告，再走后续链路。
 
@@ -895,6 +897,8 @@ class V310ResearchPipeline:
             ticker=symbol,
             as_of_date=as_of_date,
             questions=questions,
+            call_budget=call_budget,
+            token_budget=token_budget,
         )
         self.agent_failures.update(failures)
 
@@ -1104,6 +1108,18 @@ def main(argv: Sequence[str] | None = None) -> int:
         action="store_true",
         help="continue with a degraded decision when fewer than min reports arrive",
     )
+    parser.add_argument(
+        "--call-budget",
+        type=int,
+        default=None,
+        help="max live adapter calls for this run (default: unlimited)",
+    )
+    parser.add_argument(
+        "--token-budget",
+        type=int,
+        default=None,
+        help="max estimated prompt tokens for this run (default: unlimited)",
+    )
     args = parser.parse_args(argv)
 
     if not args.live and args.debate is None:
@@ -1152,6 +1168,8 @@ def main(argv: Sequence[str] | None = None) -> int:
                 timeout_mode=args.timeout_mode,
             ),
             allow_missing_agents=args.allow_missing_agents,
+            call_budget=args.call_budget,
+            token_budget=args.token_budget,
         )
 
         if isinstance(result, dict):

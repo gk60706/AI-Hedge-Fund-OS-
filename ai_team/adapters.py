@@ -28,6 +28,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Mapping, Sequence
+from urllib.parse import urlsplit
 
 from ai_team.source_extraction import extract_sources_from_content
 
@@ -349,6 +350,40 @@ class OpenAICompatibleAdapter:
         if not model:
             raise AdapterConfigError(
                 f"{spec.agent_id}: missing {spec.model_env}"
+            )
+
+        if timeout <= 0:
+            raise AdapterConfigError(
+                f"{spec.agent_id}: timeout must be > 0"
+            )
+        if (
+            isinstance(max_tokens, bool)
+            or not isinstance(max_tokens, int)
+            or not 1 <= max_tokens <= 32768
+        ):
+            raise AdapterConfigError(
+                f"{spec.agent_id}: max_tokens must be an int in [1, 32768]"
+            )
+        if (
+            isinstance(temperature, bool)
+            or not isinstance(temperature, (int, float))
+            or not 0 <= temperature <= 2
+        ):
+            raise AdapterConfigError(
+                f"{spec.agent_id}: temperature must be a number in [0, 2]"
+            )
+        try:
+            parsed_url = urlsplit(base_url)
+            valid_url = (
+                parsed_url.scheme.lower() in {"http", "https"}
+                and bool(parsed_url.hostname)
+            )
+        except (TypeError, ValueError):
+            valid_url = False
+        if not valid_url:
+            raise AdapterConfigError(
+                f"{spec.agent_id}: base_url must be a valid HTTP(S) URL "
+                "with a hostname"
             )
 
         self.spec = spec
@@ -693,6 +728,8 @@ def generate_reports(
     rate_limit_retries: int = 2,
     base_retry_wait: float = 5.0,
     max_retry_wait: float = 60.0,
+    call_budget: int | None = None,
+    token_budget: int | None = None,
 ) -> tuple[list[GeneratedReport], dict[str, str]]:
     """逐个助手生成报告。
 
@@ -701,6 +738,8 @@ def generate_reports(
     """
     reports: list[GeneratedReport] = []
     failures: dict[str, str] = {}
+    calls_used = 0
+    tokens_used = 0
     if only:
         targets = list(only)
     else:
@@ -716,6 +755,13 @@ def generate_reports(
             )
             continue
 
+        if call_budget is not None and calls_used >= call_budget:
+            failures[agent_id] = (
+                f"budget: call budget exhausted "
+                f"({calls_used}/{call_budget})"
+            )
+            continue
+
         prompt = build_agent_prompt(
             agent_id,
             task_id=task_id,
@@ -726,6 +772,18 @@ def generate_reports(
             team_reports=team_reports,
             library=library,
         )
+        prompt_tokens = len(prompt) // 4
+        if (
+            token_budget is not None
+            and tokens_used + prompt_tokens > token_budget
+        ):
+            failures[agent_id] = (
+                f"budget: token budget exhausted "
+                f"({tokens_used + prompt_tokens}/{token_budget})"
+            )
+            continue
+        calls_used += 1
+        tokens_used += prompt_tokens
 
         retries = 0
         content: str | None = None
