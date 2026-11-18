@@ -453,3 +453,23 @@ def test_real_provider_response_shapes(tmp_path):
         assert finish_reason == reason
     with pytest.raises(AdapterResponseError):
         adapter._extract_text(payload_error)
+
+
+def test_transport_rejects_invalid_json(monkeypatch):
+    from ai_team.adapters import AdapterResponseError, _urllib_transport
+
+    class _FakeResponse:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc):
+            return False
+
+        def read(self):
+            return b"<html>502 Bad Gateway</html>"
+
+    monkeypatch.setattr(
+        "urllib.request.urlopen", lambda *a, **k: _FakeResponse()
+    )
+    with pytest.raises(AdapterResponseError, match="non-JSON"):
+        _urllib_transport("https://example.com", {}, {}, 5)
