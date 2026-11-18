@@ -51,3 +51,7 @@
   ChatGPT 余额为 0、Grok 免费版无 `xai-` key、Hark 无公开模型 API。
 - 会话与地址都是临时的：Colab 会话关闭即失效，隧道地址每次重启都变，
   搭建步骤见 `docs/colab_endpoint.md`。
+- 自定义 provider 的 `provider_id` 目前必须落在 chatgpt / grok / hark 三席之内：
+  `build_agent_prompt` 与 `report_collector` 都只认这三个 id，写 `qwen`、`deepseek`
+  之类的 id 会在生成阶段或提交阶段被拒。想接自建模型时，借一个空闲席位（例如 hark），
+  不要新造 id。
