@@ -2024,13 +2024,23 @@ class CrossValidator:
             },
         )
 
+        try:
+            result_path = self.save_result(result)
+            result.metadata["result_path"] = str(result_path)
+        except CrossValidationPersistenceError as exc:
+            result.warnings.append(
+                f"Validation result could not be persisted: {exc}"
+            )
+            result.metadata["result_path"] = None
+
         logger.info(
             "Cross validation completed: task=%s "
-            "reports=%s conflicts=%s consensus=%s",
+            "reports=%s conflicts=%s consensus=%s result_path=%s",
             task_id,
             len(records),
             len(conflicts),
             len(consensus),
+            result.metadata["result_path"] or "-",
         )
 
         return result

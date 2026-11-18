@@ -1,0 +1,69 @@
+{
+  "task_id": "TASK-20261117-B7124A1F",
+  "imported": [],
+  "failures": {},
+  "report_count": 3,
+  "validation": {
+    "status": "partial",
+    "validation_id": "VAL-20261118-9FA68F30AA",
+    "seats": [
+      {
+        "agent_id": "hark",
+        "quality_score": 76.0,
+        "evidence_score": 100.0,
+        "claims": 5,
+        "warnings": 1
+      },
+      {
+        "agent_id": "grok",
+        "quality_score": 100.0,
+        "evidence_score": 100.0,
+        "claims": 9,
+        "warnings": 0
+      },
+      {
+        "agent_id": "chatgpt",
+        "quality_score": 100.0,
+        "evidence_score": 100.0,
+        "claims": 21,
+        "warnings": 0
+      }
+    ],
+    "warnings": [
+      "No sufficiently supported common claims detected.",
+      "Seats excluded from consensus (no structured sources): hark, grok",
+      "hark: Independent conclusion section is missing."
+    ],
+    "metadata": {
+      "task_title": "V3.10 research: 300394.SZ",
+      "task_status": "submitted",
+      "agents": [
+        "hark",
+        "grok",
+        "chatgpt"
+      ],
+      "algorithm": "deterministic_heuristic_v1",
+      "semantic_verification": false,
+      "factual_verification": false,
+      "seats_active": [
+        "hark",
+        "grok",
+        "chatgpt"
+      ],
+      "seats_assigned": [
+        "chatgpt",
+        "grok",
+        "hark"
+      ],
+      "seats_missing": [],
+      "seats_sourced": [
+        "chatgpt"
+      ],
+      "seats_unsourced": [
+        "hark",
+        "grok"
+      ],
+      "result_path": "C:\\Users\\Administrator\\Desktop\\股票分析\\ai_team\\evaluation\\v310_pipeline\\validation\\VAL-20261118-9FA68F30AA.json"
+    }
+  }
+}

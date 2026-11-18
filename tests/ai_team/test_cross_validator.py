@@ -1895,6 +1895,39 @@ def test_save_result(
     assert path.suffix == ".json"
 
 
+def test_validate_task_persists_result(
+    validator,
+    report_collector,
+    research_task,
+    bullish_report,
+    bearish_report,
+):
+
+    import json
+    from pathlib import Path
+
+    submit_report(
+        report_collector,
+        research_task.task_id,
+        "chatgpt",
+        bullish_report,
+    )
+    submit_report(
+        report_collector,
+        research_task.task_id,
+        "grok",
+        bearish_report,
+    )
+    result = validator.validate_task(research_task.task_id)
+    result_path = result.metadata["result_path"]
+    assert result_path
+    path = Path(result_path)
+    assert path.exists()
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    assert isinstance(payload, dict)
+    assert "validation_id" in payload
+
+
 def test_saved_result_is_valid_json(
     validator,
     report_collector,

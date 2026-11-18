@@ -247,6 +247,18 @@ Manual import required for: grok, hark
 
 测试：`test_describe_seat_status_lists_skipped_seats`（两行结构 + `Manual import required for: grok, hark` + 不含多余行），全量 `tests/ai_team` **661 passed, 4 subtests（35.68s）**。
 
+### 7.10 校验结果落盘：`VAL-*.json` 终于存在
+
+`CrossValidator.save_result()` 一直是完整的原子写实现（临时文件 + `Path.replace()`），但 `validate_task()` 从不调用它，导致每次交叉校验的结论只活在同进程内存里，`get_result()` 换个进程就查不到，也无法审计。现在（ChatGPT 出稿）：
+
+- `validate_task()` 在返回前调用 `self.save_result(result)`，把路径写进 `result.metadata["result_path"]`；
+- 落盘失败时**不吞结果**：捕获 `CrossValidationPersistenceError`，往 `result.warnings` 追加 `Validation result could not be persisted: <原因>`，`result_path` 置 `None`，照常返回 —— 调用方仍拿到完整校验结果，同时警告会随产物一起落盘；
+- `logger.info` 追加 `result_path` 字段，没有则打 `-`。
+
+**真实验证**：对已有三席任务 `TASK-20261117-B7124A1F` 重放校验，落盘 `ai_team/evaluation/v310_pipeline/validation/VAL-20261118-9FA68F30AA.json`，45595 字节，artifact 里 `metadata.result_path` 指向该文件。
+
+测试：新增 `test_validate_task_persists_result`（不显式调 `save_result`，只断言 `validate_task` 后路径存在且内容是可解析 JSON、含 `validation_id`），全量 `tests/ai_team` **662 passed, 4 subtests（52.92s）**。
+
 ## 8. 遗留待办（非 V3.10 范围）
 
 - **V3.9.3 断点续跑**：已完成（2026-11-16）。新增 `restore_state()` / `save_checkpoint()` / `from_checkpoint()`、4 个 `Checkpoint*` 异常、`FitnessResult.from_dict()`，并对 checkpoint 与 JSONL 历史做代际一致性校验（`strict=True` 抛错 / 非 strict 写入 `run_metadata`）。详见 `docs/v393_checkpoint.md`，回归 `7 passed`。
