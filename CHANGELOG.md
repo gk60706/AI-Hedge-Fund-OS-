@@ -1,0 +1,30 @@
+# Changelog
+
+本项目的所有重要变更都记录在本文件中。格式参考 Keep a Changelog。
+
+## [Unreleased]
+
+## [3.10.0] - 2026-11-18
+
+### Added
+- ai_team 的 14 个模块落地：任务、报告收集、交叉校验、辩论、共识、投委会、端到端流水线、真实 API 适配器。
+- OpenAI 兼容适配器，支持 ChatGPT、Grok 和自建 Hark 网关。
+- 结构化来源提取与证据契约校验。
+- 交叉校验结果落盘为 `VAL-*.json`。
+- RetryPolicy 支持 thread 和 process 两种超时模式；process 模式可以硬终止卡住的调用。
+- 429 限流单独归类为 `AdapterRateLimitError`，并解析 `Retry-After`。
+- 适配器配置边界校验（timeout / max_tokens / temperature / base_url）。
+- live 调用次数与 token 预算上限。
+- `scripts/smoke_live.py`：支持 `--task new/existing` 和 `--dry-run`，并支持用 `--import-report/--file` 人工导入报告。
+- `pytest.ini`：登记 `live` 与 `slow` 两个 marker。
+
+### Changed
+- 没有来源的报告不再计入投票或共识，统一标记为 `seats_unsourced`。
+- 缺 key 的席位记为 skipped 并给出原因，不再静默跳过。
+- 密钥不再写入日志和产物。
+- pytest 默认只跑 `tests` 目录，并默认跳过 live 用例（`-m "not live"`）。
+
+### Fixed
+- 任务、报告、历史三类产物改为原子写加跨进程文件锁，并发写入不再互相覆盖。
+- 429 重试改为有上限的退避，避免无限重试。
+- 两个同名的 `test_config.py` 整套运行时会冲突，现固定使用 `--import-mode=importlib`。

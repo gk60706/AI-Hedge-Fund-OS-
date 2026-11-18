@@ -16,6 +16,8 @@ from ai_team.config import (
     get_default_config,
 )
 
+__version__ = "3.10.0"
+
 # name -> (module, attribute)
 _LAZY_EXPORTS = {
     # 任务与报告
@@ -57,6 +59,7 @@ _LAZY_EXPORTS = {
     "AdapterConfigError": ("ai_team.adapters", "AdapterConfigError"),
     "AdapterUnavailableError": ("ai_team.adapters", "AdapterUnavailableError"),
     "AdapterResponseError": ("ai_team.adapters", "AdapterResponseError"),
+    "AdapterRateLimitError": ("ai_team.adapters", "AdapterRateLimitError"),
 }
 
 __all__ = [

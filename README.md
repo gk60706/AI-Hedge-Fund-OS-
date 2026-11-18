@@ -912,3 +912,38 @@ Alpha Library
 - V3.9.1 默认不连接真实券商。
 - 禁止根据 synthetic demo 的结果推断真实收益。
 - 下一阶段 V4.0 将在此 Research Engine 之上增加：AI Research Agent、AI Factor Scientist、AI Alpha Scientist、AI Hypothesis Generator、AI Backtest Agent、AI Risk Agent、Investment Committee、Alpha Evolution、Strategy Generation。
+
+## V3.10 多 AI 协作：怎么验、怎么手工补席位
+
+### 1. 三席不全时怎么验
+
+```bash
+python -m ai_team.research_pipeline --live --symbol 300394.SZ --reports-dir reports --project-root . --adapter-timeout 120 --allow-missing-agents
+```
+
+启动时会先打印席位状态，例如：
+
+- `Seats: chatgpt=... grok=... hark=...`：每个席位是否可用
+- `Manual import required for: ...`：缺 key 或缺配置的席位，需要人工导入报告
+
+加上 `--allow-missing-agents` 后，缺席不会中断流水线，缺席席位会被记录下来。
+
+### 2. 人工导入报告（手工补席位）
+
+```bash
+python scripts/smoke_live.py --task new --symbol 300394.SZ --as-of 2026-11-17 --import-report chatgpt --file report_chatgpt.md --import-report grok --file report_grok.md --artifact artifacts/smoke/run.json
+```
+
+- `--import-report <席位> --file <文件>` 可以重复使用，每组导入一个席位的报告。
+- `--artifact` 指定本次运行的产物 JSON 路径。
+
+### 3. `--task new` 与 `--task existing`
+
+- `--task new`：新建一个研究任务，导入的报告挂在这个新任务下。
+- `--task existing`：复用已有任务（同一标的、同一 as-of），只往里补导入缺席的席位，不重建任务。
+- `--dry-run`：只校验参数和报告文件，不建任务，也不写任何产物。适合导入前先检查。
+
+### 4. 关于“一致 / 共识”的表述
+
+> 只有三席全绿（全部真实出报告且带来源）时，“一致 / 共识”这种表述才有意义。
+> 缺席或没有来源的席位会被标为 `seats_unsourced`，不计入共识。此时结论只能写成“单席观点”或“部分席位观点”。

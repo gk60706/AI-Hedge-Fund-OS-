@@ -72,3 +72,10 @@ alpha_library/*
 
 # V3.10 generated runtime artifacts inside research cases
 research/**/ai_team/
+
+# ---- V3.10 多 AI 协作：本机运行产物（不入库）----
+ai_team/tasks/
+ai_team/reports/
+ai_team/evaluation/
+reports/generation.json
+reports/hybrid_smoke/validation.json

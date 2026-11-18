@@ -427,3 +427,29 @@ def test_call_budget_skips_remaining_seats(tmp_path, env):
     )
     assert len(reports) == 1
     assert any("call budget exhausted" in error for error in failures.values())
+
+
+def test_real_provider_response_shapes(tmp_path):
+    from ai_team.adapters import AdapterResponseError, build_registry
+
+    payload_stop = {
+        "id": "chatcmpl-stop", "object": "chat.completion", "created": 1795000000, "model": "m",
+        "choices": [{"index": 0, "message": {"role": "assistant", "content": "公司营收保持稳健增长。"}, "finish_reason": "stop"}],
+        "usage": {"prompt_tokens": 10, "completion_tokens": 8, "total_tokens": 18},
+    }
+    payload_length = {
+        "id": "chatcmpl-length", "object": "chat.completion", "created": 1795000000, "model": "m",
+        "choices": [{"index": 0, "message": {"role": "assistant", "content": "公司营收保持稳健增长。"}, "finish_reason": "length"}],
+        "usage": {"prompt_tokens": 10, "completion_tokens": 8, "total_tokens": 18},
+    }
+    payload_error = {"error": {"message": "insufficient_quota", "type": "insufficient_quota"}}
+    adapter = build_registry(
+        env={"OPENAI_API_KEY": "x", "OPENAI_MODEL": "m"},
+        env_file=tmp_path / "missing.env",
+    ).adapters["chatgpt"]
+    for payload, reason in ((payload_stop, "stop"), (payload_length, "length")):
+        content, finish_reason = adapter._extract_text(payload)
+        assert content == "公司营收保持稳健增长。"
+        assert finish_reason == reason
+    with pytest.raises(AdapterResponseError):
+        adapter._extract_text(payload_error)
