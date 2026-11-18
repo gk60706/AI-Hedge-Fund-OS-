@@ -35,12 +35,15 @@ from ai_team.debate_engine import (
     DebatePosition,
 )
 from ai_team.investment_committee import InvestmentCommittee
-from ai_team.report_collector import ReportCollector
+from ai_team.report_collector import InvalidReportError, ReportCollector
 from ai_team.task_manager import TaskManager
 from evolution.file_lock import FileLock
 
 
 DEFAULT_PARTICIPANTS = ("chatgpt", "grok", "hark")
+# 显式降级（allow_missing=True）时，不完整报告入库并在 notes 追加此标记
+INCOMPLETE_NOTE_MARKER = "incomplete=true"
+_INCOMPLETE_REJECTION = "Incomplete report submission is not allowed."
 
 
 def _write_text_atomic(
@@ -605,6 +608,9 @@ class V310ResearchPipeline:
         单个助手失败不会中断其他助手的提交；成功数量低于 ``min_reports``
         时，默认抛 ``InsufficientAgentsError``（显式降级），只有显式传入
         ``allow_missing=True`` 才继续往下走，并把缺口记进 outcome。
+
+        ``allow_missing=True`` 同时放行不完整报告（缺章节），入库时在
+        notes 末尾追加 ``incomplete=true``；默认 False 时行为不变。
         """
         policy = retry_policy or RetryPolicy()
         records: list[Any] = []
@@ -614,7 +620,11 @@ class V310ResearchPipeline:
 
         for report in reports:
             self.reports_submitted += 1
-            record, error = self._submit_one(report, policy)
+            record, error = self._submit_one(
+                report,
+                policy,
+                allow_incomplete=allow_missing,
+            )
             if record is not None:
                 records.append(record)
             else:
@@ -637,35 +647,63 @@ class V310ResearchPipeline:
         self,
         report: AgentReport,
         policy: RetryPolicy,
+        *,
+        allow_incomplete: bool = False,
     ) -> tuple[Any | None, BaseException | None]:
+        """提交单份报告，按策略重试。
+
+        先按严格口径（allow_incomplete=False）提交；仅当
+        ``allow_incomplete=True`` 且被判为不完整时，才以降级口径重交一次，
+        并在 notes 末尾追加 ``incomplete=true``，保证完整报告不被误打标记。
+        """
         last_error: BaseException | None = None
 
         for _ in range(policy.attempts):
             try:
-                call = _ReportCollectorCall(
-                    collector=self.report_collector,
-                    kwargs={
-                        "task_id": self.task_id,
-                        "agent_id": report.agent_id,
-                        "content": report.content,
-                        "title": report.title,
-                        "source": report.source,
-                        "notes": report.notes,
-                        "allow_incomplete": False,
-                        "sources": report.sources,
-                    },
-                )
-                record = self._call_with_timeout(
-                    call,
-                    policy.timeout_seconds,
-                    f"report submission for {report.agent_id}",
-                    timeout_mode=policy.timeout_mode,
-                )
-                return record, None
+                return self._submit_once(report, policy, incomplete=False), None
+            except InvalidReportError as exc:
+                last_error = exc
+                if not (allow_incomplete and _INCOMPLETE_REJECTION in str(exc)):
+                    continue  # 默认口径：与原实现一致，按策略重试
+                try:
+                    return self._submit_once(report, policy, incomplete=True), None
+                except BaseException as inner:  # noqa: BLE001 - 记录后按策略重试
+                    last_error = inner
             except BaseException as exc:  # noqa: BLE001 - 记录后按策略重试
                 last_error = exc
 
         return None, last_error
+
+    def _submit_once(
+        self,
+        report: AgentReport,
+        policy: RetryPolicy,
+        *,
+        incomplete: bool,
+    ) -> Any:
+        notes = report.notes or ""
+        if incomplete and INCOMPLETE_NOTE_MARKER not in notes:
+            notes = f"{notes} {INCOMPLETE_NOTE_MARKER}".strip()
+
+        call = _ReportCollectorCall(
+            collector=self.report_collector,
+            kwargs={
+                "task_id": self.task_id,
+                "agent_id": report.agent_id,
+                "content": report.content,
+                "title": report.title,
+                "source": report.source,
+                "notes": notes,
+                "allow_incomplete": incomplete,
+                "sources": report.sources,
+            },
+        )
+        return self._call_with_timeout(
+            call,
+            policy.timeout_seconds,
+            f"report submission for {report.agent_id}",
+            timeout_mode=policy.timeout_mode,
+        )
 
     @staticmethod
     def _call_with_timeout(
@@ -941,6 +979,20 @@ class V310ResearchPipeline:
             retry_policy=retry_policy,
             allow_missing=allow_missing_agents,
         )
+
+        if allow_missing_agents and len(submitted) < self.min_reports:
+            # 显式降级：报告数不足以交叉校验时不调 validate()，
+            # 保持 cross_validator 严格性，同时让 CLI 正常退出并留下产物
+            return self._degraded_result(
+                task_id=task_id,
+                symbol=symbol,
+                as_of_date=as_of_date,
+                registry=registry,
+                generated=generated,
+                submitted=submitted,
+                reports_dir=reports_dir,
+            )
+
         validation = self.validate()
 
         if debate is None:
@@ -987,6 +1039,45 @@ class V310ResearchPipeline:
             decision=decision,
             failed_agents=dict(self.agent_failures),
         )
+
+    def _degraded_result(
+        self,
+        *,
+        task_id: str,
+        symbol: str,
+        as_of_date: str,
+        registry: Any,
+        generated: Sequence[Any],
+        submitted: Sequence[Any],
+        reports_dir: Path,
+    ) -> dict[str, Any]:
+        stage = (
+            "degraded_no_reports"
+            if not submitted
+            else "degraded_insufficient_reports"
+        )
+        artifact = reports_dir.parent / "degraded.json"
+        payload: dict[str, Any] = {
+            "task_id": task_id,
+            "symbol": symbol,
+            "as_of_date": as_of_date,
+            "stage": stage,
+            "reports_generated": len(generated),
+            "reports_collected": len(submitted),
+            "min_reports": self.min_reports,
+            "validation": "not_performed",
+            "failures": dict(self.agent_failures),
+            "registry": registry.describe()
+            if hasattr(registry, "describe")
+            else {},
+            "artifact": str(artifact),
+            "generation_artifact": str(reports_dir.parent / "generation.json"),
+        }
+        _write_text_atomic(
+            artifact,
+            json.dumps(_to_jsonable(payload), ensure_ascii=False, indent=2, default=str),
+        )
+        return payload
 
     # --------------------------------------------------------
     # 8. 落盘

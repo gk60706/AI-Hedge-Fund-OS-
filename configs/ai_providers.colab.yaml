@@ -1,0 +1,35 @@
+# V3.10 验收脚手架：把 Colab 上的 OpenAI 兼容端点当作一个真实 provider
+#
+# 用途：在没有任何付费 API key 的情况下，用真实 HTTP + 真实模型推理
+#      跑通 `--live --providers-file` 这条链路，产出真实的 TASK/VAL 证据。
+#
+# 为什么 provider_id 必须是 hark：
+#   ai_team/adapters.py 的 AGENT_ROLE_NAMES 只认 chatgpt / grok / hark 三个席位，
+#   自定义 provider_id 会触发 "unknown agent_id"。这里借用 hark 席位（它本来就是
+#   人工导入，最不影响其它席位）。
+#
+# 用法：
+#   1. 在 Colab 里起服务（见 docs/colab_endpoint.md），拿到 https://xxx.trycloudflare.com
+#   2. 设环境变量（不要写进 .env 提交）：
+#        $env:HARK_BASE_URL = "https://xxx.trycloudflare.com/v1"
+#        $env:AIH_HARK_API_KEY = "colab-dummy"
+#   3. python -m ai_team.research_pipeline --symbol 300394.SZ \
+#        --reports-dir reports/colab_smoke --live \
+#        --providers-file configs/ai_providers.colab.yaml \
+#        --allow-missing-agents --call-budget 1 --adapter-timeout 300
+#
+# 质量声明：1.5B 量化模型写不出符合来源契约的研报，本次验收只证明
+#   「链路通、产物落盘、失败可解释」，不证明研究结论有效。该席位不计票。
+
+providers:
+  - provider_id: hark
+    display_name: Colab Qwen2.5-1.5B (experimental)
+    protocol: openai
+    enabled: true
+    tags: [experimental, colab, not-counted]
+    base_url: "${HARK_BASE_URL:-http://127.0.0.1:8000/v1}"
+    model: "${HARK_MODEL:-Qwen/Qwen2.5-1.5B-Instruct}"
+    api_key_env: AIH_HARK_API_KEY
+    timeout: 300
+    max_tokens: 400
+    temperature: 0.3

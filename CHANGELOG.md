@@ -4,6 +4,14 @@
 
 ## [Unreleased]
 
+### Added
+- `configs/ai_providers.colab.yaml` 与 `docs/colab_endpoint.md`：把 Colab 免费 T4 上的 OpenAI 兼容端点当作验收席位，用真实 HTTP 跑通 `--live --providers-file`。
+- `tests/ai_team/test_pipeline_degraded.py`：显式降级路径的回归测试（零报告、单份不完整报告、严格模式不变）。
+
+### Fixed
+- `run_live` 在 `--allow-missing-agents` 且报告数不足 `min_reports` 时不再崩溃（原先 `validate()` 抛 `InsufficientReportsError`，退出码 1），改为返回 `stage=degraded_no_reports|degraded_insufficient_reports` 并落盘 `reports/degraded.json`。
+- `_submit_one` 的 `allow_incomplete` 与 `allow_missing` 联动：显式降级时允许缺章节报告入库并在 notes 追加 `incomplete=true`；默认仍是严格口径。
+
 ## [3.10.0] - 2026-11-18
 
 ### Added

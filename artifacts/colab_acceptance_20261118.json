@@ -1,0 +1,47 @@
+{
+  "kind": "live_acceptance",
+  "version": "3.10.0",
+  "date": "2026-11-18",
+  "symbol": "300394.SZ",
+  "endpoint": {
+    "runtime": "Google Colab free tier",
+    "gpu": "Tesla T4 / 15360MiB",
+    "model": "Qwen/Qwen2.5-1.5B-Instruct",
+    "protocol": "OpenAI compatible (/v1/models, /v1/chat/completions)",
+    "transport": "cloudflared quick tunnel",
+    "note": "tunnel URL is per-session and intentionally not recorded"
+  },
+  "provider_check": {
+    "command": "python -m ai_team.providers check --file configs/ai_providers.colab.yaml",
+    "result": "OK hark Qwen/Qwen2.5-1.5B-Instruct",
+    "exit_code": 0
+  },
+  "first_run": {
+    "reports_generated": 1,
+    "response_chars": 673,
+    "elapsed_seconds": 16.117,
+    "finish_reason": "stop",
+    "sources": null,
+    "agent_failures": {
+      "hark": "InvalidReportError: Incomplete report submission is not allowed."
+    },
+    "crash": "InsufficientReportsError: No reports found for task",
+    "exit_code": 1
+  },
+  "after_fix": {
+    "stage": "degraded_insufficient_reports",
+    "reports_generated": 1,
+    "reports_collected": 1,
+    "min_reports": 2,
+    "validation": "not_performed",
+    "failures": {},
+    "artifacts": ["reports/degraded.json", "reports/generation.json"],
+    "exit_code": 0
+  },
+  "regression": {
+    "command": "python -m pytest tests\\ai_team -q",
+    "result": "all passed (691 collected, 4 subtests)",
+    "flaky": "tests/ai_team/test_task_concurrency.py failed once under full-suite load, passes standalone"
+  },
+  "quality_caveat": "The generated report contains fabricated financials and no sources; it is link evidence only and is not counted as an investment view."
+}

@@ -40,3 +40,14 @@
 
 - AkShare 实时行情接入（兼容层已修，但未做实时数据对接）；
 - 发布 tag 与 PyPI 打包（当前只有 `ai_team.__version__ = "3.10.0"`，未打 git tag）。
+
+## 6. Colab 验收席位（experimental，不计票）
+
+- 2026-11-18 用 Colab 免费 T4 + Qwen2.5-1.5B 真机跑通了 `--live --providers-file`：
+  真实 HTTP、真实推理、报告落盘、降级产物齐全，退出码 0。
+- 该席位的定位是**链路验收工具**，不参与研究结论：1.5B 写出的报告会编造财务数据，
+  且常常给不出来源，按既定规则一律 `seats_unsourced`，不计票。
+- 它证明的是「代码通」，不是「结论对」。三席全绿的完整自动验收仍未完成：
+  ChatGPT 余额为 0、Grok 免费版无 `xai-` key、Hark 无公开模型 API。
+- 会话与地址都是临时的：Colab 会话关闭即失效，隧道地址每次重启都变，
+  搭建步骤见 `docs/colab_endpoint.md`。
