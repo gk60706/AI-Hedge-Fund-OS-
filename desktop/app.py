@@ -2,500 +2,1149 @@ from __future__ import annotations
 
 import json
 import logging
+import os
+import re
 import sys
 import threading
+import time
 import traceback
 import uuid
-
-from datetime import datetime, timezone
+import urllib.parse
+import urllib.request
+from concurrent.futures import ThreadPoolExecutor
+from datetime import date
 from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI, HTTPException
+import yaml
+
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field
 
+
+# ============================================================
+# Paths
+# ============================================================
+
 if getattr(sys, "frozen", False):
     PROJECT_ROOT = Path(sys.executable).resolve().parent
-    UI_FILE = Path(sys._MEIPASS) / "desktop" / "ui.html"
+    UI_ROOT = Path(getattr(sys, "_MEIPASS", PROJECT_ROOT)) / "desktop"
 else:
     PROJECT_ROOT = Path(__file__).resolve().parents[1]
-    UI_FILE = Path(__file__).resolve().parent / "ui.html"
+    UI_ROOT = Path(__file__).resolve().parent
 
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
+UI_FILE = UI_ROOT / "ui.html"
 
-import ai_team
-from ai_team.providers import (
-    load_providers,
-    build_custom_registry,
-    describe_providers,
-)
-from ai_team.research_pipeline import V310ResearchPipeline
+REPORTS_DIR = PROJECT_ROOT / "reports"
+RESEARCH_DIR = PROJECT_ROOT / "research"
+
+app = FastAPI(title="AI Hedge Fund OS Desktop API")
 
 
-app = FastAPI(
-    title="AI Hedge Fund OS V3.10",
-    version="3.10",
-)
+# ============================================================
+# Logging
+# ============================================================
+
+logger = logging.getLogger("ai_hedge_fund_desktop")
+logger.setLevel(logging.INFO)
+logger.propagate = False
+
+_log_lock = threading.Lock()
+_log_lines: list[str] = []
+
+
+class MemoryLogHandler(logging.Handler):
+    def emit(self, record: logging.LogRecord) -> None:
+        try:
+            message = self.format(record)
+            with _log_lock:
+                _log_lines.append(message)
+                if len(_log_lines) > 200:
+                    del _log_lines[:-200]
+        except Exception:
+            self.handleError(record)
+
+
+if not any(isinstance(h, MemoryLogHandler) for h in logger.handlers):
+    _handler = MemoryLogHandler()
+    _handler.setFormatter(
+        logging.Formatter(
+            "%(asctime)s [%(levelname)s] %(message)s",
+            datefmt="%H:%M:%S",
+        )
+    )
+    logger.addHandler(_handler)
+
+
+# ============================================================
+# Research jobs
+# ============================================================
 
 jobs: dict[str, dict[str, Any]] = {}
-jobs_lock = threading.Lock()
-
-
-def now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat()
-
-
-def safe_json(value: Any) -> Any:
-    try:
-        return json.loads(
-            json.dumps(
-                value,
-                ensure_ascii=False,
-                default=str,
-            )
-        )
-    except Exception:
-        return str(value)
-
-
-def resolve_config_path(value: str) -> Path:
-    path = Path(value)
-
-    if not path.is_absolute():
-        path = PROJECT_ROOT / path
-
-    try:
-        path = path.resolve()
-        path.relative_to(PROJECT_ROOT.resolve())
-    except (ValueError, OSError):
-        raise HTTPException(
-            status_code=400,
-            detail="配置文件路径越界",
-        )
-
-    if not path.is_file():
-        raise HTTPException(
-            status_code=404,
-            detail="配置文件不存在",
-        )
-
-    return path
-
-
-def append_log(job_id: str, message: str):
-    with jobs_lock:
-        job = jobs.get(job_id)
-        if job is not None:
-            job["log"].append(str(message))
-            job["log"] = job["log"][-200:]
-
-
-def update_job(job_id: str, **kwargs):
-    with jobs_lock:
-        if job_id in jobs:
-            jobs[job_id].update(kwargs)
-
-
-class JobLogHandler(logging.Handler):
-    def __init__(self, job_id: str):
-        super().__init__()
-        self.job_id = job_id
-
-    def emit(self, record):
-        try:
-            append_log(
-                self.job_id,
-                self.format(record),
-            )
-        except Exception:
-            pass
-
-
-@app.get("/", response_class=HTMLResponse)
-def index():
-    if not UI_FILE.is_file():
-        raise HTTPException(
-            status_code=500,
-            detail=f"ui.html 不存在: {UI_FILE}",
-        )
-
-    return UI_FILE.read_text(encoding="utf-8")
-
-
-@app.get("/api/health")
-def health():
-    return {
-        "status": "ok",
-        "version": getattr(ai_team, "__version__", "unknown"),
-    }
-
-
-@app.get("/api/providers")
-def providers(file: str = "configs/ai_providers.yaml"):
-    path = resolve_config_path(file)
-
-    try:
-        loaded_providers = load_providers(path)
-        registry = build_custom_registry(
-            path,
-            timeout=10,
-        )
-
-        rows = describe_providers(
-            registry,
-            loaded_providers,
-        )
-
-        result = []
-
-        for row in rows:
-            item = {
-                "provider_id": row.get("provider_id"),
-                "display_name": row.get("display_name"),
-                "base_url": row.get("base_url"),
-                "model": row.get("model"),
-                "status": row.get("status"),
-            }
-
-            if "tags" in row:
-                item["tags"] = row["tags"]
-
-            result.append(item)
-
-        return result
-
-    except HTTPException:
-        raise
-    except Exception as exc:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Provider 加载失败: {type(exc).__name__}: {exc}",
-        )
+_jobs_lock = threading.Lock()
+_research_executor = ThreadPoolExecutor(
+    max_workers=4,
+    thread_name_prefix="research",
+)
 
 
 class ResearchRequest(BaseModel):
-    symbol: str = Field(
-        default="300394.SZ",
-        min_length=1,
-        max_length=32,
-    )
-    as_of: str
-    providers_file: str = "configs/ai_providers.yaml"
+    symbol: str = Field(min_length=1)
+    as_of_date: str | None = None
+    call_budget: int = 30
     allow_missing_agents: bool = True
-    call_budget: int = Field(
-        default=1,
-        ge=1,
-        le=100,
-    )
-    adapter_timeout: int = Field(
-        default=300,
-        ge=1,
-        le=3600,
-    )
 
 
-def execute_research(
-    job_id: str,
-    request: ResearchRequest,
-):
-    handler = JobLogHandler(job_id)
-    handler.setFormatter(
-        logging.Formatter(
-            "%(asctime)s [%(levelname)s] %(message)s"
-        )
-    )
+# ============================================================
+# Tencent market data cache
+# ============================================================
 
-    root_logger = logging.getLogger()
-    root_logger.addHandler(handler)
+_HTTP_TIMEOUT = 8
+_CACHE_TTL = 10.0
+_cache_lock = threading.Lock()
+_http_cache: dict[str, tuple[float, str]] = {}
 
-    try:
-        update_job(
-            job_id,
-            status="running",
-            started_at=now_iso(),
-        )
-
-        append_log(job_id, "初始化 V3.10 Research Pipeline")
-        append_log(job_id, f"研究标的: {request.symbol}")
-        append_log(job_id, f"截止日期: {request.as_of}")
-
-        config_path = resolve_config_path(
-            request.providers_file
-        )
-
-        append_log(job_id, "加载 Provider 配置")
-
-        registry = build_custom_registry(
-            config_path,
-            timeout=request.adapter_timeout,
-        )
-
-        reports_dir = (
-            PROJECT_ROOT
-            / "reports"
-            / f"{request.symbol}_{request.as_of}"
-        )
-
-        reports_dir.mkdir(
-            parents=True,
-            exist_ok=True,
-        )
-
-        append_log(job_id, f"报告目录: {reports_dir}")
-        append_log(job_id, "创建研究 Pipeline")
-
-        pipeline = V310ResearchPipeline(
-            project_root=PROJECT_ROOT,
-        )
-
-        append_log(job_id, "开始执行多 AI 研究")
-
-        result = pipeline.run_live(
-            symbol=request.symbol,
-            registry=registry,
-            as_of_date=request.as_of,
-            reports_dir=reports_dir,
-            allow_missing_agents=request.allow_missing_agents,
-            call_budget=request.call_budget,
-        )
-
-        result_data = safe_json(result)
-
-        if isinstance(result_data, dict):
-            stage = result_data.get("stage", "unknown")
-            reports_collected = result_data.get(
-                "reports_collected",
-                0,
-            )
-        else:
-            stage = getattr(result, "stage", "completed")
-            reports_collected = getattr(
-                result,
-                "reports_collected",
-                0,
-            )
-
-        append_log(job_id, "研究执行完成")
-        append_log(job_id, f"stage: {stage}")
-        append_log(
-            job_id,
-            f"reports_collected: {reports_collected}",
-        )
-
-        update_job(
-            job_id,
-            status="done",
-            finished_at=now_iso(),
-            result=result_data,
-            error=None,
-        )
-
-    except Exception as exc:
-        error = f"{type(exc).__name__}: {exc}"
-
-        append_log(job_id, "研究执行失败: " + error)
-        append_log(job_id, traceback.format_exc())
-
-        update_job(
-            job_id,
-            status="error",
-            finished_at=now_iso(),
-            error=error,
-        )
-
-    finally:
-        root_logger.removeHandler(handler)
-        handler.close()
+_BROWSER_UA = (
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+    "AppleWebKit/537.36 (KHTML, like Gecko) "
+    "Chrome/131.0.0.0 Safari/537.36"
+)
 
 
-@app.post("/api/research")
-def start_research(request: ResearchRequest):
-    if not request.symbol.strip():
-        raise HTTPException(
-            status_code=400,
-            detail="股票代码不能为空",
-        )
+def _http_get(url: str) -> str:
+    now = time.monotonic()
 
-    try:
-        datetime.strptime(
-            request.as_of,
-            "%Y-%m-%d",
-        )
-    except ValueError:
-        raise HTTPException(
-            status_code=400,
-            detail="截止日期必须使用 YYYY-MM-DD 格式",
-        )
+    with _cache_lock:
+        cached = _http_cache.get(url)
+        if cached is not None:
+            cached_at, cached_text = cached
+            if now - cached_at < _CACHE_TTL:
+                return cached_text
 
-    resolve_config_path(request.providers_file)
-
-    job_id = uuid.uuid4().hex
-
-    with jobs_lock:
-        jobs[job_id] = {
-            "job_id": job_id,
-            "status": "queued",
-            "started_at": None,
-            "finished_at": None,
-            "result": None,
-            "error": None,
-            "log": ["任务已进入队列"],
-        }
-
-    thread = threading.Thread(
-        target=execute_research,
-        args=(job_id, request),
-        name=f"research-{job_id[:8]}",
-        daemon=True,
+    request = urllib.request.Request(
+        url,
+        headers={
+            "User-Agent": _BROWSER_UA,
+            "Referer": "https://gu.qq.com/",
+            "Accept": "*/*",
+            "Connection": "close",
+        },
     )
 
-    thread.start()
+    with urllib.request.urlopen(
+        request,
+        timeout=_HTTP_TIMEOUT,
+    ) as response:
+        raw = response.read()
 
-    return {
-        "job_id": job_id,
-    }
+    content = raw.decode("gbk", errors="replace")
+
+    with _cache_lock:
+        _http_cache[url] = (time.monotonic(), content)
+
+        if len(_http_cache) > 256:
+            expired = [
+                key
+                for key, (cached_at, _) in _http_cache.items()
+                if time.monotonic() - cached_at >= _CACHE_TTL
+            ]
+            for key in expired:
+                _http_cache.pop(key, None)
+
+    return content
 
 
-@app.get("/api/jobs/{job_id}")
-def get_job(job_id: str):
-    with jobs_lock:
-        job = jobs.get(job_id)
+# ============================================================
+# Stock symbol helpers
+# ============================================================
 
-        if job is None:
-            raise HTTPException(
-                status_code=404,
-                detail="任务不存在",
-            )
+def _normalize_market(market: str, code: str) -> str | None:
+    market = market.lower()
+    code = code.strip()
 
-        return safe_json(job)
+    if not code.isdigit():
+        return None
+
+    if market in ("sh", "sz", "bj"):
+        return market
+
+    return None
 
 
-def collect_files():
-    results = []
+def _symbol_from_market(market: str, code: str) -> str:
+    suffix = {
+        "sh": "SH",
+        "sz": "SZ",
+        "bj": "BJ",
+    }[market]
 
-    for folder_name in ("reports", "research"):
-        folder = PROJECT_ROOT / folder_name
+    return f"{code}.{suffix}"
 
-        if not folder.is_dir():
+
+def _market_from_symbol(symbol: str) -> tuple[str, str] | None:
+    value = symbol.strip().upper()
+
+    match = re.fullmatch(r"(\d{6})\.(SH|SZ|BJ)", value)
+
+    if match:
+        code, suffix = match.groups()
+        market = {
+            "SH": "sh",
+            "SZ": "sz",
+            "BJ": "bj",
+        }[suffix]
+        return market, code
+
+    if re.fullmatch(r"\d{6}", value):
+        if value.startswith(("6", "9")):
+            return "sh", value
+
+        if value.startswith(("0", "3")):
+            return "sz", value
+
+        if value.startswith(("4", "8")):
+            return "bj", value
+
+    return None
+
+
+def _parse_smartbox(text: str, limit: int = 10) -> list[dict[str, str]]:
+    match = re.search(
+        r'v_hint\s*=\s*"([^"]*)"',
+        text,
+        flags=re.IGNORECASE,
+    )
+
+    if not match:
+        return []
+
+    raw_items = match.group(1).split("^")
+    results: list[dict[str, str]] = []
+    seen: set[str] = set()
+
+    for raw_item in raw_items:
+        fields = raw_item.split("~")
+
+        if len(fields) < 5:
             continue
 
-        for path in folder.rglob("*"):
-            if not path.is_file():
-                continue
+        market = _normalize_market(fields[0], fields[1])
+        code = fields[1].strip()
+        name = fields[2].strip()
+        stock_type = fields[4].strip()
 
-            if path.suffix.lower() not in (
-                ".json",
-                ".md",
-            ):
-                continue
+        if market is None or not name:
+            continue
 
-            try:
-                stat = path.stat()
+        symbol = _symbol_from_market(market, code)
 
-                results.append({
-                    "path": path.relative_to(
-                        PROJECT_ROOT
-                    ).as_posix(),
-                    "size": stat.st_size,
-                    "mtime": stat.st_mtime,
-                })
+        if symbol in seen:
+            continue
 
-            except OSError:
-                continue
+        seen.add(symbol)
 
-    results.sort(
-        key=lambda item: item["mtime"],
-        reverse=True,
-    )
+        results.append(
+            {
+                "market": market,
+                "code": code,
+                "symbol": symbol,
+                "name": name,
+                "type": stock_type,
+            }
+        )
 
-    return results[:30]
+        if len(results) >= limit:
+            break
+
+    return results
 
 
-@app.get("/api/files")
-def list_files():
+def _search_stocks(query: str, limit: int = 10) -> list[dict[str, str]]:
+    query = query.strip()
+
+    if not query:
+        return []
+
+    limit = max(1, min(int(limit), 50))
+
+    encoded = urllib.parse.urlencode({"q": query, "t": "all"})
+    url = f"https://smartbox.gtimg.cn/s3/?{encoded}"
+
+    response = _http_get(url)
+    results = _parse_smartbox(response, limit)
+
+    # Tencent smartbox normally handles both code and Chinese-name
+    # matching. Keep the local filtering as a defensive fallback.
+    if not results:
+        return []
+
+    return results
+
+
+# ============================================================
+# Tencent quote helpers
+# ============================================================
+
+def _to_float(value: Any) -> float | None:
+    try:
+        text = str(value).strip()
+
+        if not text:
+            return None
+
+        result = float(text)
+
+        if result != result or result in (float("inf"), float("-inf")):
+            return None
+
+        return result
+    except (TypeError, ValueError, OverflowError):
+        return None
+
+
+def _quote_from_fields(
+    symbol: str,
+    fields: list[str],
+) -> dict[str, Any] | None:
+    if len(fields) <= 45:
+        return None
+
+    name = fields[1].strip()
+
+    if not name:
+        return None
+
+    market_info = _market_from_symbol(symbol)
+
+    if market_info is None:
+        return None
+
+    market, code = market_info
+
+    # Tencent quote field indexes.
+    price = _to_float(fields[3])
+    prev_close = _to_float(fields[4])
+    open_price = _to_float(fields[5])
+
+    if price is None:
+        return None
+
+    volume = _to_float(fields[6])
+    quote_time = fields[30].strip()
+
+    change = _to_float(fields[31])
+    change_pct = _to_float(fields[32])
+    high = _to_float(fields[33])
+    low = _to_float(fields[34])
+
+    amount_wan = _to_float(fields[37])
+    turnover = _to_float(fields[38])
+    pe_ttm = _to_float(fields[39])
+
+    market_cap = _to_float(fields[44])
+
+    if market_cap is None:
+        market_cap = _to_float(fields[45])
+
     return {
-        "files": collect_files(),
+        "symbol": _symbol_from_market(market, code),
+        "code": code,
+        "name": name,
+        "price": price,
+        "prev_close": prev_close,
+        "open": open_price,
+        "high": high,
+        "low": low,
+        "change": change,
+        "change_pct": change_pct,
+        "volume": volume,
+        "amount": amount_wan * 10000 if amount_wan is not None else None,
+        "turnover": turnover,
+        "pe_ttm": pe_ttm,
+        "market_cap": market_cap,
+        "time": quote_time or None,
     }
 
 
-@app.get("/api/files/{file_path:path}")
-def read_file(file_path: str):
-    if not file_path:
-        raise HTTPException(
-            status_code=400,
-            detail="文件路径不能为空",
-        )
+def _fetch_quotes(symbols: list[str]) -> list[dict[str, Any]]:
+    normalized: list[tuple[str, str]] = []
+    seen: set[str] = set()
 
-    requested = Path(file_path)
+    for raw_symbol in symbols:
+        info = _market_from_symbol(raw_symbol)
 
-    if requested.is_absolute():
-        raise HTTPException(
-            status_code=400,
-            detail="禁止绝对路径",
-        )
+        if info is None:
+            continue
+
+        market, code = info
+        symbol = _symbol_from_market(market, code)
+
+        if symbol in seen:
+            continue
+
+        seen.add(symbol)
+        normalized.append((market, code))
+
+    if not normalized:
+        return []
+
+    normalized = normalized[:50]
+
+    query = ",".join(
+        f"{market}{code}"
+        for market, code in normalized
+    )
+
+    url = f"https://qt.gtimg.cn/q={query}"
 
     try:
-        target = (
-            PROJECT_ROOT / requested
-        ).resolve()
+        response = _http_get(url)
+    except Exception:
+        logger.warning("腾讯行情接口请求失败", exc_info=True)
+        return []
 
-        target.relative_to(
-            PROJECT_ROOT.resolve()
+    results: list[dict[str, Any]] = []
+
+    for market, code in normalized:
+        symbol = _symbol_from_market(market, code)
+
+        pattern = re.compile(
+            rf'v_{re.escape(market + code)}\s*=\s*"([^"]*)"',
         )
 
-    except (ValueError, OSError):
-        raise HTTPException(
-            status_code=403,
-            detail="文件路径越界",
+        match = pattern.search(response)
+
+        if not match:
+            continue
+
+        try:
+            fields = match.group(1).split("~")
+            item = _quote_from_fields(symbol, fields)
+
+            if item is not None:
+                results.append(item)
+
+        except Exception:
+            logger.warning(
+                "行情解析失败: %s",
+                symbol,
+                exc_info=True,
+            )
+
+    return results
+
+
+# ============================================================
+# Stock resolution
+# ============================================================
+
+def _resolve_stock(value: str) -> dict[str, Any]:
+    raw_value = value.strip()
+    value = raw_value
+    suffix = ""
+
+    if "." in value:
+        core, _, tail = value.partition(".")
+        value = core.strip()
+        suffix = tail.strip().upper()
+
+    not_found = {
+        "ok": False,
+        "error": f"未找到该股票代码：{raw_value}",
+    }
+
+    if not value:
+        return not_found
+
+    try:
+        items = _search_stocks(value, limit=20)
+    except Exception:
+        logger.warning(
+            "股票联想查询失败: %s",
+            value,
+            exc_info=True,
+        )
+        return not_found
+
+    candidates = []
+
+    for item in items:
+        try:
+            name = str(item.get("name", "")).strip()
+
+            if "\\u" in name:
+                name = json.loads('"' + name + '"')
+
+            stock_type = str(item.get("type", "")).strip().upper()
+            market = str(item.get("market", "")).strip().lower()
+            code = str(item.get("code", "")).strip()
+
+            if not stock_type.startswith("GP"):
+                continue
+
+            if market not in ("sh", "sz", "bj"):
+                continue
+
+            if not re.fullmatch(r"\d{6}", code):
+                continue
+
+            if not name:
+                continue
+
+            if suffix and _symbol_from_market(market, code).split(".")[-1] != suffix:
+                continue
+
+            candidates.append({
+                "code": code,
+                "name": name,
+                "symbol": _symbol_from_market(market, code),
+            })
+
+        except (ValueError, TypeError, KeyError):
+            continue
+
+    # 纯数字：必须代码完全匹配
+    if re.fullmatch(r"\d{5,6}", value):
+        for item in candidates:
+            if item["code"] == value:
+                return {
+                    "ok": True,
+                    "symbol": item["symbol"],
+                    "name": item["name"],
+                }
+
+        return not_found
+
+    # 名称完全匹配
+    for item in candidates:
+        if item["name"] == value:
+            return {
+                "ok": True,
+                "symbol": item["symbol"],
+                "name": item["name"],
+            }
+
+    # 名称前缀匹配
+    for item in candidates:
+        if item["name"].startswith(value):
+            return {
+                "ok": True,
+                "symbol": item["symbol"],
+                "name": item["name"],
+            }
+
+    # 名称包含匹配
+    if len(value) >= 2:
+        for item in candidates:
+            if value in item["name"]:
+                return {
+                    "ok": True,
+                    "symbol": item["symbol"],
+                    "name": item["name"],
+                }
+
+    return not_found
+
+
+# ============================================================
+
+def _expand_env_default(text: str) -> str:
+    """把 ${VAR:-默认值} 形式展开为默认值或环境变量值。"""
+    def repl(match: re.Match[str]) -> str:
+        name = match.group(1)
+        default = match.group(2) or ""
+        return os.environ.get(name, default)
+
+    return re.sub(r"\$\{([A-Za-z_][A-Za-z0-9_]*)(?::?-([^}]*))?\}", repl, str(text))
+
+
+def _get_provider_rows() -> list[dict[str, Any]]:
+    from ai_team.providers import (
+        build_custom_registry,
+        describe_providers,
+    )
+
+    config_candidates = [
+        PROJECT_ROOT / "configs" / "ai_providers.yaml",
+        PROJECT_ROOT / "configs" / "ai_providers.yml",
+        PROJECT_ROOT / "config" / "providers.yaml",
+        PROJECT_ROOT / "config" / "providers.yml",
+    ]
+
+    config_path = next(
+        (
+            path
+            for path in config_candidates
+            if path.is_file()
+        ),
+        None,
+    )
+
+    if config_path is None:
+        return []
+
+    registry = build_custom_registry(
+        config_path,
+        timeout=10,
+    )
+
+    try:
+        description = registry.describe()
+        available = description.get("available") or []
+        skipped = description.get("skipped") or {}
+    except Exception:
+        available = []
+        skipped = {}
+
+    try:
+        raw = yaml.safe_load(
+            config_path.read_text(encoding="utf-8")
+        ) or {}
+    except Exception:
+        logger.warning(
+            "读取 Provider 配置失败: %s",
+            config_path,
+            exc_info=True,
+        )
+        raw = {}
+
+    rows: list[dict[str, Any]] = []
+
+    for entry in raw.get("providers") or []:
+        if not isinstance(entry, dict):
+            continue
+
+        provider_id = str(entry.get("provider_id") or "").strip()
+
+        if not provider_id:
+            continue
+
+        enabled = entry.get("enabled", True)
+
+        if provider_id in skipped or skipped.get(provider_id):
+            status = "missing_key"
+        elif not enabled:
+            status = "disabled"
+        elif provider_id in available:
+            status = "ready"
+        else:
+            status = "unknown"
+
+        rows.append(
+            {
+                "provider_id": provider_id,
+                "display_name": str(entry.get("display_name") or provider_id),
+                "base_url": _expand_env_default(entry.get("base_url") or ""),
+                "model": _expand_env_default(entry.get("model") or ""),
+                "status": status,
+                "tags": entry.get("tags") or [],
+            }
         )
 
-    if target.suffix.lower() not in (
-        ".json",
-        ".md",
-    ):
-        raise HTTPException(
-            status_code=403,
-            detail="不支持的文件类型",
+    return rows
+
+
+# ============================================================
+# Research execution
+# ============================================================
+
+def _run_research(job_id: str, payload: dict[str, Any]) -> None:
+    try:
+        from ai_team.research_pipeline import V310ResearchPipeline
+
+        from ai_team.providers import (
+            build_custom_registry,
         )
 
-    if not target.is_file():
+        symbol = payload["symbol"]
+        as_of_date = payload.get("as_of_date")
+        call_budget = payload.get("call_budget", 30)
+        allow_missing_agents = payload.get(
+            "allow_missing_agents",
+            True,
+        )
+
+        with _jobs_lock:
+            jobs[job_id]["status"] = "running"
+            jobs[job_id]["started_at"] = time.time()
+
+        logger.info("研究任务启动: %s", job_id)
+        logger.info("标的: %s", symbol)
+        logger.info("调用预算: %s", call_budget)
+
+        config_candidates = [
+            PROJECT_ROOT / "configs" / "ai_providers.yaml",
+            PROJECT_ROOT / "configs" / "ai_providers.yml",
+            PROJECT_ROOT / "config" / "providers.yaml",
+            PROJECT_ROOT / "config" / "providers.yml",
+        ]
+
+        config_path = next(
+            (
+                path
+                for path in config_candidates
+                if path.is_file()
+            ),
+            None,
+        )
+
+        registry = (
+            build_custom_registry(
+                config_path,
+                timeout=10,
+            )
+            if config_path is not None
+            else None
+        )
+
+        pipeline = V310ResearchPipeline(project_root=PROJECT_ROOT)
+
+        result = pipeline.run_live(
+            symbol=symbol,
+            registry=registry,
+            as_of_date=as_of_date or date.today().isoformat(),
+            reports_dir=REPORTS_DIR,
+            allow_missing_agents=allow_missing_agents,
+            call_budget=call_budget,
+        )
+
+        with _jobs_lock:
+            jobs[job_id]["status"] = "completed"
+            jobs[job_id]["result"] = result
+            jobs[job_id]["finished_at"] = time.time()
+
+        logger.info("研究任务完成: %s", job_id)
+
+    except Exception as exc:
+        error = str(exc)
+
+        logger.error(
+            "研究任务失败: %s\n%s",
+            error,
+            traceback.format_exc(),
+        )
+
+        with _jobs_lock:
+            if job_id in jobs:
+                jobs[job_id]["status"] = "failed"
+                jobs[job_id]["error"] = error
+                jobs[job_id]["finished_at"] = time.time()
+
+
+# ============================================================
+# Existing endpoints
+# ============================================================
+
+@app.get("/", response_class=HTMLResponse)
+async def index():
+    if not UI_FILE.is_file():
         raise HTTPException(
             status_code=404,
-            detail="文件不存在",
+            detail="Desktop UI not found",
         )
 
     try:
-        content = target.read_text(
-            encoding="utf-8-sig",
+        return HTMLResponse(
+            UI_FILE.read_text(encoding="utf-8")
         )
-
-        return {
-            "path": target.relative_to(
-                PROJECT_ROOT
-            ).as_posix(),
-            "content": content,
-        }
-
-    except UnicodeDecodeError:
-        raise HTTPException(
-            status_code=415,
-            detail="文件不是有效 UTF-8 文本",
-        )
-
-    except OSError as exc:
+    except Exception as exc:
         raise HTTPException(
             status_code=500,
             detail=str(exc),
         )
 
 
-if __name__ == "__main__":
-    import uvicorn
+@app.get("/api/health")
+async def health():
+    return {
+        "status": "ok",
+        "project_root": str(PROJECT_ROOT),
+    }
 
-    uvicorn.run(
-        app,
-        host="127.0.0.1",
-        port=8765,
+
+@app.get("/api/providers")
+async def providers():
+    try:
+        return _get_provider_rows()
+    except Exception as exc:
+        logger.error(
+            "Provider 加载失败: %s",
+            exc,
+            exc_info=True,
+        )
+        return []
+
+
+@app.post("/api/research")
+async def create_research(request: ResearchRequest):
+    raw_symbol = request.symbol.strip()
+
+    resolved = _resolve_stock(raw_symbol)
+
+    if not resolved["ok"]:
+        raise HTTPException(
+            status_code=400,
+            detail=f"未找到该股票代码：{raw_symbol}",
+        )
+
+    symbol = resolved["symbol"]
+    name = resolved["name"]
+
+    job_id = str(uuid.uuid4())
+
+    payload = request.model_dump()
+    payload["symbol"] = symbol
+
+    with _jobs_lock:
+        jobs[job_id] = {
+            "job_id": job_id,
+            "symbol": symbol,
+            "name": name,
+            "status": "queued",
+            "created_at": time.time(),
+            "result": None,
+            "error": None,
+        }
+
+    logger.info(
+        "标的: %s(%s)",
+        name,
+        symbol,
+    )
+
+    _research_executor.submit(
+        _run_research,
+        job_id,
+        payload,
+    )
+
+    logger.info("研究任务已提交: %s", job_id)
+
+    return {
+        "job_id": job_id,
+        "symbol": symbol,
+        "name": name,
+        "status": "queued",
+    }
+
+
+@app.get("/api/jobs/{job_id}")
+async def get_job(job_id: str):
+    with _jobs_lock:
+        job = jobs.get(job_id)
+
+        if job is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Job not found",
+            )
+
+        return dict(job)
+
+
+@app.get("/api/files")
+async def list_files():
+    files: list[dict[str, Any]] = []
+
+    for base_dir in (REPORTS_DIR, RESEARCH_DIR):
+        if not base_dir.is_dir():
+            continue
+
+        try:
+            for path in base_dir.rglob("*"):
+                if not path.is_file():
+                    continue
+
+                if path.suffix.lower() not in (".json", ".md"):
+                    continue
+
+                try:
+                    stat = path.stat()
+
+                    files.append(
+                        {
+                            "path": str(
+                                path.relative_to(PROJECT_ROOT)
+                            ).replace("\\", "/"),
+                            "size": stat.st_size,
+                            "mtime": stat.st_mtime,
+                        }
+                    )
+                except OSError:
+                    continue
+
+        except OSError:
+            logger.warning(
+                "文件目录扫描失败: %s",
+                base_dir,
+                exc_info=True,
+            )
+
+    files.sort(
+        key=lambda item: item["mtime"],
+        reverse=True,
+    )
+
+    return files[:30]
+
+
+@app.get("/api/files/{file_path:path}")
+async def read_file(file_path: str):
+    candidate = (PROJECT_ROOT / file_path).resolve()
+
+    try:
+        candidate.relative_to(PROJECT_ROOT.resolve())
+    except ValueError:
+        raise HTTPException(
+            status_code=403,
+            detail="Access denied",
+        )
+
+    if candidate.suffix.lower() not in (".json", ".md"):
+        raise HTTPException(
+            status_code=403,
+            detail="Unsupported file type",
+        )
+
+    if not candidate.is_file():
+        raise HTTPException(
+            status_code=404,
+            detail="File not found",
+        )
+
+    try:
+        content = candidate.read_text(
+            encoding="utf-8",
+            errors="replace",
+        )
+
+        return {
+            "path": file_path,
+            "content": content,
+        }
+
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=str(exc),
+        )
+
+
+# ============================================================
+# New stock search endpoint
+# ============================================================
+
+@app.get("/api/search")
+async def search_stocks(
+    q: str = Query(default=""),
+    limit: int = Query(default=10, ge=1, le=50),
+):
+    if not q.strip():
+        return {
+            "items": [],
+            "error": "查询内容不能为空",
+        }
+
+    try:
+        items = _search_stocks(q, limit)
+
+        for item in items:
+            name = item.get("name", "")
+            if "\\u" in name:
+                try:
+                    item["name"] = json.loads('"' + name + '"')
+                except (ValueError, TypeError):
+                    pass
+
+        return {
+            "items": items,
+        }
+
+    except Exception as exc:
+        logger.warning(
+            "股票搜索失败: %s",
+            exc,
+            exc_info=True,
+        )
+
+        return {
+            "items": [],
+            "error": str(exc),
+        }
+
+
+# ============================================================
+# New stock quote endpoint
+# ============================================================
+
+@app.get("/api/quote")
+async def stock_quotes(
+    symbols: str = Query(default=""),
+):
+    if not symbols.strip():
+        return []
+
+    requested = [
+        item.strip()
+        for item in symbols.split(",")
+        if item.strip()
+    ][:50]
+
+    try:
+        return _fetch_quotes(requested)
+
+    except Exception:
+        logger.warning(
+            "批量行情请求失败",
+            exc_info=True,
+        )
+        return []
+
+
+# ============================================================
+# New market indices endpoint
+# ============================================================
+
+@app.get("/api/indices")
+async def market_indices():
+    symbols = [
+        "000001.SH",
+        "399001.SZ",
+        "399006.SZ",
+        "000688.SH",
+    ]
+
+    try:
+        return _fetch_quotes(symbols)
+
+    except Exception:
+        logger.warning(
+            "指数行情请求失败",
+            exc_info=True,
+        )
+        return []
+
+
+# ============================================================
+# New stock resolution endpoint
+# ============================================================
+
+@app.get("/api/resolve")
+async def resolve_stock(
+    symbol: str = Query(default=""),
+):
+    raw_value = symbol.strip()
+    value = raw_value
+    suffix = ""
+
+    if "." in value:
+        core, _, tail = value.partition(".")
+        value = core.strip()
+        suffix = tail.strip().upper()
+
+    def not_found():
+        return {
+            "ok": False,
+            "error": f"未找到该股票代码：{raw_value}",
+        }
+
+    if not value:
+        return not_found()
+
+    try:
+        items = _search_stocks(value, limit=50)
+
+        candidates = []
+
+        for item in items:
+            name = item.get("name", "")
+
+            if "\\u" in name:
+                try:
+                    name = json.loads('"' + name + '"')
+                except (ValueError, TypeError):
+                    continue
+
+            stock_type = str(item.get("type", "")).upper()
+
+            if not stock_type.startswith("GP"):
+                continue
+
+            market = item.get("market", "").lower()
+            code = str(item.get("code", "")).strip()
+
+            if market not in ("sh", "sz", "bj"):
+                continue
+
+            if not re.fullmatch(r"\d{6}", code):
+                continue
+
+            if suffix and _symbol_from_market(market, code).split(".")[-1] != suffix:
+                continue
+
+            candidates.append({
+                "code": code,
+                "name": name,
+                "symbol": _symbol_from_market(market, code),
+            })
+
+        # 纯数字：必须代码完全匹配
+        if re.fullmatch(r"\d{5,6}", value):
+            for item in candidates:
+                if item["code"] == value:
+                    return {
+                        "ok": True,
+                        "symbol": item["symbol"],
+                        "name": item["name"],
+                    }
+
+            return not_found()
+
+        # 中文或字母：只接受名称完全匹配或前缀匹配
+        for item in candidates:
+            if item["name"] == value:
+                return {
+                    "ok": True,
+                    "symbol": item["symbol"],
+                    "name": item["name"],
+                }
+
+        for item in candidates:
+            if item["name"].startswith(value):
+                return {
+                    "ok": True,
+                    "symbol": item["symbol"],
+                    "name": item["name"],
+                }
+
+        if len(value) >= 2:
+            for item in candidates:
+                if value in item["name"]:
+                    return {
+                        "ok": True,
+                        "symbol": item["symbol"],
+                        "name": item["name"],
+                    }
+
+        return not_found()
+
+    except Exception:
+        logger.warning(
+            "股票代码解析失败: %s",
+            value,
+            exc_info=True,
+        )
+        return not_found()
+
+
+# ============================================================
+# Application shutdown
+# ============================================================
+
+@app.on_event("shutdown")
+def shutdown():
+    _research_executor.shutdown(
+        wait=False,
+        cancel_futures=True,
     )

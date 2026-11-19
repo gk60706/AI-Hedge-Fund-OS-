@@ -1,523 +1,1187 @@
+
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>AI Hedge Fund OS V3.10 · 桌面客户端</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Hedge Fund OS</title>
 <style>
 :root {
-    color-scheme: dark;
-    --bg:#10141d;
-    --panel:#1a2230;
-    --border:#303b4d;
-    --text:#e8edf5;
-    --muted:#8996a9;
-    --green:#32c98b;
-    --red:#ff6474;
-    --blue:#559bff;
-    --orange:#ffbd59;
+  color-scheme: dark;
+  --bg:#0f1115;
+  --card:#171a21;
+  --card2:#1c2029;
+  --border:#232734;
+  --text:#e6e8ee;
+  --muted:#8b93a7;
+  --red:#ef5350;
+  --green:#26a69a;
+  --blue:#6c91ff;
+  --yellow:#e5b45c;
+  --radius:10px;
 }
-* {box-sizing:border-box}
-body {
-    margin:0;
-    padding:22px;
-    background:var(--bg);
-    color:var(--text);
-    font-family:"Microsoft YaHei",Arial,sans-serif;
-    font-size:14px;
+*{box-sizing:border-box}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font:13px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif;
 }
-header {
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    margin-bottom:22px;
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+button:disabled{opacity:.45;cursor:not-allowed}
+.app{min-height:100vh}
+.topbar{
+  height:76px;padding:10px 18px;display:flex;align-items:center;
+  justify-content:space-between;border-bottom:1px solid var(--border);
+  background:#12151b;gap:16px;
 }
-h1 {font-size:22px;margin:0}
-h2 {font-size:16px;margin:0 0 16px}
-.panel {
-    background:var(--panel);
-    border:1px solid var(--border);
-    border-radius:10px;
-    padding:18px;
-    margin-bottom:16px;
+.brand{font-size:15px;font-weight:700;white-space:nowrap}
+.brand small{display:block;color:var(--muted);font-size:11px;font-weight:400}
+.indices{display:flex;gap:24px;align-items:center;flex:1;justify-content:center}
+.index{min-width:105px}
+.index-name{color:var(--muted);font-size:11px}
+.index-value{font-size:15px;font-weight:700;font-variant-numeric:tabular-nums}
+.index-change{font-size:11px;font-variant-numeric:tabular-nums}
+.red{color:var(--red)!important}
+.green{color:var(--green)!important}
+.muted{color:var(--muted)}
+.health{display:flex;align-items:center;gap:8px;white-space:nowrap}
+.dot{width:8px;height:8px;border-radius:50%;background:#666;display:inline-block}
+.dot.ok{background:var(--green)}
+.dot.bad{background:var(--red)}
+.layout{
+  display:grid;grid-template-columns:320px minmax(0,1fr);
+  gap:16px;padding:16px;max-width:1800px;margin:auto;
 }
-.row {
-    display:flex;
-    align-items:center;
-    gap:12px;
-    flex-wrap:wrap;
+.sidebar,.main{min-width:0}
+.panel{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--radius);padding:16px;margin-bottom:16px;
 }
-.space {justify-content:space-between}
-button {
-    border:0;
-    border-radius:6px;
-    padding:9px 17px;
-    background:var(--blue);
-    color:white;
-    cursor:pointer;
-    font-weight:600;
+.panel-title{
+  font-size:15px;font-weight:600;margin:0 0 14px;
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
 }
-button:disabled {opacity:.45;cursor:not-allowed}
-input {
-    background:#101722;
-    border:1px solid var(--border);
-    color:var(--text);
-    padding:9px;
-    border-radius:5px;
-    min-width:0;
-    width:100%;
+.panel-title small{font-size:11px;color:var(--muted);font-weight:400}
+.search-wrap{position:relative}
+input,select{
+  background:#10131a;border:1px solid var(--border);border-radius:7px;
+  padding:9px 10px;outline:none;width:100%;
 }
-input[type=checkbox] {width:auto}
-label {display:block;color:var(--muted);margin-bottom:7px}
-.field {flex:1;min-width:160px}
-.grid {
-    display:grid;
-    grid-template-columns:repeat(3,minmax(0,1fr));
-    gap:15px;
+input:focus,select:focus{border-color:#536ba8}
+.search-results{
+  display:none;position:absolute;top:43px;left:0;right:0;z-index:20;
+  background:#202530;border:1px solid #343b4b;border-radius:8px;
+  max-height:300px;overflow:auto;box-shadow:0 10px 30px #0009;
 }
-.status {
-    display:inline-flex;
-    align-items:center;
-    gap:7px;
-    padding:6px 12px;
-    border-radius:20px;
-    background:#263345;
+.search-results.show{display:block}
+.search-item{
+  padding:9px 11px;display:flex;justify-content:space-between;
+  align-items:center;gap:8px;cursor:pointer;border-bottom:1px solid #2b303c;
 }
-.dot {
-    width:8px;height:8px;border-radius:50%;
-    background:var(--orange);
+.search-item:hover,.search-item.active{background:#30394b}
+.search-item strong{font-weight:600}
+.search-item small{color:var(--muted)}
+.empty-hint{
+  color:var(--muted);padding:16px 8px;text-align:center;
+  line-height:1.8;
 }
-.ok {color:var(--green)}
-.bad {color:var(--red)}
-.muted {color:var(--muted)}
-table {width:100%;border-collapse:collapse}
-th,td {
-    text-align:left;
-    padding:10px;
-    border-bottom:1px solid var(--border);
+.watch-list{margin-top:12px}
+.watch-item{
+  display:grid;grid-template-columns:minmax(0,1fr) auto 24px;
+  gap:8px;align-items:center;padding:10px 4px;
+  border-bottom:1px solid var(--border);cursor:pointer;
 }
-th {color:var(--muted);font-weight:500}
-pre {
-    background:#0c1119;
-    border:1px solid var(--border);
-    padding:14px;
-    border-radius:7px;
-    overflow:auto;
-    white-space:pre-wrap;
-    word-break:break-word;
+.watch-item:hover{background:#20242e}
+.watch-item.selected{background:#222a39;border-radius:6px}
+.watch-name{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.watch-code{font-size:11px;color:var(--muted)}
+.watch-price{text-align:right;font-variant-numeric:tabular-nums}
+.remove{
+  background:none;border:0;color:var(--muted);font-size:17px;
+  padding:0;width:24px;height:24px;
 }
-#log {
-    height:230px;
-    overflow:auto;
-    font-family:Consolas,monospace;
-    font-size:12px;
-    line-height:1.7;
-    white-space:pre-wrap;
-    word-break:break-all;
+.remove:hover{color:var(--red)}
+.chips{display:none;gap:8px;overflow-x:auto;padding:8px 0 12px}
+.chip{
+  white-space:nowrap;background:var(--card);border:1px solid var(--border);
+  border-radius:20px;padding:6px 12px;cursor:pointer;
 }
-.file {
-    padding:10px;
-    border-bottom:1px solid var(--border);
-    cursor:pointer;
+.chip.active{border-color:var(--blue);background:#202b40}
+.stock-card{padding:20px}
+.stock-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
+.stock-name{font-size:19px;font-weight:700}
+.stock-code{color:var(--muted);margin-left:8px;font-size:12px}
+.quote-time{font-size:11px;color:var(--muted)}
+.quote-main{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin:16px 0}
+.price{font-size:32px;font-weight:700;line-height:1.2;font-variant-numeric:tabular-nums}
+.change{font-size:14px;font-weight:600;font-variant-numeric:tabular-nums}
+.quote-grid{
+  display:grid;grid-template-columns:repeat(6,minmax(0,1fr));
+  gap:14px 20px;border-top:1px solid var(--border);padding-top:16px;
 }
-.file:hover {background:#273448}
-.file-name {color:var(--blue)}
-#preview {max-height:450px;overflow:auto}
-#error {
-    display:none;
-    color:#ff8b95;
-    background:#401f2a;
-    padding:12px;
-    border-radius:6px;
-    margin-bottom:15px;
-    white-space:pre-wrap;
+.metric-label{font-size:11px;color:var(--muted)}
+.metric-value{font-size:13px;font-weight:600;margin-top:3px;font-variant-numeric:tabular-nums}
+.quote-message{color:var(--muted);padding:12px 0}
+.research-grid{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;
 }
-.checkbox {
-    display:flex;
-    align-items:center;
-    gap:8px;
-    padding-top:23px;
+.field label{display:block;color:var(--muted);font-size:11px;margin-bottom:5px}
+.field input,.field select{height:36px}
+.check-field{display:flex;align-items:center;gap:8px;padding-top:22px}
+.check-field input{width:auto}
+.provider-status{
+  display:inline-flex;align-items:center;border-radius:20px;padding:2px 7px;
+  font-size:10px;background:#29313c;color:var(--muted);white-space:nowrap;
 }
-details summary {cursor:pointer;color:var(--blue);padding:8px 0}
-@media(max-width:760px) {
-    .grid {grid-template-columns:1fr}
-    body {padding:12px}
-    header {align-items:flex-start;gap:12px;flex-direction:column}
+.status-ok{background:#17352f;color:#6dd7bc}
+.status-error{background:#412626;color:#ff8585}
+.status-warn{background:#41351f;color:#e5b45c}
+.primary{
+  border:1px solid #5475c8;background:#3657a0;color:white;
+  border-radius:7px;padding:9px 18px;font-weight:600;
+}
+.primary:hover{background:#456bc0}
+.form-actions{margin-top:14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.error-text{color:var(--red);font-size:12px}
+.task-card{margin-top:16px;padding:12px;background:#11151c;border:1px solid var(--border);border-radius:8px}
+.task-header{display:flex;justify-content:space-between;gap:8px;align-items:center}
+.task-steps{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin-top:15px}
+.step{text-align:center;color:var(--muted);font-size:11px}
+.step-line{height:4px;border-radius:5px;background:#303644;margin-bottom:6px}
+.step.done .step-line{background:var(--green)}
+.step.current .step-line{background:var(--blue)}
+.logs{
+  background:#0d1016;border:1px solid var(--border);border-radius:7px;
+  padding:10px;height:240px;overflow:auto;
+  font:11px/1.7 Consolas,Monaco,monospace;
+  white-space:pre-wrap;overflow-wrap:anywhere;
+}
+.log-info{color:#b0bdce}
+.log-warn{color:var(--yellow)}
+.log-error{color:#ff7777}
+.files-list{display:flex;flex-direction:column;gap:0}
+.file-row{
+  display:grid;grid-template-columns:minmax(0,1fr) 90px 135px;
+  gap:10px;padding:10px 4px;border-bottom:1px solid var(--border);
+  cursor:pointer;align-items:center;
+}
+.file-row:hover{background:#20242e}
+.file-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.file-size,.file-time{color:var(--muted);font-size:11px}
+.collapse-btn{
+  background:none;border:0;color:var(--muted);font-size:12px;
+}
+.provider-list{display:flex;flex-direction:column;gap:8px}
+.provider-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:9px;background:#11151c;border-radius:7px;gap:12px;
+}
+.provider-name{font-weight:600}
+.provider-model{color:var(--muted);font-size:11px}
+.drawer-backdrop{
+  position:fixed;inset:0;background:#0008;z-index:50;display:none;
+}
+.drawer-backdrop.show{display:block}
+.drawer{
+  position:absolute;right:0;top:0;height:100%;width:min(680px,90vw);
+  background:#171a21;border-left:1px solid var(--border);
+  padding:18px;display:flex;flex-direction:column;gap:12px;
+}
+.drawer-header{display:flex;justify-content:space-between;align-items:center}
+.drawer-content{
+  flex:1;overflow:auto;background:#0d1016;border:1px solid var(--border);
+  padding:14px;border-radius:8px;white-space:pre-wrap;overflow-wrap:anywhere;
+  font:12px/1.7 Consolas,monospace;
+}
+.secondary{
+  background:#242a36;border:1px solid var(--border);
+  border-radius:7px;padding:7px 12px;
+}
+.toast-area{
+  position:fixed;right:18px;top:90px;z-index:100;
+  display:flex;flex-direction:column;gap:8px;width:min(360px,90vw);
+}
+.toast{
+  background:#272d39;border:1px solid #3b4353;border-radius:8px;
+  padding:11px 12px;box-shadow:0 5px 20px #0008;
+  display:flex;justify-content:space-between;gap:10px;
+}
+.toast button{background:none;border:0;color:var(--muted)}
+.empty-main{text-align:center;padding:55px 20px;color:var(--muted)}
+.hidden{display:none!important}
+@media(max-width:1100px){
+  .layout{grid-template-columns:1fr}
+  .sidebar{display:none}
+  .chips{display:flex}
+  .quote-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .indices{justify-content:flex-start;overflow-x:auto}
+  .index{min-width:90px}
+  .brand{display:none}
+}
+@media(max-width:650px){
+  .topbar{height:auto;min-height:66px;padding:10px}
+  .indices{gap:14px}
+  .index{min-width:82px}
+  .health{font-size:10px}
+  .layout{padding:10px;gap:10px}
+  .panel{padding:12px;margin-bottom:10px}
+  .research-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .quote-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .price{font-size:28px}
+  .file-row{grid-template-columns:minmax(0,1fr) 65px}
+  .file-time{display:none}
 }
 </style>
 </head>
 <body>
+<div class="app">
 
-<header>
-    <h1>AI Hedge Fund OS V3.10 · 桌面客户端</h1>
-    <div class="status">
-        <span class="dot" id="healthDot"></span>
-        <span id="healthText">正在连接...</span>
-    </div>
+<header class="topbar">
+  <div class="brand">
+    AI HEDGE FUND OS
+    <small>QUANTITATIVE RESEARCH TERMINAL</small>
+  </div>
+  <div class="indices" id="indices">
+    <div class="index"><div class="index-name">上证指数</div><div class="index-value muted">--</div></div>
+    <div class="index"><div class="index-name">深证成指</div><div class="index-value muted">--</div></div>
+    <div class="index"><div class="index-name">创业板指</div><div class="index-value muted">--</div></div>
+    <div class="index"><div class="index-name">科创50</div><div class="index-value muted">--</div></div>
+  </div>
+  <div class="health">
+    <span class="dot" id="healthDot"></span>
+    <span id="healthText">检测后端...</span>
+    <span class="muted" id="marketTime">行情 --</span>
+  </div>
 </header>
 
-<div id="error"></div>
+<div class="layout">
+  <aside class="sidebar">
+    <section class="panel">
+      <h2 class="panel-title">股票搜索 <small id="watchCount">0 / 20</small></h2>
+      <div class="search-wrap">
+        <input id="searchInput" autocomplete="off" placeholder="输入代码或名称，如 600519、贵州茅台">
+        <div class="search-results" id="searchResults"></div>
+      </div>
+      <div class="watch-list" id="watchList">
+        <div class="empty-hint">自选为空，搜索后点选即可加入</div>
+      </div>
+    </section>
+    <section class="panel">
+      <h2 class="panel-title">市场信息</h2>
+      <div class="metric-label">后端工作目录</div>
+      <div class="metric-value" id="projectRoot" style="overflow-wrap:anywhere">--</div>
+      <div style="height:12px"></div>
+      <div class="metric-label">行情刷新频率</div>
+      <div class="metric-value">5 秒</div>
+    </section>
+  </aside>
 
-<section class="panel">
-    <div class="row space">
-        <h2>AI Provider 状态</h2>
-        <button onclick="loadProviders()">刷新 Provider</button>
-    </div>
-    <div style="overflow:auto">
-        <table>
-            <thead>
-                <tr>
-                    <th>Provider</th>
-                    <th>名称</th>
-                    <th>模型</th>
-                    <th>Base URL</th>
-                    <th>标签</th>
-                    <th>状态</th>
-                </tr>
-            </thead>
-            <tbody id="providerTable">
-                <tr><td colspan="6">正在加载...</td></tr>
-            </tbody>
-        </table>
-    </div>
-</section>
+  <main class="main">
+    <div class="chips" id="watchChips"></div>
 
-<section class="panel">
-    <h2>AI 多模型研究任务</h2>
-    <form id="researchForm">
-        <div class="grid">
-            <div class="field">
-                <label>股票代码</label>
-                <input id="symbol" value="300394.SZ" required>
-            </div>
-            <div class="field">
-                <label>研究截止日期</label>
-                <input id="as_of" type="date" required>
-            </div>
-            <div class="field">
-                <label>Provider 配置文件</label>
-                <input id="providers_file" value="configs/ai_providers.yaml" required>
-            </div>
-            <div class="field">
-                <label>Call Budget</label>
-                <input id="call_budget" type="number" min="1" max="100" value="1">
-            </div>
-            <div class="field">
-                <label>Adapter Timeout（秒）</label>
-                <input id="adapter_timeout" type="number" min="1" max="3600" value="300">
-            </div>
-            <div class="checkbox">
-                <input type="checkbox" id="allow_missing_agents" checked>
-                <label for="allow_missing_agents" style="margin:0">允许缺失 Agent</label>
-            </div>
+    <section class="panel stock-card" id="stockPanel">
+      <div class="empty-main">
+        <div style="font-size:20px;color:var(--text);font-weight:700">AI Hedge Fund OS</div>
+        <p>请先搜索并选择股票，或添加自选标的开始研究。</p>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2 class="panel-title">AI 深度研究</h2>
+      <div class="research-grid">
+        <div class="field">
+          <label>当前研究标的</label>
+          <input id="researchSymbol" readonly placeholder="尚未选择股票">
         </div>
-        <div class="row" style="margin-top:20px">
-            <button type="submit" id="runButton">启动 AI 研究</button>
-            <span id="taskStatus" class="muted">等待任务</span>
+        <div class="field">
+          <label>截止日期</label>
+          <input id="asOf" type="date">
         </div>
-    </form>
-</section>
-
-<section class="panel">
-    <div class="row space">
-        <h2>实时运行日志</h2>
-        <span id="jobId" class="muted"></span>
-    </div>
-    <div id="log"><span class="muted">尚未启动任务...</span></div>
-</section>
-
-<section class="panel">
-    <h2>研究结果</h2>
-    <div id="resultStatus" class="muted">等待研究完成</div>
-    <details style="margin-top:12px">
-        <summary>展开完整 JSON 结果</summary>
-        <pre id="resultJson">暂无结果</pre>
-    </details>
-</section>
-
-<section class="panel">
-    <div class="row space">
-        <h2>研究报告文件</h2>
-        <button onclick="loadFiles()">刷新文件</button>
-    </div>
-    <div class="grid" style="grid-template-columns:minmax(180px,1fr) 2fr">
-        <div id="fileList">正在加载文件...</div>
-        <div>
-            <div id="previewTitle" class="muted">选择左侧文件预览</div>
-            <pre id="preview">暂无文件</pre>
+        <div class="field">
+          <label>Provider</label>
+          <select id="providerSelect">
+            <option value="">默认 Provider 配置</option>
+          </select>
         </div>
+        <div class="field">
+          <label>Call Budget</label>
+          <input id="callBudget" type="number" min="1" max="200" value="30">
+        </div>
+        <div class="field">
+          <label>Adapter Timeout（秒）</label>
+          <input id="adapterTimeout" type="number" min="1" max="300" value="60">
+        </div>
+        <div class="check-field">
+          <input type="checkbox" id="allowMissing" checked>
+          <label for="allowMissing">允许缺失 Agent</label>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="primary" id="startResearch">启动研究任务</button>
+        <span class="muted" id="researchHint">选择标的后即可启动</span>
+      </div>
+      <div id="researchError" class="error-text" style="margin-top:8px"></div>
+      <div id="taskContainer"></div>
+    </section>
+
+    <section class="panel">
+      <h2 class="panel-title">运行日志 <small id="logStatus">等待任务</small></h2>
+      <div class="logs" id="logs"><span class="muted">暂无日志输出。</span></div>
+    </section>
+
+    <section class="panel">
+      <h2 class="panel-title">研究结果文件 <button class="collapse-btn" id="refreshFiles">刷新 ↻</button></h2>
+      <div class="files-list" id="filesList">
+        <div class="empty-hint">暂无结果文件</div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2 class="panel-title">
+        Provider 状态
+        <button class="collapse-btn" id="providerToggle">展开 ＋</button>
+      </h2>
+      <div class="provider-list hidden" id="providerList"></div>
+    </section>
+  </main>
+</div>
+</div>
+
+<div class="drawer-backdrop" id="drawerBackdrop">
+  <div class="drawer">
+    <div class="drawer-header">
+      <strong id="drawerTitle">文件预览</strong>
+      <div style="display:flex;gap:8px">
+        <button class="secondary" id="copyPath">复制路径</button>
+        <button class="secondary" id="closeDrawer">关闭 ×</button>
+      </div>
     </div>
-</section>
+    <div class="muted" id="drawerPath"></div>
+    <div class="drawer-content" id="drawerContent">正在读取...</div>
+  </div>
+</div>
+
+<div class="toast-area" id="toastArea"></div>
 
 <script>
+"use strict";
+
 const $ = id => document.getElementById(id);
 
-let currentJob = null;
-let polling = false;
+const state = {
+  watchlist: [],
+  current: null,
+  quote: null,
+  providers: [],
+  files: [],
+  searchResults: [],
+  searchIndex: -1,
+  searchTimer: null,
+  quoteTimer: null,
+  jobTimer: null,
+  activeJob: null,
+  taskStarted: null,
+  drawerPath: "",
+  providerExpanded: false
+};
 
-function showError(message) {
-    $("error").style.display = "block";
-    $("error").textContent = String(message);
+const INDEX_NAMES = {
+  "000001.SH":"上证指数",
+  "399001.SZ":"深证成指",
+  "399006.SZ":"创业板指",
+  "000688.SH":"科创50"
+};
+
+const INDEX_SYMBOLS = Object.keys(INDEX_NAMES);
+
+function escapeHTML(value) {
+  return String(value ?? "").replace(/[&<>"']/g, c => ({
+    "&":"&amp;",
+    "<":"&lt;",
+    ">":"&gt;",
+    '"':"&quot;",
+    "'":"&#39;"
+  })[c]);
 }
 
-function clearError() {
-    $("error").style.display = "none";
-    $("error").textContent = "";
+function formatNumber(value, digits=2) {
+  if (value === null || value === undefined || value === "" || !Number.isFinite(Number(value))) return "--";
+  return Number(value).toLocaleString("zh-CN", {
+    minimumFractionDigits:digits,
+    maximumFractionDigits:digits
+  });
 }
 
-async function api(url, options={}) {
-    let response;
-    try {
-        response = await fetch(url, options);
-    } catch (e) {
-        throw new Error("网络请求失败：" + e.message);
-    }
+function formatPercent(value) {
+  if (value === null || value === undefined || !Number.isFinite(Number(value))) return "--";
+  return `${Number(value)>0?"+":""}${Number(value).toFixed(2)}%`;
+}
 
-    let data;
-    try {
-        data = await response.json();
-    } catch {
-        throw new Error("服务器返回了无效响应");
-    }
+function changeClass(value) {
+  if (value === null || value === undefined || !Number.isFinite(Number(value))) return "muted";
+  return Number(value)>0 ? "red" : Number(value)<0 ? "green" : "muted";
+}
 
-    if (!response.ok) {
-        throw new Error(
-            data.detail || data.error || `HTTP ${response.status}`
+function formatTime(value) {
+  if (!value) return "--";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return String(value);
+  return d.toLocaleString("zh-CN", {hour12:false});
+}
+
+function shortTime(value) {
+  if (!value) return "--";
+  const s = String(value);
+  if (/^\d{14}$/.test(s)) return `${s.slice(8,10)}:${s.slice(10,12)}:${s.slice(12,14)}`;
+  return formatTime(value);
+}
+
+function toast(message, type="error") {
+  const node = document.createElement("div");
+  node.className = "toast";
+  node.innerHTML = `<span class="${type==="error"?"red":""}">${escapeHTML(message)}</span><button aria-label="关闭">×</button>`;
+  node.querySelector("button").onclick = () => node.remove();
+  $("toastArea").appendChild(node);
+  setTimeout(() => node.remove(), 7000);
+}
+
+async function api(path, options={}) {
+  const response = await fetch(path, {
+    ...options,
+    headers: {
+      ...(options.body ? {"Content-Type":"application/json"} : {}),
+      ...(options.headers || {})
+    }
+  });
+  const text = await response.text();
+  let data;
+  try {
+    data = text ? JSON.parse(text) : null;
+  } catch {
+    throw new Error("服务器返回了无效数据");
+  }
+  if (!response.ok) {
+    throw new Error(data?.detail || data?.error || `HTTP ${response.status}`);
+  }
+  return data;
+}
+
+function saveWatchlist() {
+  try {
+    localStorage.setItem("ahfos_watchlist", JSON.stringify(state.watchlist.slice(0,20)));
+  } catch (error) {
+    toast("自选列表保存失败：" + error.message);
+  }
+}
+
+function loadWatchlist() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem("ahfos_watchlist") || "[]");
+    state.watchlist = Array.isArray(parsed)
+      ? parsed.filter(x => x && x.symbol && x.name).slice(0,20)
+      : [];
+  } catch {
+    state.watchlist = [];
+  }
+}
+
+function renderWatchlist() {
+  $("watchCount").textContent = `${state.watchlist.length} / 20`;
+
+  if (!state.watchlist.length) {
+    $("watchList").innerHTML = '<div class="empty-hint">输入代码或名称，如 600519、贵州茅台</div>';
+    $("watchChips").innerHTML = '<span class="muted">暂无自选标的</span>';
+    return;
+  }
+
+  $("watchList").innerHTML = state.watchlist.map(item => {
+    const selected = state.current?.symbol === item.symbol;
+    const quote = item.quote || {};
+    return `
+      <div class="watch-item ${selected?"selected":""}" data-symbol="${escapeHTML(item.symbol)}">
+        <div>
+          <div class="watch-name">${escapeHTML(item.name)}</div>
+          <div class="watch-code">${escapeHTML(item.symbol)}</div>
+        </div>
+        <div class="watch-price">
+          <div>${quote.price == null ? "--" : formatNumber(quote.price)}</div>
+          <div class="${changeClass(quote.change_pct)}">${formatPercent(quote.change_pct)}</div>
+        </div>
+        <button class="remove" data-remove="${escapeHTML(item.symbol)}" title="删除">×</button>
+      </div>`;
+  }).join("");
+
+  $("watchList").querySelectorAll(".watch-item").forEach(node => {
+    node.addEventListener("click", event => {
+      if (event.target.closest("[data-remove]")) return;
+      const item = state.watchlist.find(x => x.symbol === node.dataset.symbol);
+      if (item) selectStock(item);
+    });
+  });
+
+  $("watchList").querySelectorAll("[data-remove]").forEach(node => {
+    node.addEventListener("click", event => {
+      event.stopPropagation();
+      removeWatch(node.dataset.remove);
+    });
+  });
+
+  $("watchChips").innerHTML = state.watchlist.map(item => `
+    <button class="chip ${state.current?.symbol===item.symbol?"active":""}" data-chip="${escapeHTML(item.symbol)}">
+      ${escapeHTML(item.name)} ${escapeHTML(item.symbol)}
+    </button>
+  `).join("");
+
+  $("watchChips").querySelectorAll("[data-chip]").forEach(node => {
+    node.onclick = () => {
+      const item = state.watchlist.find(x => x.symbol === node.dataset.chip);
+      if (item) selectStock(item);
+    };
+  });
+}
+
+function addWatch(item) {
+  const existing = state.watchlist.find(x => x.symbol === item.symbol);
+  if (existing) {
+    existing.name = item.name;
+  } else {
+    if (state.watchlist.length >= 20) {
+      toast("自选列表最多添加 20 条");
+      return false;
+    }
+    state.watchlist.push({
+      symbol:item.symbol,
+      name:item.name,
+      quote:null
+    });
+  }
+  saveWatchlist();
+  renderWatchlist();
+  return true;
+}
+
+function removeWatch(symbol) {
+  state.watchlist = state.watchlist.filter(x => x.symbol !== symbol);
+  saveWatchlist();
+  renderWatchlist();
+
+  if (state.current?.symbol === symbol) {
+    state.current = null;
+    state.quote = null;
+    $("researchSymbol").value = "";
+    renderStock();
+    if (state.watchlist.length) selectStock(state.watchlist[0]);
+  }
+}
+
+function selectStock(item) {
+  state.current = {
+    symbol:item.symbol,
+    name:item.name
+  };
+  state.quote = item.quote || null;
+  $("researchSymbol").value = `${item.name} (${item.symbol})`;
+  $("researchHint").textContent = "研究任务将使用当前规范化代码";
+  $("researchError").textContent = "";
+  renderWatchlist();
+  renderStock();
+  loadQuote();
+}
+
+function renderStock() {
+  if (!state.current) {
+    $("stockPanel").innerHTML = `
+      <div class="empty-main">
+        <div style="font-size:20px;color:var(--text);font-weight:700">尚未选择研究标的</div>
+        <p>请在左侧搜索股票代码或中文名称，添加到自选列表。</p>
+      </div>`;
+    return;
+  }
+
+  const q = state.quote;
+  const name = escapeHTML(q?.name || state.current.name);
+  const symbol = escapeHTML(state.current.symbol);
+
+  if (!q) {
+    $("stockPanel").innerHTML = `
+      <div class="stock-heading">
+        <div><span class="stock-name">${name}</span><span class="stock-code">${symbol}</span></div>
+        <span class="quote-time">等待行情数据</span>
+      </div>
+      <div class="quote-message">正在获取行情，若接口暂不可用将自动重试。</div>`;
+    return;
+  }
+
+  const metrics = [
+    ["今开",q.open],
+    ["最高",q.high],
+    ["最低",q.low],
+    ["昨收",q.prev_close],
+    ["成交额",q.amount == null ? null : q.amount/100000000, "亿元"],
+    ["换手率",q.turnover,"%"],
+    ["PE (TTM)",q.pe_ttm],
+    ["总市值",q.market_cap,"亿元"],
+    ["成交量",q.volume,"手"]
+  ];
+
+  $("stockPanel").innerHTML = `
+    <div class="stock-heading">
+      <div>
+        <span class="stock-name">${name}</span>
+        <span class="stock-code">${symbol}</span>
+      </div>
+      <span class="quote-time">数据时间 ${escapeHTML(shortTime(q.time))}</span>
+    </div>
+    <div class="quote-main">
+      <span class="price ${changeClass(q.change)}">${formatNumber(q.price)}</span>
+      <span class="change ${changeClass(q.change)}">
+        ${q.change == null ? "--" : `${q.change>0?"+":""}${formatNumber(q.change)}`}
+        &nbsp;${formatPercent(q.change_pct)}
+      </span>
+    </div>
+    <div class="quote-grid">
+      ${metrics.map(([label,value,unit]) => `
+        <div>
+          <div class="metric-label">${label}</div>
+          <div class="metric-value">${value == null ? "--" : formatNumber(value)}${value == null ? "" : (unit || "")}</div>
+        </div>
+      `).join("")}
+    </div>`;
+}
+
+async function loadQuote() {
+  const selected = state.current;
+  if (!selected) return;
+
+  try {
+    const data = await api(`/api/quote?symbols=${encodeURIComponent(selected.symbol)}`);
+    if (state.current?.symbol !== selected.symbol) return;
+
+    if (!Array.isArray(data) || !data.length) {
+      if (!state.quote) {
+        $("stockPanel").querySelector(".quote-message")?.replaceChildren(
+          document.createTextNode("行情暂不可用，5 秒后自动重试。")
         );
+      }
+      return;
     }
-    return data;
+
+    state.quote = data[0];
+
+    const watch = state.watchlist.find(x => x.symbol === selected.symbol);
+    if (watch) watch.quote = data[0];
+
+    renderStock();
+    renderWatchlist();
+  } catch (error) {
+    if (!state.quote) renderStock();
+    toast("行情获取失败：" + error.message);
+  }
 }
 
-function localDate() {
-    const d = new Date();
-    const offset = d.getTimezoneOffset() * 60000;
-    return new Date(d - offset).toISOString().slice(0,10);
+async function loadIndices() {
+  try {
+    const data = await api("/api/indices");
+    if (!Array.isArray(data)) throw new Error("指数数据格式错误");
+
+    const map = new Map(data.map(item => [item.symbol,item]));
+    $("indices").innerHTML = INDEX_SYMBOLS.map(symbol => {
+      const q = map.get(symbol);
+      const name = INDEX_NAMES[symbol];
+
+      if (!q || q.price == null) {
+        return `<div class="index"><div class="index-name">${name}</div><div class="index-value muted">--</div><div class="index-change muted">--</div></div>`;
+      }
+
+      return `
+        <div class="index">
+          <div class="index-name">${name}</div>
+          <div class="index-value">${formatNumber(q.price)}</div>
+          <div class="index-change ${changeClass(q.change_pct)}">
+            ${formatPercent(q.change_pct)}
+          </div>
+        </div>`;
+    }).join("");
+
+    $("marketTime").textContent = "行情 " + new Date().toLocaleTimeString("zh-CN",{hour12:false});
+  } catch (error) {
+    $("marketTime").textContent = "行情不可用";
+    toast("指数行情获取失败：" + error.message);
+  }
 }
 
 async function checkHealth() {
-    try {
-        const data = await api("/api/health");
-        $("healthDot").style.background = "var(--green)";
-        $("healthText").textContent = "服务正常 · V" + data.version;
-    } catch (e) {
-        $("healthDot").style.background = "var(--red)";
-        $("healthText").textContent = "服务异常";
-        showError(e.message);
-    }
+  try {
+    const data = await api("/api/health");
+    $("healthDot").className = "dot ok";
+    $("healthText").textContent = "后端在线";
+    $("projectRoot").textContent = data.project_root || "--";
+  } catch (error) {
+    $("healthDot").className = "dot bad";
+    $("healthText").textContent = "后端离线";
+    toast("后端连接失败：" + error.message);
+  }
+}
+
+function statusClass(status) {
+  const s = String(status || "").toLowerCase();
+  if (["ok","ready","active","available","success","connected"].includes(s)) return "status-ok";
+  if (["error","failed","unavailable","disabled"].includes(s)) return "status-error";
+  return "status-warn";
 }
 
 async function loadProviders() {
-    try {
-        clearError();
-        const file = $("providers_file").value;
-        const data = await api(
-            "/api/providers?file=" + encodeURIComponent(file)
-        );
+  try {
+    const data = await api("/api/providers");
+    if (!Array.isArray(data)) throw new Error("Provider 返回格式不是数组");
 
-        const tbody = $("providerTable");
-        tbody.innerHTML = "";
+    state.providers = data;
 
-        for (const p of data.providers || []) {
-            const tr = document.createElement("tr");
+    $("providerSelect").innerHTML =
+      '<option value="">默认 Provider 配置</option>' +
+      data.map(p => `
+        <option value="${escapeHTML(p.provider_id)}">
+          ${escapeHTML(p.display_name || p.provider_id)}
+          ${p.status ? ` · ${escapeHTML(p.status)}` : ""}
+        </option>
+      `).join("");
 
-            const values = [
-                p.provider_id,
-                p.display_name,
-                p.model,
-                p.base_url,
-                Array.isArray(p.tags) ? p.tags.join(", ") : p.tags,
-                p.status
-            ];
-
-            values.forEach((value, index) => {
-                const td = document.createElement("td");
-                td.textContent = value || "-";
-
-                if (index === 5) {
-                    const status = String(value).toLowerCase();
-                    td.className =
-                        status === "skipped" ||
-                        status === "error" ||
-                        status === "disabled"
-                        ? "bad"
-                        : status === "ready" ||
-                          status === "ok" ||
-                          status === "active"
-                        ? "ok"
-                        : "muted";
-                }
-
-                tr.appendChild(td);
-            });
-
-            tbody.appendChild(tr);
-        }
-
-        if (!data.providers || !data.providers.length) {
-            tbody.innerHTML =
-                '<tr><td colspan="6">没有 Provider 数据</td></tr>';
-        }
-    } catch (e) {
-        showError("Provider 加载失败：" + e.message);
-        $("providerTable").innerHTML =
-            '<tr><td colspan="6" class="bad">加载失败</td></tr>';
-    }
+    renderProviders();
+  } catch (error) {
+    $("providerSelect").innerHTML = '<option value="">Provider 加载失败</option>';
+    $("providerList").innerHTML = `<div class="empty-hint">${escapeHTML(error.message)}</div>`;
+    toast("Provider 加载失败：" + error.message);
+  }
 }
 
-function addLog(lines) {
-    const log = $("log");
-    const oldHeight = log.scrollHeight;
-    const wasBottom =
-        log.scrollTop + log.clientHeight >= oldHeight - 30;
+function renderProviders() {
+  if (!state.providers.length) {
+    $("providerList").innerHTML = '<div class="empty-hint">暂无 Provider 配置</div>';
+    return;
+  }
 
-    log.textContent = Array.isArray(lines)
-        ? lines.join("\n")
-        : String(lines || "");
-
-    if (wasBottom) log.scrollTop = log.scrollHeight;
+  $("providerList").innerHTML = state.providers.map(p => `
+    <div class="provider-row">
+      <div>
+        <div class="provider-name">${escapeHTML(p.display_name || p.provider_id)}</div>
+        <div class="provider-model">${escapeHTML(p.model || "--")}</div>
+      </div>
+      <span class="provider-status ${statusClass(p.status)}">${escapeHTML(p.status || "unknown")}</span>
+    </div>
+  `).join("");
 }
 
-async function startResearch(event) {
-    event.preventDefault();
-    if (currentJob && polling) return;
+function renderFiles() {
+  if (!state.files.length) {
+    $("filesList").innerHTML = '<div class="empty-hint">暂无研究结果文件</div>';
+    return;
+  }
 
-    clearError();
+  $("filesList").innerHTML = state.files.map(file => `
+    <div class="file-row" data-file="${escapeHTML(file.path)}">
+      <div class="file-name">${escapeHTML(file.path)}</div>
+      <div class="file-size">${formatNumber(file.size,0)} B</div>
+      <div class="file-time">${escapeHTML(formatTime(file.mtime ? file.mtime*1000 : null))}</div>
+    </div>
+  `).join("");
 
-    const payload = {
-        symbol: $("symbol").value.trim(),
-        as_of: $("as_of").value,
-        providers_file: $("providers_file").value.trim(),
-        call_budget: Number($("call_budget").value),
-        adapter_timeout: Number($("adapter_timeout").value),
-        allow_missing_agents: $("allow_missing_agents").checked
-    };
-
-    $("runButton").disabled = true;
-    $("taskStatus").textContent = "正在提交任务...";
-
-    try {
-        const data = await api("/api/research", {
-            method: "POST",
-            headers: {"Content-Type":"application/json"},
-            body: JSON.stringify(payload)
-        });
-
-        currentJob = data.job_id;
-        polling = true;
-
-        $("jobId").textContent = "Job ID: " + currentJob;
-        $("taskStatus").textContent = "任务已启动";
-        $("resultStatus").textContent = "正在执行...";
-        $("resultJson").textContent = "等待结果...";
-        addLog(["任务提交成功", "Job ID: " + currentJob]);
-
-        await pollJob(currentJob);
-
-    } catch (e) {
-        showError("启动研究失败：" + e.message);
-        $("taskStatus").textContent = "启动失败";
-        $("runButton").disabled = false;
-        polling = false;
-    }
-}
-
-async function pollJob(jobId) {
-    while (polling && currentJob === jobId) {
-        try {
-            const data = await api("/api/jobs/" + encodeURIComponent(jobId));
-
-            addLog(data.log || []);
-
-            $("taskStatus").textContent = {
-                queued: "排队中",
-                running: "运行中",
-                done: "已完成",
-                error: "执行失败"
-            }[data.status] || data.status;
-
-            if (data.status === "done") {
-                $("resultStatus").textContent = "研究完成";
-                $("resultJson").textContent =
-                    JSON.stringify(data.result, null, 2);
-
-                $("taskStatus").textContent = "完成";
-                await loadFiles();
-                break;
-            }
-
-            if (data.status === "error") {
-                $("resultStatus").textContent = "研究失败";
-                $("resultJson").textContent = data.error || "未知错误";
-                showError("研究任务失败：" + (data.error || "未知错误"));
-                break;
-            }
-
-            await new Promise(resolve => setTimeout(resolve, 1000));
-
-        } catch (e) {
-            showError("任务状态轮询失败：" + e.message);
-            $("taskStatus").textContent = "轮询异常";
-            break;
-        }
-    }
-
-    polling = false;
-    $("runButton").disabled = false;
+  $("filesList").querySelectorAll("[data-file]").forEach(node => {
+    node.onclick = () => openFile(node.dataset.file);
+  });
 }
 
 async function loadFiles() {
-    try {
-        const data = await api("/api/files");
-        const container = $("fileList");
-        container.innerHTML = "";
-
-        for (const file of data.files || []) {
-            const item = document.createElement("div");
-            item.className = "file";
-
-            const name = document.createElement("div");
-            name.className = "file-name";
-            name.textContent = file.path;
-
-            const meta = document.createElement("div");
-            meta.className = "muted";
-            meta.textContent =
-                `${file.size} bytes · ${new Date(file.mtime*1000).toLocaleString()}`;
-
-            item.append(name, meta);
-            item.addEventListener("click", () => previewFile(file.path));
-            container.appendChild(item);
-        }
-
-        if (!data.files || !data.files.length) {
-            container.textContent = "暂无研究报告";
-        }
-
-    } catch (e) {
-        showError("文件列表加载失败：" + e.message);
-        $("fileList").textContent = "加载失败";
-    }
+  try {
+    const data = await api("/api/files");
+    if (!Array.isArray(data)) throw new Error("文件列表格式错误");
+    state.files = data;
+    renderFiles();
+  } catch (error) {
+    $("filesList").innerHTML = `<div class="empty-hint">文件列表加载失败：${escapeHTML(error.message)}</div>`;
+    toast("文件列表加载失败：" + error.message);
+  }
 }
 
-async function previewFile(path) {
-    try {
-        clearError();
-        const data = await api(
-            "/api/files/" + path.split("/").map(encodeURIComponent).join("/")
-        );
-        $("previewTitle").textContent = data.path;
-        $("preview").textContent = data.content;
-    } catch (e) {
-        showError("文件预览失败：" + e.message);
-    }
+async function openFile(path) {
+  $("drawerBackdrop").classList.add("show");
+  $("drawerTitle").textContent = path.split("/").pop() || "文件预览";
+  $("drawerPath").textContent = path;
+  $("drawerContent").textContent = "正在读取文件...";
+  state.drawerPath = path;
+
+  try {
+    const data = await api("/api/files/" + path.split("/").map(encodeURIComponent).join("/"));
+    $("drawerContent").textContent = data.content ?? JSON.stringify(data,null,2);
+  } catch (error) {
+    $("drawerContent").textContent = "文件读取失败：" + error.message;
+    toast("文件读取失败：" + error.message);
+  }
 }
 
-$("researchForm").addEventListener("submit", startResearch);
-$("as_of").value = localDate();
+async function copyPath() {
+  if (!state.drawerPath) return;
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(state.drawerPath);
+    } else {
+      const textarea = document.createElement("textarea");
+      textarea.value = state.drawerPath;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand("copy");
+      textarea.remove();
+    }
+    toast("路径已复制", "success");
+  } catch (error) {
+    toast("复制失败：" + error.message);
+  }
+}
 
-checkHealth();
-loadProviders();
-loadFiles();
+function hideSearch() {
+  $("searchResults").classList.remove("show");
+  state.searchIndex = -1;
+}
+
+function renderSearchResults(items) {
+  state.searchResults = items;
+  state.searchIndex = -1;
+
+  if (!items.length) {
+    $("searchResults").innerHTML = '<div class="empty-hint">没有找到匹配的股票</div>';
+  } else {
+    $("searchResults").innerHTML = items.map((item,index) => `
+      <div class="search-item" data-index="${index}">
+        <div>
+          <strong>${escapeHTML(item.name)}</strong>
+          <small>${escapeHTML(item.code)}</small>
+        </div>
+        <small>${escapeHTML(item.market.toUpperCase())}</small>
+      </div>
+    `).join("");
+
+    $("searchResults").querySelectorAll("[data-index]").forEach(node => {
+      node.onclick = () => chooseSearchItem(Number(node.dataset.index));
+    });
+  }
+
+  $("searchResults").classList.add("show");
+}
+
+function chooseSearchItem(index) {
+  const item = state.searchResults[index];
+  if (!item) return;
+
+  const added = addWatch(item);
+  if (!added) return;
+
+  $("searchInput").value = "";
+  hideSearch();
+  selectStock(item);
+}
+
+async function performSearch(query) {
+  try {
+    const data = await api(`/api/search?q=${encodeURIComponent(query)}&limit=10`);
+    if (!Array.isArray(data.items)) throw new Error(data.error || "搜索结果格式错误");
+    renderSearchResults(data.items);
+  } catch (error) {
+    renderSearchResults([]);
+    toast("股票搜索失败：" + error.message);
+  }
+}
+
+function onSearchInput() {
+  const query = $("searchInput").value.trim();
+  clearTimeout(state.searchTimer);
+
+  if (!query) {
+    hideSearch();
+    return;
+  }
+
+  state.searchTimer = setTimeout(() => performSearch(query), 300);
+}
+
+function moveSearchSelection(delta) {
+  const items = $("searchResults").querySelectorAll(".search-item");
+  if (!items.length) return;
+
+  state.searchIndex = Math.max(0,Math.min(items.length-1,state.searchIndex+delta));
+  items.forEach((item,index) => item.classList.toggle("active",index===state.searchIndex));
+  items[state.searchIndex]?.scrollIntoView({block:"nearest"});
+}
+
+async function startResearch() {
+  $("researchError").textContent = "";
+
+  if (!state.current) {
+    $("researchError").textContent = "请先选择研究标的";
+    return;
+  }
+
+  const button = $("startResearch");
+  button.disabled = true;
+  button.textContent = "正在校验标的...";
+
+  const requested = state.current.symbol;
+
+  try {
+    const resolved = await api(`/api/resolve?symbol=${encodeURIComponent(requested)}`);
+
+    if (!resolved?.ok) {
+      $("researchError").textContent = resolved?.error || `未找到该股票代码：${requested}（指数或非 A 股标的不支持研究）`;
+      return;
+    }
+
+    const payload = {
+      symbol:resolved.symbol,
+      as_of:$("asOf").value,
+      providers_file:$("providerSelect").value || null,
+      allow_missing_agents:$("allowMissing").checked,
+      call_budget:Number($("callBudget").value) || 30,
+      adapter_timeout:Number($("adapterTimeout").value) || 60
+    };
+
+    button.textContent = "提交中...";
+
+    const result = await api("/api/research", {
+      method:"POST",
+      body:JSON.stringify(payload)
+    });
+
+    if (!result.job_id) throw new Error("服务器未返回 job_id");
+
+    state.activeJob = result.job_id;
+    state.taskStarted = Date.now();
+
+    renderTask({
+      job_id:result.job_id,
+      status:result.status || "queued",
+      symbol:result.symbol || resolved.symbol
+    });
+
+    startJobPolling(result.job_id);
+    $("logStatus").textContent = "任务已提交";
+    toast("研究任务已提交", "success");
+
+  } catch (error) {
+    $("researchError").textContent = error.message;
+    toast("研究任务提交失败：" + error.message);
+  } finally {
+    button.disabled = false;
+    button.textContent = "启动研究任务";
+  }
+}
+
+const STEPS = ["排队","初始化","采集","分析","完成"];
+
+function statusStep(status) {
+  const s = String(status || "").toLowerCase();
+  if (s === "queued" || s === "pending") return 0;
+  if (s === "initializing" || s === "starting") return 1;
+  if (s === "collecting" || s === "running") return 2;
+  if (s === "analyzing" || s === "processing") return 3;
+  if (s === "completed" || s === "success") return 4;
+  return -1;
+}
+
+function renderTask(job) {
+  const elapsed = state.taskStarted
+    ? Math.max(0,Math.floor((Date.now()-state.taskStarted)/1000))
+    : 0;
+
+  const step = statusStep(job.status);
+  const failed = ["failed","error"].includes(String(job.status).toLowerCase());
+
+  $("taskContainer").innerHTML = `
+    <div class="task-card">
+      <div class="task-header">
+        <div>
+          <strong>研究任务</strong>
+          <span class="muted">#${escapeHTML(String(job.job_id).slice(0,8))}</span>
+        </div>
+        <span class="provider-status ${failed?"status-error":step===4?"status-ok":"status-warn"}">
+          ${escapeHTML(job.status || "unknown")}
+        </span>
+      </div>
+      <div class="muted" style="margin-top:5px">
+        标的：${escapeHTML(job.symbol || state.current?.symbol || "--")}
+        &nbsp;·&nbsp; 耗时：${elapsed} 秒
+      </div>
+      <div class="task-steps">
+        ${STEPS.map((name,index) => `
+          <div class="step ${failed?"":index<step?"done":index===step?"current":""}">
+            <div class="step-line"></div>${name}
+          </div>
+        `).join("")}
+      </div>
+      ${failed ? `<div class="error-text" style="margin-top:10px">${escapeHTML(job.error || "研究任务失败")}</div>` : ""}
+    </div>
+  `;
+}
+
+function renderLogs(data) {
+  let logs = [];
+
+  if (Array.isArray(data.logs)) logs = data.logs;
+  else if (Array.isArray(data.log)) logs = data.log;
+  else if (typeof data.log === "string") logs = data.log.split("\n");
+  else if (typeof data.logs === "string") logs = data.logs.split("\n");
+
+  if (!logs.length) {
+    $("logs").innerHTML = '<span class="muted">任务运行中，等待日志输出...</span>';
+    return;
+  }
+
+  $("logs").innerHTML = logs.map(line => {
+    const value = typeof line === "string" ? line : JSON.stringify(line);
+    let cls = "log-info";
+    if (/\b(ERROR|CRITICAL)\b/i.test(value)) cls = "log-error";
+    else if (/\b(WARN|WARNING)\b/i.test(value)) cls = "log-warn";
+    return `<div class="${cls}">${escapeHTML(value)}</div>`;
+  }).join("");
+
+  $("logs").scrollTop = $("logs").scrollHeight;
+}
+
+function startJobPolling(jobId) {
+  clearInterval(state.jobTimer);
+
+  const poll = async () => {
+    if (state.activeJob !== jobId) return;
+
+    try {
+      const data = await api("/api/jobs/" + encodeURIComponent(jobId));
+
+      renderTask({
+        job_id:jobId,
+        status:data.status,
+        symbol:data.symbol,
+        error:data.error
+      });
+
+      renderLogs(data);
+
+      const status = String(data.status || "").toLowerCase();
+
+      if (["completed","failed","error","cancelled"].includes(status)) {
+        clearInterval(state.jobTimer);
+        state.jobTimer = null;
+        $("logStatus").textContent = status;
+        state.activeJob = null;
+
+        if (status === "completed") {
+          toast("研究任务完成", "success");
+          await loadFiles();
+        } else {
+          toast("研究任务结束：" + (data.error || status));
+        }
+      } else {
+        $("logStatus").textContent = status || "运行中";
+      }
+    } catch (error) {
+      $("logStatus").textContent = "轮询失败";
+      toast("任务状态获取失败：" + error.message);
+    }
+  };
+
+  poll();
+  state.jobTimer = setInterval(poll,2000);
+}
+
+function initEvents() {
+  $("searchInput").addEventListener("input",onSearchInput);
+
+  $("searchInput").addEventListener("keydown",event => {
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      moveSearchSelection(1);
+    } else if (event.key === "ArrowUp") {
+      event.preventDefault();
+      moveSearchSelection(-1);
+    } else if (event.key === "Enter") {
+      event.preventDefault();
+      if (state.searchIndex >= 0) {
+        chooseSearchItem(state.searchIndex);
+      } else if (state.searchResults.length) {
+        // 回车优先选中个股，避免默认落到指数上
+        const stockIndex = state.searchResults.findIndex(item => String(item.type || "").toUpperCase().startsWith("GP"));
+        chooseSearchItem(stockIndex >= 0 ? stockIndex : 0);
+      }
+    } else if (event.key === "Escape") {
+      hideSearch();
+    }
+  });
+
+  document.addEventListener("click",event => {
+    if (!event.target.closest(".search-wrap")) hideSearch();
+  });
+
+  $("startResearch").onclick = startResearch;
+  $("refreshFiles").onclick = loadFiles;
+
+  $("providerToggle").onclick = () => {
+    state.providerExpanded = !state.providerExpanded;
+    $("providerList").classList.toggle("hidden",!state.providerExpanded);
+    $("providerToggle").textContent = state.providerExpanded ? "收起 −" : "展开 ＋";
+  };
+
+  $("closeDrawer").onclick = () => $("drawerBackdrop").classList.remove("show");
+  $("copyPath").onclick = copyPath;
+
+  $("drawerBackdrop").addEventListener("click",event => {
+    if (event.target === $("drawerBackdrop")) {
+      $("drawerBackdrop").classList.remove("show");
+    }
+  });
+
+  document.addEventListener("keydown",event => {
+    if (event.key === "Escape") {
+      $("drawerBackdrop").classList.remove("show");
+      hideSearch();
+    }
+  });
+}
+
+function setDefaultDate() {
+  const now = new Date();
+  const local = new Date(now.getTime()-now.getTimezoneOffset()*60000);
+  $("asOf").value = local.toISOString().slice(0,10);
+}
+
+async function init() {
+  loadWatchlist();
+  renderWatchlist();
+  initEvents();
+  setDefaultDate();
+
+  // 首屏请求并行执行，单项失败不阻塞其他模块。
+  await Promise.allSettled([
+    checkHealth(),
+    loadIndices(),
+    loadProviders(),
+    loadFiles()
+  ]);
+
+  if (state.watchlist.length) {
+    selectStock(state.watchlist[0]);
+  }
+
+  state.quoteTimer = setInterval(() => {
+    loadQuote();
+    loadIndices();
+  },5000);
+}
+
+window.addEventListener("beforeunload",() => {
+  clearInterval(state.quoteTimer);
+  clearInterval(state.jobTimer);
+  clearTimeout(state.searchTimer);
+});
+
+init().catch(error => {
+  toast("页面初始化失败：" + error.message);
+});
 </script>
 </body>
 </html>
