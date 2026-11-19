@@ -39,6 +39,15 @@ UI_FILE = UI_ROOT / "ui.html"
 REPORTS_DIR = PROJECT_ROOT / "reports"
 RESEARCH_DIR = PROJECT_ROOT / "research"
 
+PROVIDERS_FILE = PROJECT_ROOT / "configs" / "ai_providers.yaml"
+ENV_FILE = PROJECT_ROOT / ".env"
+
+_PROVIDERS_HEADER = (
+    "# AI Hedge Fund OS V3.10 自定义大模型配置（OpenAI 兼容协议）\n"
+    "# 该文件可由桌面端「Provider 管理」面板自动生成；\n"
+    "# API Key 写入 .env，变量名为 AIH_<ID>_API_KEY。\n"
+)
+
 app = FastAPI(title="AI Hedge Fund OS Desktop API")
 
 
@@ -559,75 +568,146 @@ def _expand_env_default(text: str) -> str:
     return re.sub(r"\$\{([A-Za-z_][A-Za-z0-9_]*)(?::?-([^}]*))?\}", repl, str(text))
 
 
-def _get_provider_rows() -> list[dict[str, Any]]:
-    from ai_team.providers import (
-        build_custom_registry,
-        describe_providers,
-    )
+def _load_env_into_process() -> None:
+    """把项目 .env 读进进程环境，之后新建的 registry 才能拿到 key。"""
+    try:
+        from ai_team.adapters import load_env_file
 
-    config_candidates = [
-        PROJECT_ROOT / "configs" / "ai_providers.yaml",
-        PROJECT_ROOT / "configs" / "ai_providers.yml",
-        PROJECT_ROOT / "config" / "providers.yaml",
-        PROJECT_ROOT / "config" / "providers.yml",
-    ]
+        for name, value in load_env_file(ENV_FILE).items():
+            if value:
+                os.environ.setdefault(name, value)
 
-    config_path = next(
-        (
-            path
-            for path in config_candidates
-            if path.is_file()
-        ),
-        None,
-    )
+    except Exception:
+        logger.warning("读取 .env 失败: %s", ENV_FILE, exc_info=True)
 
-    if config_path is None:
+
+def _read_provider_entries() -> list[dict[str, Any]]:
+    if not PROVIDERS_FILE.is_file():
         return []
 
-    registry = build_custom_registry(
-        config_path,
-        timeout=10,
-    )
-
     try:
-        description = registry.describe()
-        available = description.get("available") or []
-        skipped = description.get("skipped") or {}
-    except Exception:
-        available = []
-        skipped = {}
-
-    try:
-        raw = yaml.safe_load(
-            config_path.read_text(encoding="utf-8")
+        data = yaml.safe_load(
+            PROVIDERS_FILE.read_text(encoding="utf-8")
         ) or {}
+
     except Exception:
         logger.warning(
             "读取 Provider 配置失败: %s",
-            config_path,
+            PROVIDERS_FILE,
             exc_info=True,
         )
-        raw = {}
+        return []
+
+    items = data.get("providers") if isinstance(data, dict) else None
+
+    if not isinstance(items, list):
+        return []
+
+    return [item for item in items if isinstance(item, dict)]
+
+
+def _save_provider_entries(entries: list[dict[str, Any]]) -> None:
+    PROVIDERS_FILE.parent.mkdir(parents=True, exist_ok=True)
+
+    if PROVIDERS_FILE.is_file():
+        backup = PROVIDERS_FILE.with_suffix(".yaml.bak")
+        try:
+            backup.write_text(
+                PROVIDERS_FILE.read_text(encoding="utf-8"),
+                encoding="utf-8",
+            )
+        except Exception:
+            logger.warning("备份 Provider 配置失败", exc_info=True)
+
+    body = yaml.safe_dump(
+        {"providers": entries},
+        allow_unicode=True,
+        sort_keys=False,
+        default_flow_style=False,
+    )
+
+    tmp = PROVIDERS_FILE.with_suffix(".yaml.tmp")
+    tmp.write_text(_PROVIDERS_HEADER + body, encoding="utf-8")
+    tmp.replace(PROVIDERS_FILE)
+
+
+def _set_env_value(name: str, value: str) -> None:
+    """写入 .env（保留其它项），同时更新当前进程环境。"""
+    ENV_FILE.parent.mkdir(parents=True, exist_ok=True)
+
+    lines: list[str] = []
+
+    if ENV_FILE.is_file():
+        lines = ENV_FILE.read_text(encoding="utf-8").splitlines()
+
+    replaced = False
+    output: list[str] = []
+
+    for line in lines:
+        if line.strip().startswith(f"{name}="):
+            output.append(f"{name}={value}")
+            replaced = True
+        else:
+            output.append(line)
+
+    if not replaced:
+        output.append(f"{name}={value}")
+
+    ENV_FILE.write_text("\n".join(output).rstrip() + "\n", encoding="utf-8")
+    os.environ[name] = value
+
+
+def _provider_key_env(entry: dict[str, Any]) -> str:
+    provider_id = str(entry.get("provider_id") or "").strip().upper()
+    explicit = str(entry.get("api_key_env") or "").strip()
+    return explicit or f"AIH_{provider_id}_API_KEY"
+
+
+def _get_provider_rows() -> list[dict[str, Any]]:
+    from ai_team.providers import build_custom_registry
+
+    _load_env_into_process()
+
+    entries = _read_provider_entries()
+
+    if not entries:
+        return []
+
+    available: list[str] = []
+    skipped: dict[str, str] = {}
+
+    if PROVIDERS_FILE.is_file():
+        try:
+            description = build_custom_registry(
+                PROVIDERS_FILE,
+                timeout=10,
+            ).describe()
+            available = description.get("available") or []
+            skipped = description.get("skipped") or {}
+
+        except Exception:
+            logger.warning("Provider 状态探测失败", exc_info=True)
 
     rows: list[dict[str, Any]] = []
 
-    for entry in raw.get("providers") or []:
-        if not isinstance(entry, dict):
-            continue
-
+    for entry in entries:
         provider_id = str(entry.get("provider_id") or "").strip()
 
         if not provider_id:
             continue
 
-        enabled = entry.get("enabled", True)
+        enabled = bool(entry.get("enabled", True))
+        key_env = _provider_key_env(entry)
+        has_key = bool(os.environ.get(key_env, "").strip())
 
-        if provider_id in skipped or skipped.get(provider_id):
-            status = "missing_key"
-        elif not enabled:
+        if not enabled:
             status = "disabled"
+        elif not has_key:
+            status = "missing_key"
         elif provider_id in available:
             status = "ready"
+        elif skipped.get(provider_id):
+            status = "error"
         else:
             status = "unknown"
 
@@ -637,6 +717,10 @@ def _get_provider_rows() -> list[dict[str, Any]]:
                 "display_name": str(entry.get("display_name") or provider_id),
                 "base_url": _expand_env_default(entry.get("base_url") or ""),
                 "model": _expand_env_default(entry.get("model") or ""),
+                "protocol": str(entry.get("protocol") or "openai"),
+                "api_key_env": key_env,
+                "has_key": has_key,
+                "enabled": enabled,
                 "status": status,
                 "tags": entry.get("tags") or [],
             }
@@ -664,6 +748,8 @@ def _run_research(job_id: str, payload: dict[str, Any]) -> None:
             "allow_missing_agents",
             True,
         )
+
+        _load_env_into_process()
 
         with _jobs_lock:
             jobs[job_id]["status"] = "running"
@@ -774,6 +860,135 @@ async def providers():
             exc_info=True,
         )
         return []
+
+
+_PROVIDER_ID_RE = re.compile(r"^[a-z][a-z0-9_-]{1,31}$")
+
+
+class ProviderInput(BaseModel):
+    provider_id: str = ""
+    display_name: str = ""
+    base_url: str = ""
+    model: str = ""
+    api_key: str | None = None
+    api_key_env: str | None = None
+    tags: list[str] = []
+    enabled: bool = True
+    timeout: float | None = None
+    max_tokens: int | None = None
+    temperature: float | None = None
+
+
+def _provider_presets() -> list[dict[str, Any]]:
+    return [
+        {"provider_id": "openai", "display_name": "OpenAI", "base_url": "https://api.openai.com/v1", "model": "gpt-4o-mini", "tags": ["global"]},
+        {"provider_id": "deepseek", "display_name": "DeepSeek", "base_url": "https://api.deepseek.com/v1", "model": "deepseek-chat", "tags": ["cn", "reasoning"]},
+        {"provider_id": "moonshot", "display_name": "Kimi (Moonshot)", "base_url": "https://api.moonshot.cn/v1", "model": "kimi-k2-turbo-preview", "tags": ["cn", "long-context"]},
+        {"provider_id": "dashscope", "display_name": "Qwen (DashScope)", "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1", "model": "qwen-plus", "tags": ["cn"]},
+        {"provider_id": "zhipu", "display_name": "Zhipu GLM", "base_url": "https://open.bigmodel.cn/api/paas/v4", "model": "glm-4.5", "tags": ["cn"]},
+        {"provider_id": "minimax", "display_name": "MiniMax", "base_url": "https://api.minimaxi.com/v1", "model": "MiniMax-M2", "tags": ["cn"]},
+        {"provider_id": "siliconflow", "display_name": "SiliconFlow", "base_url": "https://api.siliconflow.cn/v1", "model": "deepseek-ai/DeepSeek-V3", "tags": ["cn", "aggregator"]},
+        {"provider_id": "openrouter", "display_name": "OpenRouter", "base_url": "https://openrouter.ai/api/v1", "model": "openai/gpt-4o-mini", "tags": ["global", "aggregator"]},
+        {"provider_id": "groq", "display_name": "Groq", "base_url": "https://api.groq.com/openai/v1", "model": "llama-3.3-70b-versatile", "tags": ["global", "fast"]},
+        {"provider_id": "xai", "display_name": "Grok (xAI)", "base_url": "https://api.x.ai/v1", "model": "grok-4", "tags": ["global"]},
+        {"provider_id": "gemini", "display_name": "Gemini (OpenAI 兼容)", "base_url": "https://generativelanguage.googleapis.com/v1beta/openai", "model": "gemini-2.0-flash", "tags": ["global"]},
+        {"provider_id": "ollama", "display_name": "Ollama 本地模型", "base_url": "http://127.0.0.1:11434/v1", "model": "qwen2.5:7b", "tags": ["local"]},
+    ]
+
+
+def _build_provider_entry(payload: ProviderInput, provider_id: str) -> dict[str, Any]:
+    base_url = payload.base_url.strip()
+    model = payload.model.strip()
+
+    if not base_url.startswith(("http://", "https://")):
+        raise HTTPException(status_code=400, detail="base_url 必须以 http:// 或 https:// 开头")
+
+    if not model:
+        raise HTTPException(status_code=400, detail="model 不能为空")
+
+    key_env = (payload.api_key_env or "").strip() or f"AIH_{provider_id.upper()}_API_KEY"
+
+    entry: dict[str, Any] = {
+        "provider_id": provider_id,
+        "display_name": (payload.display_name or provider_id).strip(),
+        "protocol": "openai",
+        "enabled": bool(payload.enabled),
+        "tags": [str(tag).strip() for tag in payload.tags if str(tag).strip()],
+        "base_url": base_url,
+        "model": model,
+        "api_key_env": key_env,
+    }
+
+    if payload.timeout is not None:
+        entry["timeout"] = payload.timeout
+    if payload.max_tokens is not None:
+        entry["max_tokens"] = payload.max_tokens
+    if payload.temperature is not None:
+        entry["temperature"] = payload.temperature
+
+    return entry
+
+
+@app.get("/api/providers/presets")
+async def provider_presets():
+    return _provider_presets()
+
+
+@app.post("/api/providers")
+async def create_provider(payload: ProviderInput):
+    provider_id = payload.provider_id.strip().lower()
+
+    if not _PROVIDER_ID_RE.fullmatch(provider_id):
+        raise HTTPException(status_code=400, detail="provider_id 需为小写字母开头，仅含小写字母、数字、_ 或 -（2-32 位）")
+
+    entries = _read_provider_entries()
+
+    if any(str(item.get("provider_id")).lower() == provider_id for item in entries):
+        raise HTTPException(status_code=400, detail=f"Provider 已存在：{provider_id}")
+
+    entry = _build_provider_entry(payload, provider_id)
+    entries.append(entry)
+    _save_provider_entries(entries)
+
+    if payload.api_key and payload.api_key.strip():
+        _set_env_value(entry["api_key_env"], payload.api_key.strip())
+
+    logger.info("新增 Provider: %s", provider_id)
+    return {"ok": True, "provider": _get_provider_rows()}
+
+
+@app.put("/api/providers/{provider_id}")
+async def update_provider(provider_id: str, payload: ProviderInput):
+    target = provider_id.strip().lower()
+    entries = _read_provider_entries()
+    index = next((i for i, item in enumerate(entries) if str(item.get("provider_id")).lower() == target), None)
+
+    if index is None:
+        raise HTTPException(status_code=404, detail=f"Provider 不存在：{target}")
+
+    entry = _build_provider_entry(payload, target)
+    entries[index] = entry
+    _save_provider_entries(entries)
+
+    if payload.api_key and payload.api_key.strip():
+        _set_env_value(entry["api_key_env"], payload.api_key.strip())
+
+    logger.info("更新 Provider: %s", target)
+    return {"ok": True, "provider": _get_provider_rows()}
+
+
+@app.delete("/api/providers/{provider_id}")
+async def delete_provider(provider_id: str):
+    target = provider_id.strip().lower()
+    entries = _read_provider_entries()
+    remaining = [item for item in entries if str(item.get("provider_id")).lower() != target]
+
+    if len(remaining) == len(entries):
+        raise HTTPException(status_code=404, detail=f"Provider 不存在：{target}")
+
+    _save_provider_entries(remaining)
+    logger.info("删除 Provider: %s", target)
+    return {"ok": True, "provider": _get_provider_rows()}
 
 
 @app.post("/api/research")

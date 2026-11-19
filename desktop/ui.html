@@ -178,6 +178,32 @@ input:focus,select:focus{border-color:#536ba8}
 }
 .provider-name{font-weight:600}
 .provider-model{color:var(--muted);font-size:11px}
+.provider-toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+.provider-toolbar select{flex:1;min-width:150px;height:32px}
+.provider-tip{color:var(--muted);font-size:11px;line-height:1.6;margin-top:10px}
+.provider-actions{display:flex;gap:6px;flex-shrink:0}
+.mini-btn{
+  border:1px solid var(--border);background:#1d222b;color:#cfd8e3;
+  border-radius:6px;padding:4px 9px;font-size:11px;cursor:pointer;
+}
+.mini-btn:hover{border-color:var(--blue);color:#fff}
+.mini-btn.danger:hover{border-color:var(--red);color:var(--red)}
+.modal-backdrop{
+  position:fixed;inset:0;background:#000a;z-index:70;display:none;
+  align-items:center;justify-content:center;padding:20px;
+}
+.modal-backdrop.show{display:flex}
+.modal{
+  width:min(620px,94vw);max-height:88vh;overflow:auto;background:#171a21;
+  border:1px solid var(--border);border-radius:12px;padding:18px;
+  box-shadow:0 18px 50px #0009;
+}
+.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.modal-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.modal-grid .field.full{grid-column:1/-1}
+.modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:16px}
+.modal-note{color:var(--muted);font-size:11px;line-height:1.6;margin-top:10px}
+@media(max-width:720px){.modal-grid{grid-template-columns:minmax(0,1fr)}}
 .drawer-backdrop{
   position:fixed;inset:0;background:#0008;z-index:50;display:none;
 }
@@ -338,13 +364,83 @@ input:focus,select:focus{border-color:#536ba8}
 
     <section class="panel">
       <h2 class="panel-title">
-        Provider 状态
+        Provider 管理
         <button class="collapse-btn" id="providerToggle">展开 ＋</button>
       </h2>
-      <div class="provider-list hidden" id="providerList"></div>
+      <div class="provider-body hidden" id="providerBody">
+        <div class="provider-toolbar">
+          <select id="presetSelect">
+            <option value="">选择常用模型模板…</option>
+          </select>
+          <button class="mini-btn" id="presetFill">填入表单</button>
+          <button class="mini-btn" id="providerAdd">＋ 新增</button>
+          <button class="mini-btn" id="providerReload">刷新 ↻</button>
+        </div>
+        <div class="provider-list" id="providerList"></div>
+        <div class="provider-tip">
+          API Key 写入 .env（AIH_&lt;ID&gt;_API_KEY），界面不回显明文；删除条目不会清除 .env 中的历史 Key。
+        </div>
+      </div>
     </section>
   </main>
 </div>
+</div>
+
+<div class="modal-backdrop" id="providerModal">
+  <div class="modal">
+    <div class="modal-head">
+      <strong id="providerModalTitle">新增 Provider</strong>
+      <button class="secondary" id="providerCancel">关闭 ×</button>
+    </div>
+    <div class="modal-grid">
+      <div class="field">
+        <label>Provider ID</label>
+        <input id="pvId" placeholder="小写字母开头，如 deepseek">
+      </div>
+      <div class="field">
+        <label>显示名称</label>
+        <input id="pvName" placeholder="如 DeepSeek">
+      </div>
+      <div class="field full">
+        <label>Base URL（OpenAI 兼容）</label>
+        <input id="pvBase" placeholder="https://api.deepseek.com/v1">
+      </div>
+      <div class="field">
+        <label>模型</label>
+        <input id="pvModel" placeholder="deepseek-chat">
+      </div>
+      <div class="field">
+        <label>API Key（留空则不修改）</label>
+        <input id="pvKey" type="password" autocomplete="new-password" placeholder="sk-...">
+      </div>
+      <div class="field full">
+        <label>标签（逗号分隔）</label>
+        <input id="pvTags" placeholder="cn, reasoning">
+      </div>
+      <div class="field check-field">
+        <input type="checkbox" id="pvEnabled" checked>
+        <label style="margin:0">启用该 Provider</label>
+      </div>
+      <div class="field">
+        <label>Timeout（秒）</label>
+        <input id="pvTimeout" type="number" placeholder="120">
+      </div>
+      <div class="field">
+        <label>Max Tokens</label>
+        <input id="pvMaxTokens" type="number" placeholder="4096">
+      </div>
+      <div class="field">
+        <label>Temperature</label>
+        <input id="pvTemp" type="number" step="0.1" placeholder="0.3">
+      </div>
+    </div>
+    <div class="error-text" id="pvError"></div>
+    <div class="modal-note">Key 只会写入 .env，不会出现在配置文件、日志或界面中。</div>
+    <div class="modal-actions">
+      <button class="secondary" id="providerCancel2">取消</button>
+      <button class="primary" id="providerSave">保存</button>
+    </div>
+  </div>
 </div>
 
 <div class="drawer-backdrop" id="drawerBackdrop">
@@ -373,6 +469,8 @@ const state = {
   current: null,
   quote: null,
   providers: [],
+  presets: [],
+  providerEditing: null,
   files: [],
   searchResults: [],
   searchIndex: -1,
@@ -742,7 +840,7 @@ async function loadProviders() {
       data.map(p => `
         <option value="${escapeHTML(p.provider_id)}">
           ${escapeHTML(p.display_name || p.provider_id)}
-          ${p.status ? ` · ${escapeHTML(p.status)}` : ""}
+          ${p.has_key ? "" : " · 未配置 Key"}
         </option>
       `).join("");
 
@@ -754,21 +852,170 @@ async function loadProviders() {
   }
 }
 
+const PROVIDER_STATUS_TEXT = {
+  ready: "可用",
+  missing_key: "缺少 Key",
+  disabled: "已停用",
+  error: "配置异常",
+  unknown: "未知"
+};
+
 function renderProviders() {
   if (!state.providers.length) {
-    $("providerList").innerHTML = '<div class="empty-hint">暂无 Provider 配置</div>';
+    $("providerList").innerHTML = '<div class="empty-hint">暂无 Provider，点击「新增」添加</div>';
     return;
   }
 
   $("providerList").innerHTML = state.providers.map(p => `
     <div class="provider-row">
-      <div>
+      <div style="min-width:0">
         <div class="provider-name">${escapeHTML(p.display_name || p.provider_id)}</div>
-        <div class="provider-model">${escapeHTML(p.model || "--")}</div>
+        <div class="provider-model">${escapeHTML(p.model || "--")} · ${escapeHTML(p.base_url || "")}</div>
       </div>
-      <span class="provider-status ${statusClass(p.status)}">${escapeHTML(p.status || "unknown")}</span>
+      <div class="provider-actions">
+        <span class="provider-status ${statusClass(p.status)}">${escapeHTML(PROVIDER_STATUS_TEXT[p.status] || p.status || "unknown")}</span>
+        <button class="mini-btn" data-edit="${escapeHTML(p.provider_id)}">编辑</button>
+        <button class="mini-btn danger" data-delete="${escapeHTML(p.provider_id)}">删除</button>
+      </div>
     </div>
   `).join("");
+
+  $("providerList").querySelectorAll("[data-edit]").forEach(node => {
+    node.onclick = () => {
+      const item = state.providers.find(p => p.provider_id === node.dataset.edit);
+      if (item) openProviderModal(item);
+    };
+  });
+
+  $("providerList").querySelectorAll("[data-delete]").forEach(node => {
+    node.onclick = () => deleteProvider(node.dataset.delete, node);
+  });
+}
+
+async function loadPresets() {
+  try {
+    const data = await api("/api/providers/presets");
+    state.presets = Array.isArray(data) ? data : [];
+    $("presetSelect").innerHTML =
+      '<option value="">选择常用模型模板…</option>' +
+      state.presets.map(p => `
+        <option value="${escapeHTML(p.provider_id)}">
+          ${escapeHTML(p.display_name)}（${escapeHTML(p.model)}）
+        </option>`).join("");
+  } catch (error) {
+    console.warn("模板加载失败", error);
+  }
+}
+
+function openProviderModal(provider) {
+  state.providerEditing = provider ? provider.provider_id : null;
+
+  $("providerModalTitle").textContent = provider ? "编辑 Provider" : "新增 Provider";
+  $("pvError").textContent = "";
+
+  $("pvId").value = provider ? provider.provider_id : "";
+  $("pvId").disabled = Boolean(provider);
+  $("pvName").value = provider ? (provider.display_name || "") : "";
+  $("pvBase").value = provider ? (provider.base_url || "") : "";
+  $("pvModel").value = provider ? (provider.model || "") : "";
+  $("pvKey").value = "";
+  $("pvKey").placeholder = provider && provider.has_key ? "已配置，留空则保持不变" : "sk-...";
+  $("pvTags").value = provider ? (provider.tags || []).join(", ") : "";
+  $("pvEnabled").checked = provider ? Boolean(provider.enabled) : true;
+  $("pvTimeout").value = "";
+  $("pvMaxTokens").value = "";
+  $("pvTemp").value = "";
+
+  $("providerModal").classList.add("show");
+  setTimeout(() => $("pvId").focus(), 30);
+}
+
+function closeProviderModal() {
+  $("providerModal").classList.remove("show");
+  state.providerEditing = null;
+}
+
+function fillPreset() {
+  const pid = $("presetSelect").value;
+  const preset = state.presets.find(p => p.provider_id === pid);
+  if (!preset) return;
+
+  if (!$("pvId").disabled) $("pvId").value = preset.provider_id;
+  $("pvName").value = preset.display_name || preset.provider_id;
+  $("pvBase").value = preset.base_url || "";
+  $("pvModel").value = preset.model || "";
+  $("pvTags").value = (preset.tags || []).join(", ");
+  $("pvId").focus();
+}
+
+async function saveProvider() {
+  const payload = {
+    provider_id: $("pvId").value.trim().toLowerCase(),
+    display_name: $("pvName").value.trim(),
+    base_url: $("pvBase").value.trim(),
+    model: $("pvModel").value.trim(),
+    api_key: $("pvKey").value.trim(),
+    tags: $("pvTags").value.split(",").map(t => t.trim()).filter(Boolean),
+    enabled: $("pvEnabled").checked,
+    timeout: $("pvTimeout").value ? Number($("pvTimeout").value) : null,
+    max_tokens: $("pvMaxTokens").value ? Number($("pvMaxTokens").value) : null,
+    temperature: $("pvTemp").value ? Number($("pvTemp").value) : null
+  };
+
+  if (!payload.provider_id || !payload.base_url || !payload.model) {
+    $("pvError").textContent = "Provider ID、Base URL、模型均为必填";
+    return;
+  }
+
+  $("providerSave").disabled = true;
+  try {
+    if (state.providerEditing) {
+      await api(`/api/providers/${encodeURIComponent(state.providerEditing)}`, {
+        method: "PUT",
+        body: JSON.stringify(payload)
+      });
+      toast("Provider 已更新", "success");
+    } else {
+      await api("/api/providers", {
+        method: "POST",
+        body: JSON.stringify(payload)
+      });
+      toast("Provider 已新增", "success");
+    }
+    closeProviderModal();
+    await loadProviders();
+  } catch (error) {
+    $("pvError").textContent = error.message;
+  } finally {
+    $("providerSave").disabled = false;
+  }
+}
+
+async function deleteProvider(providerId, btn) {
+  if (!btn.dataset.confirm) {
+    btn.dataset.confirm = "1";
+    btn.textContent = "确认?";
+    setTimeout(() => {
+      if (btn.dataset.confirm) {
+        delete btn.dataset.confirm;
+        btn.textContent = "删除";
+      }
+    }, 3000);
+    return;
+  }
+
+  delete btn.dataset.confirm;
+  btn.disabled = true;
+
+  try {
+    await api(`/api/providers/${encodeURIComponent(providerId)}`, { method: "DELETE" });
+    toast("Provider 已删除（.env 中的历史 Key 保留）", "success");
+    await loadProviders();
+  } catch (error) {
+    toast("删除失败：" + error.message);
+  } finally {
+    btn.disabled = false;
+  }
 }
 
 function renderFiles() {
@@ -1122,9 +1369,20 @@ function initEvents() {
 
   $("providerToggle").onclick = () => {
     state.providerExpanded = !state.providerExpanded;
-    $("providerList").classList.toggle("hidden",!state.providerExpanded);
+    $("providerBody").classList.toggle("hidden", !state.providerExpanded);
     $("providerToggle").textContent = state.providerExpanded ? "收起 −" : "展开 ＋";
   };
+
+  $("providerAdd").onclick = () => openProviderModal(null);
+  $("providerReload").onclick = () => Promise.all([loadProviders(), loadPresets()]);
+  $("presetFill").onclick = fillPreset;
+  $("providerCancel").onclick = closeProviderModal;
+  $("providerCancel2").onclick = closeProviderModal;
+  $("providerSave").onclick = saveProvider;
+
+  $("providerModal").addEventListener("click", event => {
+    if (event.target === $("providerModal")) closeProviderModal();
+  });
 
   $("closeDrawer").onclick = () => $("drawerBackdrop").classList.remove("show");
   $("copyPath").onclick = copyPath;
@@ -1160,6 +1418,7 @@ async function init() {
     checkHealth(),
     loadIndices(),
     loadProviders(),
+    loadPresets(),
     loadFiles()
   ]);
 
