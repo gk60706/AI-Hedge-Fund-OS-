@@ -778,7 +778,7 @@ def _run_research(job_id: str, payload: dict[str, Any]) -> None:
         registry = (
             build_custom_registry(
                 config_path,
-                timeout=10,
+                timeout=180,
             )
             if config_path is not None
             else None
@@ -786,11 +786,32 @@ def _run_research(job_id: str, payload: dict[str, Any]) -> None:
 
         pipeline = V310ResearchPipeline(project_root=PROJECT_ROOT)
 
+        participants: list[str] = []
+
+        if registry is not None:
+            try:
+                available = list(registry.describe().get("available") or [])
+            except Exception:
+                available = []
+
+            # 管线只认识 chatgpt / grok / hark 三个席位（含提示词角色）
+            participants = [
+                seat for seat in ("chatgpt", "grok", "hark") if seat in available
+            ]
+
+        if not participants:
+            raise RuntimeError(
+                "没有可用的研究席位：请在「Provider 管理」面板为 chatgpt / grok / hark 配置 API Key 并启用"
+            )
+
+        logger.info("参与研究的 Provider: %s", ", ".join(participants))
+
         result = pipeline.run_live(
             symbol=symbol,
             registry=registry,
             as_of_date=as_of_date or date.today().isoformat(),
             reports_dir=REPORTS_DIR,
+            participants=participants,
             allow_missing_agents=allow_missing_agents,
             call_budget=call_budget,
         )

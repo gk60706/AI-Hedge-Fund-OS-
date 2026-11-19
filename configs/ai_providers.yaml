@@ -58,16 +58,6 @@ providers:
   base_url: ${AIH_MINIMAX_BASE_URL:-https://api.minimaxi.com/v1}
   model: ${AIH_MINIMAX_MODEL:-MiniMax-M2}
   api_key_env: AIH_MINIMAX_API_KEY
-- provider_id: siliconflow
-  display_name: SiliconFlow
-  protocol: openai
-  enabled: false
-  tags:
-  - cn
-  - aggregator
-  base_url: ${AIH_SILICONFLOW_BASE_URL:-https://api.siliconflow.cn/v1}
-  model: ${AIH_SILICONFLOW_MODEL:-deepseek-ai/DeepSeek-V3}
-  api_key_env: AIH_SILICONFLOW_API_KEY
 - provider_id: openrouter
   display_name: OpenRouter
   protocol: openai
@@ -98,11 +88,35 @@ providers:
   model: ${AIH_XAI_MODEL:-grok-4}
   api_key_env: AIH_XAI_API_KEY
 - provider_id: hark
-  display_name: Hark Gateway (self-hosted)
+  display_name: Hark 席位 · GLM-4.5-Air
   protocol: openai
-  enabled: false
+  enabled: true
   tags:
-  - self-hosted
-  base_url: ${HARK_BASE_URL:-http://127.0.0.1:8000/v1}
-  model: ${AIH_HARK_MODEL:-hark-default}
+  - siliconflow
+  - cn
+  - seat
+  base_url: https://api.siliconflow.cn/v1
+  model: zai-org/GLM-4.5-Air
   api_key_env: AIH_HARK_API_KEY
+- provider_id: chatgpt
+  display_name: ChatGPT 席位 · DeepSeek-V3.2
+  protocol: openai
+  enabled: true
+  tags:
+  - siliconflow
+  - cn
+  - seat
+  base_url: https://api.siliconflow.cn/v1
+  model: deepseek-ai/DeepSeek-V3.2
+  api_key_env: AIH_CHATGPT_API_KEY
+- provider_id: grok
+  display_name: Grok 席位 · Qwen2.5-72B
+  protocol: openai
+  enabled: true
+  tags:
+  - siliconflow
+  - cn
+  - seat
+  base_url: https://api.siliconflow.cn/v1
+  model: Qwen/Qwen2.5-72B-Instruct
+  api_key_env: AIH_GROK_API_KEY
