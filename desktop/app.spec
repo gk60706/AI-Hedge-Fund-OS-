@@ -9,6 +9,7 @@ datas = [
     (str(DESKTOP / "ui.html"), "desktop"),
     (str(ROOT / "configs" / "ai_providers.yaml"), "configs"),
     (str(ROOT / "configs" / "ai_providers.colab.yaml"), "configs"),
+    (str(ROOT / "ai_team" / "prompts"), "ai_team/prompts"),
 ]
 
 hiddenimports = [
