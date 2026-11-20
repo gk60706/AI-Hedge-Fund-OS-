@@ -159,7 +159,7 @@ input:focus,select:focus{border-color:#536ba8}
 .log-info{color:#b0bdce}
 .log-warn{color:var(--yellow)}
 .log-error{color:#ff7777}
-.files-list{display:flex;flex-direction:column;gap:0}
+.files-list{display:flex;flex-direction:column;gap:0;max-height:320px;overflow:auto}
 .file-row{
   display:grid;grid-template-columns:minmax(0,1fr) 90px 135px;
   gap:10px;padding:10px 4px;border-bottom:1px solid var(--border);
@@ -237,7 +237,8 @@ input:focus,select:focus{border-color:#536ba8}
 .hidden{display:none!important}
 @media(max-width:1100px){
   .layout{grid-template-columns:1fr}
-  .sidebar{display:none}
+  .sidebar{display:flex;flex-direction:column;gap:12px}
+  .sidebar .panel{margin-bottom:0}
   .chips{display:flex}
   .quote-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
   .indices{justify-content:flex-start;overflow-x:auto}
@@ -356,13 +357,6 @@ input:focus,select:focus{border-color:#536ba8}
     </section>
 
     <section class="panel">
-      <h2 class="panel-title">研究结果文件 <button class="collapse-btn" id="refreshFiles">刷新 ↻</button></h2>
-      <div class="files-list" id="filesList">
-        <div class="empty-hint">暂无结果文件</div>
-      </div>
-    </section>
-
-    <section class="panel">
       <h2 class="panel-title">
         Provider 管理
         <button class="collapse-btn" id="providerToggle">展开 ＋</button>
@@ -380,6 +374,13 @@ input:focus,select:focus{border-color:#536ba8}
         <div class="provider-tip">
           API Key 写入 .env（AIH_&lt;ID&gt;_API_KEY），界面不回显明文；删除条目不会清除 .env 中的历史 Key。
         </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2 class="panel-title">研究结果文件 <button class="collapse-btn" id="refreshFiles">刷新 ↻</button></h2>
+      <div class="files-list" id="filesList">
+        <div class="empty-hint">暂无结果文件</div>
       </div>
     </section>
   </main>
@@ -1024,13 +1025,18 @@ function renderFiles() {
     return;
   }
 
-  $("filesList").innerHTML = state.files.map(file => `
+  const shown = state.files.slice(0, 20);
+  const more = state.files.length - shown.length;
+
+  $("filesList").innerHTML = shown.map(file => `
     <div class="file-row" data-file="${escapeHTML(file.path)}">
       <div class="file-name">${escapeHTML(file.path)}</div>
       <div class="file-size">${formatNumber(file.size,0)} B</div>
       <div class="file-time">${escapeHTML(formatTime(file.mtime ? file.mtime*1000 : null))}</div>
     </div>
-  `).join("");
+  `).join("") + (more > 0
+    ? `<div class="empty-hint">仅显示最近 ${shown.length} 条，另有 ${more} 条未显示</div>`
+    : "");
 
   $("filesList").querySelectorAll("[data-file]").forEach(node => {
     node.onclick = () => openFile(node.dataset.file);
