@@ -146,6 +146,8 @@ input:focus,select:focus{border-color:#536ba8}
 .task-card{margin-top:16px;padding:12px;background:#11151c;border:1px solid var(--border);border-radius:8px}
 .task-header{display:flex;justify-content:space-between;gap:8px;align-items:center}
 .task-steps{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin-top:15px}
+.task-output{margin-top:12px;padding-top:10px;border-top:1px dashed var(--border)}
+.task-output-links{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
 .step{text-align:center;color:var(--muted);font-size:11px}
 .step-line{height:4px;border-radius:5px;background:#303644;margin-bottom:6px}
 .step.done .step-line{background:var(--green)}
@@ -377,7 +379,7 @@ input:focus,select:focus{border-color:#536ba8}
       </div>
     </section>
 
-    <section class="panel">
+    <section class="panel" id="filesPanel">
       <h2 class="panel-title">研究结果文件 <button class="collapse-btn" id="refreshFiles">刷新 ↻</button></h2>
       <div class="files-list" id="filesList">
         <div class="empty-hint">暂无结果文件</div>
@@ -1188,7 +1190,7 @@ async function startResearch() {
 
     const payload = {
       symbol:resolved.symbol,
-      as_of:$("asOf").value,
+      as_of_date:$("asOf").value,
       providers_file:$("providerSelect").value || null,
       allow_missing_agents:$("allowMissing").checked,
       call_budget:Number($("callBudget").value) || 30,
@@ -1238,13 +1240,40 @@ function statusStep(status) {
   return -1;
 }
 
-function renderTask(job) {
+function renderTask(job,data) {
+  data = data || {};
   const elapsed = state.taskStarted
     ? Math.max(0,Math.floor((Date.now()-state.taskStarted)/1000))
     : 0;
 
   const step = statusStep(job.status);
   const failed = ["failed","error"].includes(String(job.status).toLowerCase());
+  const result = data.result || {};
+  const generated = Array.isArray(result.generated) ? result.generated : [];
+  const generatedFiles = Array.isArray(result.generated_files) ? result.generated_files : [];
+  const completed = String(job.status || "").toLowerCase() === "completed";
+
+  const outputBlock = completed ? `
+    <div class="task-output">
+      <div class="muted">
+        研究阶段：${escapeHTML(result.stage || "reports_collected")}
+        &nbsp;·&nbsp; 有效报告：${Number(result.reports_collected ?? generated.length ?? 0)} 份
+        ${generatedFiles.length ? `&nbsp;·&nbsp; 报告文件：${generatedFiles.length} 个` : ""}
+      </div>
+      ${generated.length ? `<div class="task-output-links">${generated.map(item => {
+        const agent = String(item.agent_id || "");
+        const label = {chatgpt:"CIO 报告",grok:"情报报告",hark:"分析师报告"}[agent] || (agent + " 报告");
+        return `<button class="mini-btn" data-open-file="reports/${escapeHTML(agent)}.md">${escapeHTML(label)} ↗</button>`;
+      }).join("")}</div>`
+      : generatedFiles.length ? `<div class="task-output-links">${generatedFiles.map(path => {
+        const base = String(path).split("/").pop() || path;
+        const agent = base.replace(/\.md$/i,"");
+        const label = {chatgpt:"CIO 报告",grok:"情报报告",hark:"分析师报告"}[agent] || base;
+        return `<button class="mini-btn" data-open-file="${escapeHTML(path)}">${escapeHTML(label)} ↗</button>`;
+      }).join("")}</div>`
+      : `<div class="empty-hint">本次没有生成报告，请查看运行日志</div>`}
+    </div>
+  ` : "";
 
   $("taskContainer").innerHTML = `
     <div class="task-card">
@@ -1269,8 +1298,13 @@ function renderTask(job) {
         `).join("")}
       </div>
       ${failed ? `<div class="error-text" style="margin-top:10px">${escapeHTML(job.error || "研究任务失败")}</div>` : ""}
+      ${outputBlock}
     </div>
   `;
+
+  $("taskContainer").querySelectorAll("[data-open-file]").forEach(node => {
+    node.onclick = () => openFile(node.dataset.openFile);
+  });
 }
 
 function renderLogs(data) {
@@ -1282,8 +1316,25 @@ function renderLogs(data) {
   else if (typeof data.logs === "string") logs = data.logs.split("\n");
 
   if (!logs.length) {
-    $("logs").innerHTML = '<span class="muted">任务运行中，等待日志输出...</span>';
-    return;
+    const status = String(data.status || "").toLowerCase();
+    if (["completed","failed","error","cancelled"].includes(status)) {
+      const result = data.result || {};
+      const generated = Array.isArray(result.generated) ? result.generated : [];
+      const generatedFiles = Array.isArray(result.generated_files) ? result.generated_files : [];
+      logs = [
+        `任务结束：${data.status}`,
+        `研究阶段：${result.stage || "--"}，有效报告：${result.reports_collected ?? generated.length ?? 0} 份`
+      ];
+      if (generated.length) {
+        logs.push("已生成：" + generated.map(item => `${item.agent_id}（${(item.generation||{}).model || "?"}）`).join("、"));
+      } else if (generatedFiles.length) {
+        logs.push("已写入：" + generatedFiles.join("、"));
+      }
+      if (data.error) logs.push("错误：" + data.error);
+    } else {
+      $("logs").innerHTML = '<span class="muted">任务运行中，等待日志输出...</span>';
+      return;
+    }
   }
 
   $("logs").innerHTML = logs.map(line => {
@@ -1311,7 +1362,7 @@ function startJobPolling(jobId) {
         status:data.status,
         symbol:data.symbol,
         error:data.error
-      });
+      }, data);
 
       renderLogs(data);
 
@@ -1324,8 +1375,12 @@ function startJobPolling(jobId) {
         state.activeJob = null;
 
         if (status === "completed") {
-          toast("研究任务完成", "success");
+          const result = data.result || {};
+          const count = Number(result.reports_collected || (result.generated || []).length || (result.generated_files || []).length || 0);
+          toast(`研究任务完成，产出 ${count} 份报告`, "success");
           await loadFiles();
+          const panel = $("filesPanel");
+          if (panel) panel.scrollIntoView({ behavior:"smooth", block:"center" });
         } else {
           toast("研究任务结束：" + (data.error || status));
         }

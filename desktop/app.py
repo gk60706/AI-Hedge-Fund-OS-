@@ -98,6 +98,20 @@ _research_executor = ThreadPoolExecutor(
 )
 
 
+def _job_log(job_id: str, message: str) -> None:
+    """把一条研究进度写进任务日志，供界面轮询展示。"""
+
+    stamp = time.strftime("%H:%M:%S")
+
+    with _jobs_lock:
+        job = jobs.get(job_id)
+
+        if job is None:
+            return
+
+        job.setdefault("logs", []).append(f"[{stamp}] {message}")
+
+
 class ResearchRequest(BaseModel):
     symbol: str = Field(min_length=1)
     as_of_date: str | None = None
@@ -751,6 +765,9 @@ def _run_research(job_id: str, payload: dict[str, Any]) -> None:
 
         _load_env_into_process()
 
+        _job_log(job_id, f"研究任务启动，标的 {symbol}")
+        _job_log(job_id, f"调用预算 {call_budget}，截止日期 {as_of_date}")
+
         with _jobs_lock:
             jobs[job_id]["status"] = "running"
             jobs[job_id]["started_at"] = time.time()
@@ -805,6 +822,10 @@ def _run_research(job_id: str, payload: dict[str, Any]) -> None:
             )
 
         logger.info("参与研究的 Provider: %s", ", ".join(participants))
+        _job_log(job_id, "参与研究的席位：" + " / ".join(participants))
+        _job_log(job_id, "正在调用模型生成报告，请稍候…")
+
+        run_started = time.time()
 
         result = pipeline.run_live(
             symbol=symbol,
@@ -815,6 +836,70 @@ def _run_research(job_id: str, payload: dict[str, Any]) -> None:
             allow_missing_agents=allow_missing_agents,
             call_budget=call_budget,
         )
+
+        stage = result.get("stage") if isinstance(result, dict) else None
+        collected = (
+            result.get("reports_collected")
+            if isinstance(result, dict)
+            else None
+        )
+        generated = (
+            list(result.get("generated") or [])
+            if isinstance(result, dict)
+            else []
+        )
+
+        # 无论管线返回完整结果还是降级状态，都以本次运行真正落盘的报告为准，
+        # 避免界面出现「已完成但没有结果」。
+        written_files: list[str] = []
+
+        if REPORTS_DIR.is_dir():
+            for path in sorted(REPORTS_DIR.glob("*.md")):
+                try:
+                    if path.stat().st_mtime >= run_started - 1:
+                        written_files.append(
+                            path.relative_to(PROJECT_ROOT)
+                            .as_posix()
+                        )
+                except OSError:
+                    continue
+
+        if isinstance(result, dict):
+            result["generated_files"] = written_files
+
+        _job_log(
+            job_id,
+            f"研究阶段结束：{stage}，有效报告 {collected} 份",
+        )
+
+        for item in generated:
+            _job_log(
+                job_id,
+                "已生成报告：{agent}（{model}）→ reports/{agent}.md".format(
+                    agent=item.get("agent_id") or "?",
+                    model=(item.get("generation") or {}).get("model") or "?",
+                ),
+            )
+
+        if written_files and not generated:
+            _job_log(
+                job_id,
+                "本次已写入报告文件：" + "、".join(written_files),
+            )
+
+        failed_agents = (
+            result.get("failed_agents")
+            if isinstance(result, dict)
+            else None
+        )
+
+        if failed_agents:
+            _job_log(
+                job_id,
+                "未纳入校验的席位：" + "、".join(sorted(failed_agents)),
+            )
+
+        _job_log(job_id, "研究完成，结果已写入 reports 目录")
 
         with _jobs_lock:
             jobs[job_id]["status"] = "completed"
@@ -831,6 +916,8 @@ def _run_research(job_id: str, payload: dict[str, Any]) -> None:
             error,
             traceback.format_exc(),
         )
+
+        _job_log(job_id, "研究失败：" + error)
 
         with _jobs_lock:
             if job_id in jobs:
@@ -1041,6 +1128,7 @@ async def create_research(request: ResearchRequest):
             "created_at": time.time(),
             "result": None,
             "error": None,
+            "logs": [],
         }
 
     logger.info(

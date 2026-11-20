@@ -817,6 +817,18 @@ def generate_reports(
 
         digest = hashlib.sha256(content.encode("utf-8")).hexdigest()
         sources = extract_sources_from_content(content)
+
+        # 收紧来源：模型常把「渠道调研」之类无链接、无日期的条目混进
+        # sources，证据契约会整份拒收。这里先剔除不合格条目，全部不合格
+        # 时按「未提供来源」处理，报告仍可入库，而不是整份丢失。
+        if sources:
+            sources = [
+                item
+                for item in sources
+                if str(item.get("name") or "").strip()
+                and str(item.get("url") or "").strip()
+                and str(item.get("published_at") or "").strip()
+            ] or None
         record = GenerationRecord(
             agent_id=agent_id,
             model=adapter.model,
