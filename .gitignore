@@ -26,6 +26,11 @@ Thumbs.db
 # ---- 生成的报告（保留 .gitkeep）----
 reports/*.md
 !reports/.gitkeep
+!reports/four_ai_consensus_v1.2.md
+
+# ---- v1.2 本地行情缓存与信号台账（运行时数据，不入库）----
+market_data/cache/
+market_data/signal_ledger.sqlite
 
 # ---- 测试 / 缓存 ----
 .pytest_cache/

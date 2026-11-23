@@ -6,7 +6,11 @@ from pathlib import Path
 
 APP_NAME = "A股趋势工作台"
 APP_NAME_EN = "AStockWorkbench"
-VERSION = "1.1.0"
+VERSION = "1.2.0"
+
+# v1.2.0 消融结论：日线 + 周线 + 可交易性作为硬过滤；
+# VWAP、量比、实体占比保留为观察灯，不再参与 eligible。
+CORE_GATES_ONLY = True
 
 
 def _is_frozen() -> bool:

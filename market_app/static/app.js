@@ -729,6 +729,7 @@
           min_matches: Number($("minMatches").value) || 1,
           max_results: Number($("maxResults").value) || 80,
           quality_filter: $("qualityFilter").value === "on",
+          strict_gates: $("strictGates").value === "on",
           daily_top_k: Number($("dailyTopK").value) || 0,
           cooldown_days: Number($("cooldownDays").value) || 10,
         }),
@@ -784,7 +785,7 @@
     const badge = $("topPicksBadge");
     badge.textContent = picks.length ? `${picks.length} 只` : "无";
     badge.className = `mini-badge ${picks.length ? "ok" : "warn"}`;
-    $("topPicksSub").textContent = `质量过滤 ${result.quality_filter ? "开启" : "关闭"} · 合格 ${result.eligible || 0} 只 · 新信号 ${result.fresh || 0} 只 · Top ${result.daily_top_k || 0}`;
+    $("topPicksSub").textContent = `质量过滤 ${result.quality_filter ? "开启" : "关闭"} · ${result.strict_gates ? "严格四灯" : "核心日线+周线"} · 合格 ${result.eligible || 0} 只 · 新信号 ${result.fresh || 0} 只 · Top ${result.daily_top_k || 0}`;
     if (!picks.length) {
       $("topPicks").innerHTML = '<div class="empty">没有合格候选。可关闭质量过滤，或放宽选股条件。</div>';
       return;
@@ -803,7 +804,7 @@
           </div>
           <div class="top-pick-score">${num(item.quality_score, 0)}<small>质量分</small></div>
           <div class="top-pick-meta">${esc(item.signal_status || "")} · VWAP ${m.vwap20_dist_pct === null || m.vwap20_dist_pct === undefined ? "--" : `${num(m.vwap20_dist_pct)}%`} · 量比 ${num(m.vol_ratio_20_prev, 2)}× · 实体 ${m.body_pct === null || m.body_pct === undefined ? "--" : `${num(m.body_pct, 1)}%`}</div>
-          <div class="top-pick-flags">${flags || '<span class="top-pick-ok">四灯通过</span>'}</div>
+          <div class="top-pick-flags">${flags || '<span class="top-pick-ok">核心灯通过</span>'}</div>
         </button>
       `;
     }).join("");
@@ -814,6 +815,7 @@
 
   function renderScreenResults(result) {
     renderTopPicks(result);
+    loadLedger();
     const body = $("screenTable").querySelector("tbody");
     if (!result.results || !result.results.length) {
       body.innerHTML = '<tr><td colspan="10" class="empty">没有命中的标的，试试放宽条件、关闭质量过滤或换股票池</td></tr>';
@@ -840,9 +842,43 @@
 
   $("runScreen").addEventListener("click", runScreen);
 
+  async function loadLedger() {
+    try {
+      const data = await api("/api/ledger?days=30&limit=100");
+      const summary = data.summary || {};
+      $("ledgerSummary").textContent = summary.total
+        ? `近 ${data.days} 天：${summary.total} 条 · ${summary.days} 个数据日 · 新信号 ${summary.fresh || 0} 条 · ${summary.first_date || "--"} 至 ${summary.last_date || "--"}`
+        : "近 30 天暂无记录；运行一次带 Top K 的选股后自动写入";
+      const body = $("ledgerTable").querySelector("tbody");
+      if (!data.items || !data.items.length) {
+        body.innerHTML = '<tr><td colspan="8" class="empty">暂无台账记录</td></tr>';
+        return;
+      }
+      body.innerHTML = data.items.map((item) => `
+        <tr class="clickable" data-symbol="${esc(item.symbol)}" data-name="${esc(item.name)}">
+          <td class="mono">${esc(item.trade_date)}</td>
+          <td><div class="cell-name">${esc(item.name)}</div><div class="cell-symbol">${esc(item.symbol)}</div></td>
+          <td class="r mono">${num(item.top_rank, 0)}</td>
+          <td class="r mono">${num(item.quality_score, 0)}</td>
+          <td><span class="quality-grade grade-${esc(item.grade || "D")}">${esc(item.grade || "D")}</span></td>
+          <td>${esc(item.signal_status || "")}${item.fresh_signal ? ' <span class="signal-pill fresh">新</span>' : ""}</td>
+          <td class="r mono">${num(item.trend_score, 0)}</td>
+          <td class="mono small">${esc(item.recorded_at)}</td>
+        </tr>
+      `).join("");
+      body.querySelectorAll("tr[data-symbol]").forEach((row) => {
+        row.addEventListener("click", () => selectStock(row.dataset.symbol, row.dataset.name));
+      });
+    } catch (error) {
+      $("ledgerSummary").textContent = `台账读取失败：${error.message}`;
+    }
+  }
+
+  $("refreshLedger").addEventListener("click", loadLedger);
+
   // ---------------------------------------------------------------- global refresh
   async function refreshAll() {
-    await Promise.all([loadHealth(), loadIndices(), loadWatchlist(), loadSources(false)]);
+    await Promise.all([loadHealth(), loadIndices(), loadWatchlist(), loadSources(false), loadLedger()]);
     tickClock();
     toast("行情已刷新", "ok");
   }
@@ -853,7 +889,7 @@
     tickClock();
     setInterval(tickClock, 1000);
     renderConditionChips();
-    await Promise.all([loadHealth(), loadIndices(), loadWatchlist(), loadSources(false)]);
+    await Promise.all([loadHealth(), loadIndices(), loadWatchlist(), loadSources(false), loadLedger()]);
     loadUniverses();
     window.addEventListener("resize", () => { if (state.chart) state.chart.resize(); });
   }

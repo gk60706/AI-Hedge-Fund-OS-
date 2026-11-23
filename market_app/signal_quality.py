@@ -129,8 +129,15 @@ def attach_signal_quality(
     volume_threshold: float = 1.2,
     body_threshold: float = 0.5,
     require_weekly: bool = True,
+    core_only: bool = False,
 ) -> pd.DataFrame:
-    """Add the P0 daily signal-quality columns to an indicator frame."""
+    """Add the P0 daily signal-quality columns to an indicator frame.
+
+    ``core_only`` keeps the tradeable + daily + weekly gates as hard filters and
+    leaves VWAP / volume / body as display-only lights. v1.2.0 defaults to this
+    mode because the cost-adjusted ablation showed the extra state gates
+    reduced net PF once their on/off toggling was included.
+    """
 
     if frame.empty:
         return frame
@@ -235,8 +242,14 @@ def attach_signal_quality(
         axis=1,
     )
     data["gate_count"] = gate_count
-    eligible = (gate_count == (5 if require_weekly else 4)) & gates["tradeable"]
+    core_eligible = gates["daily_trend"] & gates["tradeable"]
+    if require_weekly:
+        core_eligible = core_eligible & gates["weekly_trend"]
+    full_eligible = (gate_count == (5 if require_weekly else 4)) & gates["tradeable"]
+    eligible = core_eligible if core_only else full_eligible
+    data["core_eligible"] = core_eligible
     data["eligible"] = eligible
+    data["core_gates_only"] = bool(core_only)
 
     fresh = np.zeros(len(data), dtype=bool)
     last_trigger = -10**9
@@ -268,6 +281,8 @@ def attach_signal_quality(
         0.0,
     )
     quality_score += np.where(fresh, 10.0, 0.0)
+    if core_only:
+        quality_score += np.where(core_eligible, 30.0, 0.0)
     data["quality_score"] = np.round(np.clip(quality_score, 0.0, 100.0), 1)
     data["quality_grade"] = np.select(
         [data["quality_score"] >= 80, data["quality_score"] >= 65, data["quality_score"] >= 50],
@@ -286,6 +301,7 @@ def latest_signal_quality(data: pd.DataFrame, cooldown_days: int = 10) -> dict[s
     last = data.iloc[-1]
     confirmed = _confirmed_bar(str(last.get("date", "")))
     eligible = bool(last.get("eligible", False))
+    core_only = bool(last.get("core_gates_only", False))
     fresh = bool(last.get("fresh_signal", False)) and confirmed
     raw_fresh = bool(last.get("fresh_signal", False))
     gate_count = int(last.get("gate_count", 0) or 0)
@@ -354,6 +370,8 @@ def latest_signal_quality(data: pd.DataFrame, cooldown_days: int = 10) -> dict[s
         warnings.append("实体占 K 线不足 50%")
     if not tradeable:
         warnings.append("当日涨停或一字板，无法按收盘价追入")
+    if core_only and eligible and not all(gates.values()):
+        warnings.append("v1.2.0 核心模式：只硬过滤日线+周线+可交易，VWAP/量比/实体仅作观察灯")
 
     if not tradeable:
         status = "涨停/一字板"
@@ -374,6 +392,8 @@ def latest_signal_quality(data: pd.DataFrame, cooldown_days: int = 10) -> dict[s
         "as_of": str(last.get("date", "")),
         "confirmed": confirmed,
         "eligible": eligible,
+        "core_gates_only": core_only,
+        "core_eligible": bool(last.get("core_eligible", False)),
         "fresh_signal": fresh,
         "raw_fresh": raw_fresh,
         "status": status,

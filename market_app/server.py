@@ -12,7 +12,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from . import analytics, data_sources as ds
+from . import analytics, data_sources as ds, signal_ledger
 from .config import (
     APP_NAME,
     APP_NAME_EN,
@@ -243,6 +243,7 @@ class ScreenRequest(BaseModel):
     min_matches: int = Field(default=2, ge=1, le=8)
     max_results: int = Field(default=80, ge=1, le=200)
     quality_filter: bool = True
+    strict_gates: bool = False
     daily_top_k: int = Field(default=5, ge=0, le=20)
     cooldown_days: int = Field(default=10, ge=1, le=60)
 
@@ -292,8 +293,16 @@ def _run_screen(job_id: str, request: ScreenRequest) -> None:
             quality_filter=request.quality_filter,
             daily_top_k=request.daily_top_k,
             cooldown_days=request.cooldown_days,
+            strict_gates=request.strict_gates,
             progress=progress,
         )
+        try:
+            result["ledger_inserted"] = signal_ledger.record_top_picks(
+                result, universe=request.universe
+            )
+        except Exception as exc:
+            result["ledger_inserted"] = 0
+            result["ledger_error"] = str(exc)[:160]
         with _screen_lock:
             job = _screen_jobs.get(job_id)
             if job:
@@ -336,6 +345,11 @@ def get_screen(job_id: str):
         if job is None:
             raise HTTPException(status_code=404, detail="任务不存在")
         return dict(job)
+
+
+@app.get("/api/ledger")
+def ledger(days: int = Query(default=30, ge=1, le=3650), limit: int = Query(default=200, ge=1, le=2000)):
+    return signal_ledger.recent(days=days, limit=limit)
 
 
 @app.get("/api/sources")

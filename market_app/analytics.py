@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 
 from . import data_sources as ds
-from .config import SCREEN_CACHE_DIR
+from .config import CORE_GATES_ONLY, SCREEN_CACHE_DIR
 from .indicators import build_snapshot, compute_indicators, series_payload
 from .signal_quality import attach_signal_quality, latest_signal_quality
 
@@ -115,7 +115,7 @@ def _verify_with_baostock(symbol: str, period: str, primary: pd.DataFrame) -> di
     return dict(result)
 
 
-def analyze_symbol(raw_symbol: str, period: str = "day", bars: int = 320) -> dict[str, Any]:
+def analyze_symbol(raw_symbol: str, period: str = "day", bars: int = 320, core_only: bool = CORE_GATES_ONLY) -> dict[str, Any]:
     resolved = ds.resolve_symbol(raw_symbol)
     if not resolved.get("ok"):
         return {"ok": False, "error": resolved.get("error", "未找到该股票")}
@@ -131,7 +131,9 @@ def analyze_symbol(raw_symbol: str, period: str = "day", bars: int = 320) -> dic
         return {"ok": False, "error": "历史行情为空"}
     name = resolved.get("name", symbol)
     frame = compute_indicators(frame)
-    frame = attach_signal_quality(frame, symbol, name=name, cooldown_days=10)
+    frame = attach_signal_quality(
+        frame, symbol, name=name, cooldown_days=10, core_only=core_only
+    )
     quality = latest_signal_quality(frame, cooldown_days=10)
 
     quote = ds.get_quote(symbol)
@@ -363,6 +365,7 @@ def screen_universe(
     quality_filter: bool = True,
     daily_top_k: int = 5,
     cooldown_days: int = 10,
+    strict_gates: bool = False,
     progress: Callable[[int, int, str], None] | None = None,
 ) -> dict[str, Any]:
     conditions = [item for item in conditions if item in CONDITION_LABELS]
@@ -391,7 +394,9 @@ def screen_universe(
         frame = compute_indicators(frame)
         if frame.empty:
             raise ValueError("K 线为空")
-        frame = attach_signal_quality(frame, symbol, name=name, cooldown_days=cooldown_days)
+        frame = attach_signal_quality(
+            frame, symbol, name=name, cooldown_days=cooldown_days, core_only=not strict_gates
+        )
         quality = latest_signal_quality(frame, cooldown_days=cooldown_days)
         snapshot = build_snapshot(frame, index_return_20=index_return_20)
         matched, metrics = evaluate_conditions(frame, conditions)
@@ -483,6 +488,8 @@ def screen_universe(
         "match_mode": match_mode,
         "min_matches": min_matches,
         "quality_filter": bool(quality_filter),
+        "strict_gates": bool(strict_gates),
+        "core_gates_only": not strict_gates,
         "daily_top_k": top_k,
         "cooldown_days": int(cooldown_days),
         "top_picks": top_picks,
