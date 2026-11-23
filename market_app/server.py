@@ -12,7 +12,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from . import analytics, data_sources as ds, signal_ledger
+from . import analytics, data_sources as ds, market_context, signal_ledger
 from .config import (
     APP_NAME,
     APP_NAME_EN,
@@ -355,6 +355,93 @@ def ledger(days: int = Query(default=30, ge=1, le=3650), limit: int = Query(defa
 @app.get("/api/sources")
 def sources(refresh: bool = Query(default=False)):
     return {"items": ds.get_source_status(refresh=refresh), "fetched_at": ds.now_text()}
+
+
+@app.get("/api/market/sentiment")
+def market_sentiment(refresh: bool = Query(default=False)):
+    try:
+        return market_context.market_sentiment(force=refresh)
+    except Exception as exc:
+        return {
+            "ok": False,
+            "error": str(exc),
+            "fetched_at": ds.now_text(),
+            "breadth": {},
+            "limit_up": {"count": 0, "items": []},
+            "limit_down": {"count": 0, "items": []},
+            "broken_board": {"count": 0, "items": []},
+            "dragon_tiger": {"ok": False, "items": [], "error": str(exc)},
+            "sectors": {"ok": False, "inflow": [], "outflow": [], "error": str(exc)},
+        }
+
+
+@app.get("/api/market/radar")
+def market_radar(
+    q: str = Query(default=""),
+    board: str = Query(default="all"),
+    min_pct: float | None = Query(default=None),
+    max_pct: float | None = Query(default=None),
+    min_turnover: float | None = Query(default=None),
+    max_turnover: float | None = Query(default=None),
+    min_amount_yi: float | None = Query(default=None),
+    max_amount_yi: float | None = Query(default=None),
+    min_cap_yi: float | None = Query(default=None),
+    max_cap_yi: float | None = Query(default=None),
+    min_pe: float | None = Query(default=None),
+    max_pe: float | None = Query(default=None),
+    min_pb: float | None = Query(default=None),
+    max_pb: float | None = Query(default=None),
+    exclude_st: bool = Query(default=True),
+    sort: str = Query(default="pct"),
+    order: str = Query(default="desc"),
+    limit: int = Query(default=120, ge=1, le=300),
+):
+    try:
+        return market_context.radar_query(
+            q=q,
+            board=board,
+            min_pct=min_pct,
+            max_pct=max_pct,
+            min_turnover=min_turnover,
+            max_turnover=max_turnover,
+            min_amount_yi=min_amount_yi,
+            max_amount_yi=max_amount_yi,
+            min_cap_yi=min_cap_yi,
+            max_cap_yi=max_cap_yi,
+            min_pe=min_pe,
+            max_pe=max_pe,
+            min_pb=min_pb,
+            max_pb=max_pb,
+            exclude_st=exclude_st,
+            sort=sort,
+            order=order,
+            limit=limit,
+        )
+    except Exception as exc:
+        return {"ok": False, "error": str(exc), "items": [], "matched": 0, "total": 0}
+
+
+@app.get("/api/stock/profile")
+def stock_profile(symbol: str = Query(default="")):
+    if not symbol.strip():
+        raise HTTPException(status_code=400, detail="请提供股票代码")
+    try:
+        return market_context.stock_profile(symbol)
+    except Exception as exc:
+        return {"ok": False, "error": str(exc), "symbol": symbol}
+
+
+@app.get("/api/stock/flow")
+def stock_flow(
+    symbol: str = Query(default=""),
+    days: int = Query(default=20, ge=1, le=60),
+):
+    if not symbol.strip():
+        raise HTTPException(status_code=400, detail="请提供股票代码")
+    try:
+        return market_context.stock_flow(symbol, days=days)
+    except Exception as exc:
+        return {"ok": False, "error": str(exc), "symbol": symbol, "items": []}
 
 
 @app.get("/api/source-check")

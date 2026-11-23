@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>A股趋势工作台</title>
   <link rel="icon" type="image/png" href="/static/app-icon.png?v=20261123">
-  <link rel="stylesheet" href="/static/style.css?v=20261123c">
+  <link rel="stylesheet" href="/static/style.css?v=20261123i">
 </head>
 <body>
 <div class="app-shell">
@@ -22,14 +22,17 @@
       <button class="nav-item active" data-page="overview">
         <span class="nav-index">01</span><span>市场总览</span>
       </button>
+      <button class="nav-item" data-page="radar">
+        <span class="nav-index">02</span><span>市场雷达</span>
+      </button>
       <button class="nav-item" data-page="stock">
-        <span class="nav-index">02</span><span>个股趋势</span>
+        <span class="nav-index">03</span><span>个股趋势</span>
       </button>
       <button class="nav-item" data-page="screener">
-        <span class="nav-index">03</span><span>条件选股</span>
+        <span class="nav-index">04</span><span>条件选股</span>
       </button>
       <button class="nav-item" data-page="sources">
-        <span class="nav-index">04</span><span>数据与来源</span>
+        <span class="nav-index">05</span><span>数据与来源</span>
       </button>
     </nav>
 
@@ -119,6 +122,174 @@
       </div>
     </section>
 
+    <section id="page-radar" class="page">
+      <div class="page-head">
+        <div>
+          <div class="eyebrow">MARKET RADAR</div>
+          <h1>市场雷达</h1>
+          <p class="page-desc">先用全市场快照看涨跌家数、涨停/跌停、炸板率和成交额，再用条件筛出候选。资金流只做观察，不进入趋势评分。</p>
+        </div>
+        <div class="head-badge" id="radarAsOf">等待数据</div>
+      </div>
+
+      <div id="sentimentCards" class="sentiment-grid">
+        <div class="sentiment-card skeleton"></div>
+        <div class="sentiment-card skeleton"></div>
+        <div class="sentiment-card skeleton"></div>
+        <div class="sentiment-card skeleton"></div>
+        <div class="sentiment-card skeleton"></div>
+        <div class="sentiment-card skeleton"></div>
+        <div class="sentiment-card skeleton"></div>
+        <div class="sentiment-card skeleton"></div>
+      </div>
+
+      <div class="panel breadth-panel">
+        <div class="panel-head">
+          <div>
+            <h2>市场宽度</h2>
+            <div class="panel-sub" id="breadthSub">涨跌家数来自巨潮代码表 + 腾讯批量行情</div>
+          </div>
+          <span id="breadthBadge" class="mini-badge">--</span>
+        </div>
+        <div id="breadthBar" class="breadth-bar"><div class="breadth-empty">等待数据</div></div>
+        <div id="breadthLegend" class="breadth-legend"></div>
+      </div>
+
+      <div class="two-col radar-top">
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>涨停梯队</h2>
+              <div class="panel-sub" id="limitUpSub">按连板数与首封时间排序</div>
+            </div>
+            <span id="limitUpBadge" class="mini-badge">--</span>
+          </div>
+          <div class="table-wrap table-scroll">
+            <table class="data-table compact" id="limitUpTable">
+              <thead><tr><th>标的</th><th class="r">涨幅</th><th class="r">连板</th><th class="r">首封</th><th class="r">封单</th><th class="r">炸板</th><th>行业</th></tr></thead>
+              <tbody><tr><td colspan="7" class="empty">等待涨停池</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>跌停与炸板</h2>
+              <div class="panel-sub" id="weakSub">跌停、炸板分别计数</div>
+            </div>
+            <span id="weakBadge" class="mini-badge">--</span>
+          </div>
+          <div class="table-wrap table-scroll">
+            <table class="data-table compact" id="weakTable">
+              <thead><tr><th>类型</th><th>标的</th><th class="r">涨跌幅</th><th class="r">封单/炸板</th><th>行业</th></tr></thead>
+              <tbody><tr><td colspan="5" class="empty">等待跌停池</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="two-col radar-top radar-mid">
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>板块资金流</h2>
+              <div class="panel-sub">主力净流入为算法估算，只做观察</div>
+            </div>
+            <span id="sectorBadge" class="mini-badge">--</span>
+          </div>
+          <div id="sectorFlow" class="sector-flow">
+            <div class="muted small" style="padding:0 20px 18px">等待板块数据</div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>龙虎榜</h2>
+              <div class="panel-sub" id="dragonSub">按净买入额排序</div>
+            </div>
+            <span id="dragonBadge" class="mini-badge">--</span>
+          </div>
+          <div class="table-wrap table-scroll">
+            <table class="data-table compact" id="dragonTable">
+              <thead><tr><th>标的</th><th class="r">涨幅</th><th class="r">净买入</th><th class="r">买入</th><th class="r">卖出</th><th>上榜原因</th></tr></thead>
+              <tbody><tr><td colspan="6" class="empty">等待龙虎榜</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel radar-panel">
+        <div class="panel-head">
+          <div>
+            <h2>全市场快照雷达</h2>
+            <div class="panel-sub" id="radarSummary">覆盖沪深北全部 A 股；不逐只拉 K 线，盘中报价会变化。</div>
+          </div>
+          <div class="radar-actions">
+            <button class="text-btn" id="refreshRadar">刷新快照</button>
+            <button class="text-btn" id="resetRadar">清空条件</button>
+            <button class="ghost-btn" id="runRadar">筛选</button>
+          </div>
+        </div>
+
+        <div class="form-grid radar-form">
+          <label class="field"><span>代码 / 名称</span><input id="radarQ" type="text" placeholder="600519 或 茅台"></label>
+          <label class="field"><span>板块</span>
+            <select id="radarBoard">
+              <option value="all">全部</option>
+              <option value="主板">主板</option>
+              <option value="创业板">创业板</option>
+              <option value="科创板">科创板</option>
+              <option value="北交所">北交所</option>
+              <option value="ST">ST</option>
+            </select>
+          </label>
+          <label class="field"><span>涨跌幅下限 %</span><input id="radarMinPct" type="number" step="0.1" placeholder="-10"></label>
+          <label class="field"><span>涨跌幅上限 %</span><input id="radarMaxPct" type="number" step="0.1" placeholder="10"></label>
+          <label class="field"><span>换手下限 %</span><input id="radarMinTurnover" type="number" step="0.1" placeholder="1"></label>
+          <label class="field"><span>换手上限 %</span><input id="radarMaxTurnover" type="number" step="0.1" placeholder="30"></label>
+          <label class="field"><span>成交额下限（亿）</span><input id="radarMinAmount" type="number" step="0.1" placeholder="1"></label>
+          <label class="field"><span>成交额上限（亿）</span><input id="radarMaxAmount" type="number" step="0.1" placeholder="100"></label>
+          <label class="field"><span>总市值下限（亿）</span><input id="radarMinCap" type="number" step="1" placeholder="50"></label>
+          <label class="field"><span>总市值上限（亿）</span><input id="radarMaxCap" type="number" step="1" placeholder="5000"></label>
+          <label class="field"><span>PE 下限</span><input id="radarMinPe" type="number" step="0.1" placeholder="0"></label>
+          <label class="field"><span>PE 上限</span><input id="radarMaxPe" type="number" step="0.1" placeholder="50"></label>
+          <label class="field"><span>排序</span>
+            <select id="radarSort">
+              <option value="pct">涨跌幅</option>
+              <option value="turnover">换手率</option>
+              <option value="amount">成交额</option>
+              <option value="cap">总市值</option>
+              <option value="pe">PE</option>
+              <option value="pb">PB</option>
+              <option value="code">代码</option>
+            </select>
+          </label>
+          <label class="field"><span>方向</span>
+            <select id="radarOrder">
+              <option value="desc">从高到低</option>
+              <option value="asc">从低到高</option>
+            </select>
+          </label>
+          <label class="field"><span>排除 ST</span>
+            <select id="radarExcludeSt">
+              <option value="true">是</option>
+              <option value="false">否</option>
+            </select>
+          </label>
+          <label class="field"><span>显示条数</span><input id="radarLimit" type="number" min="10" max="300" value="120"></label>
+        </div>
+
+        <div class="table-wrap">
+          <table class="data-table" id="radarTable">
+            <thead><tr><th>标的</th><th>板块</th><th class="r">现价</th><th class="r">涨跌幅</th><th class="r">换手</th><th class="r">成交额</th><th class="r">总市值</th><th class="r">PE</th><th class="r">PB</th></tr></thead>
+            <tbody><tr><td colspan="9" class="empty">打开页面后自动加载全市场快照</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
     <section id="page-stock" class="page">
       <div class="stock-head">
         <div class="stock-title-wrap">
@@ -131,6 +302,12 @@
             <span id="stockPrice" class="stock-price">--</span>
             <span id="stockChange" class="stock-change">--</span>
             <span id="stockQuoteTime" class="muted small">等待行情</span>
+          </div>
+          <div id="profileStrip" class="profile-strip">
+            <div class="profile-cell"><span>PE / PB</span><b>--</b></div>
+            <div class="profile-cell"><span>总市值</span><b>--</b></div>
+            <div class="profile-cell"><span>换手</span><b>--</b></div>
+            <div class="profile-cell wide"><span>行业 / 概念</span><b>等待数据</b></div>
           </div>
         </div>
         <div class="stock-actions">
@@ -217,6 +394,20 @@
             <div class="panel-head"><h2>关键位与指标</h2></div>
             <div id="levelGrid" class="level-grid"></div>
             <div id="indicatorTable" class="indicator-table"></div>
+          </div>
+
+          <div class="panel flow-panel">
+            <div class="panel-head">
+              <div>
+                <h2>资金面 · 近 10 日</h2>
+                <div class="panel-sub">东方财富主力净流入，算法估算</div>
+              </div>
+              <span id="flowBadge" class="mini-badge">--</span>
+            </div>
+            <div id="flowBars" class="flow-bars">
+              <div class="muted small" style="padding:0 20px 18px">等待资金流数据</div>
+            </div>
+            <div id="flowSummary" class="flow-summary"></div>
           </div>
         </div>
       </div>
@@ -407,6 +598,11 @@
 
 <div id="toast" class="toast hidden"></div>
 <script src="/static/echarts.min.js"></script>
-<script src="/static/app.js?v=20261123"></script>
+<script src="/static/app.js?v=20261123i"></script>
 </body>
 </html>
+
+
+
+
+

@@ -12,6 +12,11 @@
     sourceData: [],
     screenJob: null,
     screenTimer: null,
+    sentiment: null,
+    sentimentLoaded: false,
+    radarLoaded: false,
+    radarLoading: false,
+    profileSymbol: null,
     loading: false,
     conditions: ["ma_bull", "above_ma20", "macd_positive", "rsi_50_75", "volume_expand"],
   };
@@ -57,6 +62,18 @@
     if (Math.abs(n) >= 1e8) return `${(n / 1e8).toFixed(2)} 亿`;
     if (Math.abs(n) >= 1e4) return `${(n / 1e4).toFixed(2)} 万`;
     return n.toFixed(0);
+  };
+  const yiText = (value, digits = 2) => {
+    if (value === null || value === undefined || value === "") return "--";
+    const n = Number(value);
+    if (!Number.isFinite(n)) return "--";
+    return `${n > 0 ? "+" : ""}${n.toFixed(digits)} 亿`;
+  };
+  const nval = (id) => {
+    const raw = String($(id).value || "").trim();
+    if (!raw) return null;
+    const n = Number(raw);
+    return Number.isFinite(n) ? n : null;
   };
   const timeText = (value) => {
     if (!value) return "--";
@@ -112,6 +129,7 @@
     if (name === "stock" && state.chart) {
       setTimeout(() => state.chart.resize(), 60);
     }
+    if (name === "radar") ensureRadar();
   }
 
   document.querySelectorAll(".nav-item").forEach((item) => {
@@ -379,6 +397,390 @@
 
   $("refreshSources").addEventListener("click", () => loadSources(true));
 
+  // ---------------------------------------------------------------- market radar
+  function renderSentimentError(message) {
+    $("radarAsOf").textContent = "市场快照不可用";
+    $("radarAsOf").className = "head-badge";
+    $("sentimentCards").innerHTML = `
+      <div class="sentiment-card" style="grid-column:span 4">
+        <div class="sent-kicker">MARKET SNAPSHOT</div>
+        <div class="sent-value warn">不可用</div>
+        <div class="sent-sub">${esc(message)}</div>
+      </div>`;
+    $("breadthBar").innerHTML = '<div class="breadth-empty">涨跌家数不可用</div>';
+    $("breadthLegend").innerHTML = "";
+    $("breadthBadge").textContent = "失败";
+    $("breadthBadge").className = "mini-badge bad";
+    ["limitUpTable", "weakTable", "dragonTable"].forEach((id) => {
+      const cols = id === "limitUpTable" ? 7 : (id === "weakTable" ? 5 : 6);
+      $(id).querySelector("tbody").innerHTML = `<tr><td colspan="${cols}" class="empty">${esc(message)}</td></tr>`;
+    });
+    $("sectorFlow").innerHTML = `<div class="muted small" style="padding:0 20px 18px">${esc(message)}</div>`;
+    $("radarSummary").textContent = "全市场快照不可用，稍后重试或查看数据源状态。";
+  }
+
+  function renderSentiment(data) {
+    if (!data || !data.ok) {
+      renderSentimentError((data && data.error) || "市场数据请求失败");
+      return;
+    }
+    state.sentiment = data;
+    const b = data.breadth || {};
+    const zt = data.limit_up || {};
+    const dt = data.limit_down || {};
+    const zb = data.broken_board || {};
+    $("radarAsOf").textContent = `数据日 ${data.as_of || "--"}${data.quote_time ? ` · ${String(data.quote_time).slice(11, 16)}` : ""}`;
+    $("radarAsOf").className = "head-badge";
+
+    const breadthClass = clsByChange(b.median_pct);
+    const cards = [
+      {
+        kicker: "涨 / 跌",
+        value: `<span class="up">${num(b.up, 0)}</span><small>/</small><span class="down">${num(b.down, 0)}</span>`,
+        sub: `平盘 ${num(b.flat, 0)} · 有效 ${num(b.total, 0)} 只`,
+      },
+      {
+        kicker: "涨停",
+        value: `${num(zt.count, 0)}<small>只</small>`,
+        sub: zt.max_streak ? `最高 ${zt.max_streak} 连板 · 炸板 ${num(zb.count, 0)}` : `炸板 ${num(zb.count, 0)}`,
+      },
+      {
+        kicker: "跌停",
+        value: `${num(dt.count, 0)}<small>只</small>`,
+        sub: `跌停池前 ${Math.min((dt.items || []).length, 12)} 只列在下方`,
+      },
+      {
+        kicker: "封板率",
+        value: `${num(zt.seal_rate, 1)}<small>%</small>`,
+        sub: `涨停 ${num(zt.count, 0)} / 炸板 ${num(zb.count, 0)}`,
+      },
+      {
+        kicker: "全市场成交额",
+        value: `${num(b.amount_yi, 0)}<small>亿</small>`,
+        sub: "全 A 快照合计",
+      },
+      {
+        kicker: "涨幅中位数",
+        value: pct(b.median_pct),
+        sub: `强势 ≥5% ${num(b.strong_up, 0)} 只`,
+        cls: breadthClass,
+      },
+      {
+        kicker: "强势股 ≥5%",
+        value: `${num(b.strong_up, 0)}<small>只</small>`,
+        sub: `占有效样本 ${num((b.strong_up || 0) / Math.max(1, b.total || 1) * 100, 1)}%`,
+      },
+      {
+        kicker: "弱势股 ≤-5%",
+        value: `${num(b.strong_down, 0)}<small>只</small>`,
+        sub: `占有效样本 ${num((b.strong_down || 0) / Math.max(1, b.total || 1) * 100, 1)}%`,
+        cls: "down",
+      },
+    ];
+    $("sentimentCards").innerHTML = cards.map((card) => `
+      <div class="sentiment-card">
+        <div class="sent-kicker">${esc(card.kicker)}</div>
+        <div class="sent-value ${card.cls || ""}">${card.value}</div>
+        <div class="sent-sub">${esc(card.sub)}</div>
+      </div>
+    `).join("");
+
+    const total = Math.max(1, (b.up || 0) + (b.down || 0) + (b.flat || 0));
+    const upW = (b.up || 0) / total * 100;
+    const flatW = (b.flat || 0) / total * 100;
+    const downW = (b.down || 0) / total * 100;
+    $("breadthBar").innerHTML = `
+      <div class="breadth-seg up" style="width:${upW}%"></div>
+      <div class="breadth-seg flat" style="width:${flatW}%"></div>
+      <div class="breadth-seg down" style="width:${downW}%"></div>`;
+    $("breadthLegend").innerHTML = `
+      <span><i class="up"></i>上涨 ${num(b.up, 0)}（${num(upW, 1)}%）</span>
+      <span><i class="flat"></i>平盘 ${num(b.flat, 0)}（${num(flatW, 1)}%）</span>
+      <span><i class="down"></i>下跌 ${num(b.down, 0)}（${num(downW, 1)}%）</span>
+      <span>中位 ${pct(b.median_pct)} · 成交额 ${num(b.amount_yi, 0)} 亿</span>`;
+    $("breadthBadge").textContent = `${num(b.total, 0)} 只`;
+    $("breadthBadge").className = "mini-badge ok";
+    $("breadthSub").textContent = `数据日 ${data.as_of || "--"} · 巨潮代码表 + 腾讯批量行情 · 有效样本 ${num(b.total, 0)} 只`;
+
+    const upItems = zt.items || [];
+    $("limitUpBadge").textContent = `${num(zt.count, 0)} 只`;
+    $("limitUpBadge").className = `mini-badge ${zt.count ? "ok" : "warn"}`;
+    $("limitUpSub").textContent = `最高 ${num(zt.max_streak, 0)} 连板 · 封板率 ${num(zt.seal_rate, 1)}% · 炸板 ${num(zb.count, 0)} 只`;
+    const upBody = $("limitUpTable").querySelector("tbody");
+    if (!upItems.length) {
+      upBody.innerHTML = `<tr><td colspan="7" class="empty">${zt.error ? esc(zt.error) : "今日暂无涨停池数据"}</td></tr>`;
+    } else {
+      upBody.innerHTML = upItems.map((item) => `
+        <tr class="clickable" data-symbol="${esc(item.symbol)}" data-name="${esc(item.name)}">
+          <td><div class="cell-name">${esc(item.name)}</div><div class="cell-symbol">${esc(item.symbol)}</div></td>
+          <td class="r mono up">${pct(item.pct)}</td>
+          <td class="r mono">${item.streak ? `${item.streak} 板` : "--"}</td>
+          <td class="r mono small">${esc(item.first_seal || "--")}</td>
+          <td class="r mono">${yiText(item.seal_fund_yi)}</td>
+          <td class="r mono ${item.broken_times ? "down" : ""}">${num(item.broken_times, 0)}</td>
+          <td class="muted small">${esc(item.industry || "--")}</td>
+        </tr>
+      `).join("");
+      upBody.querySelectorAll("tr[data-symbol]").forEach((row) => {
+        row.addEventListener("click", () => selectStock(row.dataset.symbol, row.dataset.name));
+      });
+    }
+
+    const weakRows = [
+      ...(dt.items || []).map((item) => ({ ...item, kind: "跌停" })),
+      ...(zb.items || []).map((item) => ({ ...item, kind: "炸板" })),
+    ];
+    $("weakBadge").textContent = `跌停 ${num(dt.count, 0)} · 炸板 ${num(zb.count, 0)}`;
+    $("weakBadge").className = `mini-badge ${dt.count || zb.count ? "warn" : "ok"}`;
+    $("weakSub").textContent = `跌停池 ${num(dt.count, 0)} 只 · 炸板池 ${num(zb.count, 0)} 只`;
+    const weakBody = $("weakTable").querySelector("tbody");
+    if (!weakRows.length) {
+      weakBody.innerHTML = '<tr><td colspan="5" class="empty">今日暂无跌停或炸板数据</td></tr>';
+    } else {
+      weakBody.innerHTML = weakRows.map((item) => `
+        <tr class="clickable" data-symbol="${esc(item.symbol)}" data-name="${esc(item.name)}">
+          <td><span class="weak-tag ${item.kind === "跌停" ? "dt" : "zb"}">${esc(item.kind)}</span></td>
+          <td><div class="cell-name">${esc(item.name)}</div><div class="cell-symbol">${esc(item.symbol)}</div></td>
+          <td class="r mono ${clsByChange(item.pct)}">${pct(item.pct)}</td>
+          <td class="r mono">${item.kind === "跌停" ? yiText(item.seal_fund_yi) : `${num(item.broken_times, 0)} 次`}</td>
+          <td class="muted small">${esc(item.industry || "--")}</td>
+        </tr>
+      `).join("");
+      weakBody.querySelectorAll("tr[data-symbol]").forEach((row) => {
+        row.addEventListener("click", () => selectStock(row.dataset.symbol, row.dataset.name));
+      });
+    }
+
+    const sectors = data.sectors || {};
+    const sectorRows = (rows) => rows.length ? rows.map((item) => `
+      <div class="sector-row">
+        <div class="sector-name">${esc(item.name)}<small>${esc(item.leader || "暂无领涨")}</small></div>
+        <div class="sector-net ${clsByChange(item.main_net_yi)}">${yiText(item.main_net_yi)}</div>
+        <div class="sector-pct">${pct(item.main_pct)}</div>
+      </div>
+    `).join("") : '<div class="muted small">暂无数据</div>';
+    if (!sectors.ok || (!(sectors.inflow || []).length && !(sectors.outflow || []).length)) {
+      $("sectorBadge").textContent = "不可用";
+      $("sectorBadge").className = "mini-badge bad";
+      $("sectorFlow").innerHTML = `<div class="muted small" style="padding:0 20px 18px">${esc(sectors.note || sectors.error || "板块资金流接口暂不可用")}</div>`;
+    } else {
+      $("sectorBadge").textContent = "观察";
+      $("sectorBadge").className = "mini-badge warn";
+      $("sectorFlow").innerHTML = `
+        <div class="sector-side">
+          <div class="sector-side-title">主力净流入</div>
+          ${sectorRows(sectors.inflow || [])}
+        </div>
+        <div class="sector-side">
+          <div class="sector-side-title">主力净流出</div>
+          ${sectorRows(sectors.outflow || [])}
+        </div>
+        <div class="sector-note" style="grid-column:1/-1">${esc(sectors.note || "")}</div>`;
+    }
+
+    const dragon = data.dragon_tiger || {};
+    $("dragonBadge").textContent = dragon.ok ? `${num(dragon.count, 0)} 只` : "不可用";
+    $("dragonBadge").className = `mini-badge ${dragon.ok ? "ok" : "bad"}`;
+    $("dragonSub").textContent = dragon.ok ? `数据日 ${dragon.date || data.as_of} · 按净买入额排序` : "龙虎榜接口暂不可用";
+    const dragonBody = $("dragonTable").querySelector("tbody");
+    if (!dragon.ok || !(dragon.items || []).length) {
+      dragonBody.innerHTML = `<tr><td colspan="6" class="empty">${esc(dragon.error || "今日暂无龙虎榜数据")}</td></tr>`;
+    } else {
+      dragonBody.innerHTML = dragon.items.map((item) => `
+        <tr class="clickable" data-symbol="${esc(item.code)}" data-name="${esc(item.name)}">
+          <td><div class="cell-name">${esc(item.name)}</div><div class="cell-symbol">${esc(item.code)}</div></td>
+          <td class="r mono ${clsByChange(item.pct)}">${pct(item.pct)}</td>
+          <td class="r mono ${clsByChange(item.net_buy_yi)}">${yiText(item.net_buy_yi)}</td>
+          <td class="r mono">${yiText(item.buy_yi)}</td>
+          <td class="r mono">${yiText(item.sell_yi)}</td>
+          <td class="muted small">${esc(item.reason || "--")}</td>
+        </tr>
+      `).join("");
+      dragonBody.querySelectorAll("tr[data-symbol]").forEach((row) => {
+        const symbol = row.dataset.symbol;
+        const normalized = symbol.includes(".") ? symbol : `${symbol}.${String(symbol).startsWith("6") ? "SH" : (String(symbol).startsWith("8") || String(symbol).startsWith("4") ? "BJ" : "SZ")}`;
+        row.addEventListener("click", () => selectStock(normalized, row.dataset.name));
+      });
+    }
+  }
+
+  async function loadSentiment(force = false) {
+    $("radarAsOf").textContent = "正在加载全市场快照…";
+    $("radarAsOf").className = "head-badge";
+    try {
+      const data = await api(`/api/market/sentiment?refresh=${force ? "true" : "false"}`);
+      renderSentiment(data);
+      state.sentimentLoaded = true;
+    } catch (error) {
+      renderSentimentError(error.message);
+      state.sentimentLoaded = true;
+      toast(`市场雷达加载失败：${error.message}`, "bad");
+    }
+  }
+
+  function buildRadarQuery() {
+    const params = new URLSearchParams();
+    const q = $("radarQ").value.trim();
+    if (q) params.set("q", q);
+    params.set("board", $("radarBoard").value);
+    const numeric = [
+      ["min_pct", "radarMinPct"], ["max_pct", "radarMaxPct"],
+      ["min_turnover", "radarMinTurnover"], ["max_turnover", "radarMaxTurnover"],
+      ["min_amount_yi", "radarMinAmount"], ["max_amount_yi", "radarMaxAmount"],
+      ["min_cap_yi", "radarMinCap"], ["max_cap_yi", "radarMaxCap"],
+      ["min_pe", "radarMinPe"], ["max_pe", "radarMaxPe"],
+    ];
+    numeric.forEach(([key, id]) => {
+      const value = nval(id);
+      if (value !== null) params.set(key, String(value));
+    });
+    params.set("exclude_st", $("radarExcludeSt").value);
+    params.set("sort", $("radarSort").value);
+    params.set("order", $("radarOrder").value);
+    params.set("limit", String(Math.max(10, Math.min(300, Number($("radarLimit").value) || 120))));
+    return params;
+  }
+
+  async function loadRadar() {
+    const body = $("radarTable").querySelector("tbody");
+    body.innerHTML = '<tr><td colspan="9" class="empty">正在筛选全市场快照…</td></tr>';
+    try {
+      const data = await api(`/api/market/radar?${buildRadarQuery().toString()}`);
+      if (!data.ok) throw new Error(data.error || "雷达接口返回失败");
+      $("radarSummary").textContent = `全市场 ${num(data.total, 0)} 只 · 命中 ${num(data.matched, 0)} 只 · 显示 ${num(data.displayed, 0)} 只 · 数据日 ${data.as_of || "--"}`;
+      if (!data.items || !data.items.length) {
+        body.innerHTML = '<tr><td colspan="9" class="empty">没有命中的标的，试试放宽涨跌幅、换手或市值条件</td></tr>';
+        state.radarLoaded = true;
+        return;
+      }
+      body.innerHTML = data.items.map((item) => `
+        <tr class="clickable" data-symbol="${esc(item.symbol)}" data-name="${esc(item.name)}">
+          <td><div class="cell-name">${esc(item.name)}</div><div class="cell-symbol">${esc(item.symbol)}</div></td>
+          <td class="muted small">${esc(item.board || "--")}</td>
+          <td class="r mono">${num(item.price, 3)}</td>
+          <td class="r mono ${clsByChange(item.pct)}">${pct(item.pct)}</td>
+          <td class="r mono">${num(item.turnover, 2)}%</td>
+          <td class="r mono">${num((item.amount || 0) / 1e8, 2)} 亿</td>
+          <td class="r mono">${num(item.market_cap_yi, 1)} 亿</td>
+          <td class="r mono">${item.pe !== null && item.pe !== undefined && Number(item.pe) > 0 ? num(item.pe, 1) : '<span class="muted">亏损</span>'}</td>
+          <td class="r mono">${num(item.pb, 2)}</td>
+        </tr>
+      `).join("");
+      body.querySelectorAll("tr[data-symbol]").forEach((row) => {
+        row.addEventListener("click", () => selectStock(row.dataset.symbol, row.dataset.name));
+      });
+      state.radarLoaded = true;
+    } catch (error) {
+      $("radarSummary").textContent = `雷达加载失败：${error.message}`;
+      body.innerHTML = `<tr><td colspan="9" class="empty">${esc(error.message)}</td></tr>`;
+      state.radarLoaded = false;
+    }
+  }
+
+  async function ensureRadar(force = false) {
+    if (state.radarLoading) return;
+    state.radarLoading = true;
+    try {
+      if (force || !state.sentimentLoaded) await loadSentiment(force);
+      if (force || !state.radarLoaded) await loadRadar();
+    } finally {
+      state.radarLoading = false;
+    }
+  }
+
+  function resetRadar() {
+    ["radarQ", "radarMinPct", "radarMaxPct", "radarMinTurnover", "radarMaxTurnover",
+      "radarMinAmount", "radarMaxAmount", "radarMinCap", "radarMaxCap", "radarMinPe", "radarMaxPe"]
+      .forEach((id) => { $(id).value = ""; });
+    $("radarBoard").value = "all";
+    $("radarSort").value = "pct";
+    $("radarOrder").value = "desc";
+    $("radarExcludeSt").value = "true";
+    $("radarLimit").value = "120";
+    loadRadar();
+  }
+
+  $("runRadar").addEventListener("click", loadRadar);
+  $("resetRadar").addEventListener("click", resetRadar);
+  if ($("refreshRadar")) $("refreshRadar").addEventListener("click", () => ensureRadar(true));
+  $("radarQ").addEventListener("keydown", (event) => { if (event.key === "Enter") loadRadar(); });
+
+  // ---------------------------------------------------------------- stock profile / flow
+  function renderProfile(data) {
+    const container = $("profileStrip");
+    if (!data || data.ok === false || data.error) {
+      container.innerHTML = `<div class="profile-cell wide"><span>估值与归属</span><b>${esc((data && data.error) || "个股快照不可用")}</b></div>`;
+      return;
+    }
+    const pe = data.pe_ttm !== null && data.pe_ttm !== undefined ? Number(data.pe_ttm) : null;
+    const pb = data.pb !== null && data.pb !== undefined ? Number(data.pb) : null;
+    const industry = data.industry || "";
+    const concepts = data.concepts || [];
+    const tags = [
+      industry ? `<span class="concept-tag">${esc(industry)}</span>` : "",
+      ...concepts.slice(0, 8).map((item) => `<span class="concept-tag">${esc(item)}</span>`),
+    ].join("");
+    container.innerHTML = `
+      <div class="profile-cell"><span>PE(TTM)</span><b>${pe === null ? "--" : (pe > 0 ? num(pe, 2) : "亏损")}</b></div>
+      <div class="profile-cell"><span>PB</span><b>${pb === null ? "--" : num(pb, 2)}</b></div>
+      <div class="profile-cell"><span>总市值</span><b>${data.market_cap_yi === null || data.market_cap_yi === undefined ? "--" : `${num(data.market_cap_yi, 1)} 亿`}</b></div>
+      <div class="profile-cell"><span>流通市值</span><b>${data.float_cap_yi === null || data.float_cap_yi === undefined ? "--" : `${num(data.float_cap_yi, 1)} 亿`}</b></div>
+      <div class="profile-cell"><span>换手</span><b>${data.turnover === null || data.turnover === undefined ? "--" : `${num(data.turnover, 2)}%`}</b></div>
+      <div class="profile-cell wide"><span>估值 / 行业 / 概念</span><b>${tags || "行业与概念快照暂不可用（当前仅腾讯 PE/PB/市值）"}</b></div>`;
+  }
+
+  function renderFlow(data) {
+    const bars = $("flowBars");
+    const summary = $("flowSummary");
+    const badge = $("flowBadge");
+    if (!data || data.ok === false || !(data.items || []).length) {
+      badge.textContent = "不可用";
+      badge.className = "mini-badge bad";
+      bars.innerHTML = `<div class="muted small" style="padding:0 20px 18px">${esc((data && data.error) || "资金流数据不可用")}</div>`;
+      summary.innerHTML = "";
+      return;
+    }
+    const items = data.items;
+    const nets = items.map((item) => Math.abs(Number(item.main_net_yi || 0)));
+    const maxAbs = Math.max(0.01, ...nets);
+    badge.textContent = `${items.length} 日`;
+    badge.className = "mini-badge warn";
+    bars.innerHTML = items.map((item) => {
+      const value = Number(item.main_net_yi || 0);
+      const width = Math.min(100, Math.abs(value) / maxAbs * 100);
+      const cls = clsByChange(value);
+      return `
+        <div class="flow-row">
+          <span class="flow-date">${esc(String(item.date || "--").slice(5))}</span>
+          <div class="flow-track"><div class="flow-fill ${cls}" style="width:${width}%"></div></div>
+          <span class="flow-value ${cls}">${yiText(value)}</span>
+        </div>`;
+    }).join("");
+    const s = data.summary || {};
+    summary.innerHTML = `
+      <div class="flow-sum-item"><span>最新</span><b>${yiText(s.last_main_net_yi)}</b></div>
+      <div class="flow-sum-item"><span>近 5 日</span><b>${yiText(s.sum5_yi)}</b></div>
+      <div class="flow-sum-item"><span>近 10 日</span><b>${yiText(s.sum10_yi)}</b></div>
+      <div class="flow-sum-item"><span>近 20 日</span><b>${yiText(s.sum20_yi)}</b></div>`;
+    bars.innerHTML += `<div class="flow-note">${esc(data.note || "")}</div>`;
+  }
+
+  async function loadProfileAndFlow(symbol) {
+    state.profileSymbol = symbol;
+    try {
+      const profile = await api(`/api/stock/profile?symbol=${encodeURIComponent(symbol)}`);
+      if (state.currentSymbol === symbol) renderProfile(profile);
+    } catch (error) {
+      if (state.currentSymbol === symbol) renderProfile({ error: error.message });
+    }
+    try {
+      const flow = await api(`/api/stock/flow?symbol=${encodeURIComponent(symbol)}&days=10`);
+      if (state.currentSymbol === symbol) renderFlow(flow);
+    } catch (error) {
+      if (state.currentSymbol === symbol) renderFlow({ error: error.message });
+    }
+  }
+
   // ---------------------------------------------------------------- stock analysis
   async function selectStock(symbol, name = "") {
     state.currentSymbol = symbol;
@@ -396,6 +798,12 @@
     $("qualityBadge").textContent = "--";
     $("qualityLights").innerHTML = "";
     $("qualityNotes").innerHTML = '<li class="muted">正在计算信号质量…</li>';
+    $("profileStrip").innerHTML = '<div class="profile-cell wide"><span>估值与归属</span><b>正在读取…</b></div>';
+    $("flowBars").innerHTML = '<div class="muted small" style="padding:0 20px 18px">正在读取资金流…</div>';
+    $("flowSummary").innerHTML = "";
+    $("flowBadge").textContent = "--";
+    $("flowBadge").className = "mini-badge";
+    loadProfileAndFlow(symbol);
     await loadAnalysis();
   }
 

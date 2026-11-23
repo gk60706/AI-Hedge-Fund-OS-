@@ -14,6 +14,14 @@ import numpy as np
 import pandas as pd
 import requests
 
+# 本机 IPv6 出网会先等待约 30 秒再回退 IPv4；强制 requests 走 IPv4。
+try:
+    from urllib3.util import connection as _urllib3_connection
+
+    _urllib3_connection.HAS_IPV6 = False
+except Exception:
+    pass
+
 from .config import CACHE_DIR, SCREEN_CACHE_DIR
 
 try:
@@ -68,7 +76,7 @@ SOURCE_INFO = {
         "kind": "全市场行情、资金流、龙虎榜、基本面",
         "endpoint": "push2his.eastmoney.com",
         "license": "公开网页接口，非官方 API；个人自用",
-        "note": "数据最全，但当前网络实测 502/连接中断，未作为主源。",
+        "note": "个股快照与板块 clist 在当前网络常被断开；涨停池、跌停池、炸板池、龙虎榜、日资金流可用。",
     },
     "ths": {
         "id": "ths",
@@ -361,7 +369,10 @@ def _quote_from_fields(symbol: str, fields: list[str]) -> dict[str, Any] | None:
         "amount": num(fields[37], 10000.0),
         "turnover": num(fields[38]),
         "pe_ttm": num(fields[39]),
-        "market_cap": num(fields[44], 100000000.0),
+        "pe_dynamic": num(fields[52]) if len(fields) > 52 else None,
+        "pb": num(fields[46]) if len(fields) > 46 else None,
+        "market_cap": num(fields[45], 100000000.0) if len(fields) > 45 else None,
+        "float_market_cap": num(fields[44], 100000000.0),
         "time": timestamp or quote_time or None,
         "source": "腾讯财经 qt.gtimg.cn",
     }

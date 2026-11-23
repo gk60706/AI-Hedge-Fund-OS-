@@ -21,6 +21,7 @@ hiddenimports = [
     "market_app.signal_quality",
     "market_app.signal_ledger",
     "market_app.costs",
+    "market_app.market_context",
     "market_app.server",
     "webview",
     "webview.platforms.edgechromium",
