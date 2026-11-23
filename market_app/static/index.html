@@ -1,0 +1,388 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>A股趋势工作台</title>
+  <link rel="stylesheet" href="/static/style.css?v=20261123b">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">A</div>
+      <div>
+        <div class="brand-title">A股趋势工作台</div>
+        <div class="brand-sub">行情 / 选股 / 单票趋势</div>
+      </div>
+    </div>
+
+    <nav class="nav">
+      <button class="nav-item active" data-page="overview">
+        <span class="nav-index">01</span><span>市场总览</span>
+      </button>
+      <button class="nav-item" data-page="stock">
+        <span class="nav-index">02</span><span>个股趋势</span>
+      </button>
+      <button class="nav-item" data-page="screener">
+        <span class="nav-index">03</span><span>条件选股</span>
+      </button>
+      <button class="nav-item" data-page="sources">
+        <span class="nav-index">04</span><span>数据与来源</span>
+      </button>
+    </nav>
+
+    <div class="side-section">
+      <div class="side-head">
+        <span>我的自选</span>
+        <button class="icon-btn" id="focusSearch" title="搜索并添加">＋</button>
+      </div>
+      <div id="watchlist" class="watchlist">
+        <div class="muted small">正在读取自选…</div>
+      </div>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="status-line"><span id="healthDot" class="dot"></span><span id="healthText">本地服务</span></div>
+      <div class="muted small">数据：腾讯财经 + BaoStock</div>
+      <div class="muted tiny">仅个人研究使用，不构成投资建议</div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div class="market-clock">
+        <span class="dot live"></span>
+        <span id="beijingTime">北京时间 --:--:--</span>
+        <span class="sep">/</span>
+        <span id="dataStamp" class="muted">行情等待刷新</span>
+      </div>
+      <div class="search-wrap">
+        <input id="searchInput" class="search-input" type="text" autocomplete="off"
+               placeholder="输入代码或名称，如 600519、贵州茅台">
+        <div id="suggestions" class="suggestions hidden"></div>
+      </div>
+      <button class="ghost-btn" id="refreshAll" title="刷新行情">刷新行情</button>
+    </header>
+
+    <section id="page-overview" class="page active">
+      <div class="page-head">
+        <div>
+          <div class="eyebrow">MARKET OVERVIEW</div>
+          <h1>市场总览</h1>
+          <p class="page-desc">先看指数和自选的真实行情，再进入单票趋势。所有价格都带数据时间和来源。</p>
+        </div>
+        <div class="head-badge" id="marketBreadth">指数行情加载中</div>
+      </div>
+
+      <div id="indexCards" class="index-grid">
+        <div class="index-card skeleton"></div>
+        <div class="index-card skeleton"></div>
+        <div class="index-card skeleton"></div>
+        <div class="index-card skeleton"></div>
+      </div>
+
+      <div class="two-col">
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>自选行情</h2>
+              <div class="panel-sub">点击任意一行进入个股趋势页</div>
+            </div>
+            <button class="text-btn" id="refreshWatchlist">刷新</button>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table" id="watchTable">
+              <thead><tr><th>标的</th><th class="r">现价</th><th class="r">涨跌幅</th><th class="r">成交额</th><th class="r">换手</th><th>数据时间</th></tr></thead>
+              <tbody><tr><td colspan="6" class="empty">正在读取自选行情…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>数据源状态</h2>
+              <div class="panel-sub">每次分析都会做来源校验</div>
+            </div>
+            <button class="text-btn" data-goto="sources">查看详情</button>
+          </div>
+          <div id="sourceMini" class="source-mini">
+            <div class="muted">正在检测…</div>
+          </div>
+          <div class="note-box">
+            <div class="note-title">这只工具不做什么</div>
+            <div class="note-body">不接实时交易，不生成买卖建议，不让大模型自由写报告。只把可复算的价格、指标和趋势状态摆出来。</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="page-stock" class="page">
+      <div class="stock-head">
+        <div class="stock-title-wrap">
+          <div class="eyebrow">SINGLE STOCK TREND</div>
+          <div class="stock-title-line">
+            <h1 id="stockName">选择一只股票</h1>
+            <span id="stockSymbol" class="symbol-chip">--</span>
+          </div>
+          <div class="stock-quote-line">
+            <span id="stockPrice" class="stock-price">--</span>
+            <span id="stockChange" class="stock-change">--</span>
+            <span id="stockQuoteTime" class="muted small">等待行情</span>
+          </div>
+        </div>
+        <div class="stock-actions">
+          <div class="period-switch" id="periodSwitch">
+            <button class="period-btn active" data-period="day">日线</button>
+            <button class="period-btn" data-period="week">周线</button>
+            <button class="period-btn" data-period="month">月线</button>
+          </div>
+          <button class="ghost-btn" id="toggleWatch">加入自选</button>
+        </div>
+      </div>
+
+      <div class="stock-layout">
+        <div class="panel chart-panel">
+          <div class="panel-head">
+            <div>
+              <h2>价格与成交量</h2>
+              <div class="panel-sub" id="chartSub">前复权 K 线 · 数据加载中</div>
+            </div>
+            <div class="legend-inline">
+              <span><i class="legend-dot up"></i>上涨</span>
+              <span><i class="legend-dot down"></i>下跌</span>
+              <span><i class="legend-dot ma5"></i>MA5</span>
+              <span><i class="legend-dot ma20"></i>MA20</span>
+              <span><i class="legend-dot ma60"></i>MA60</span>
+              <span><i class="legend-dot vwap"></i>VWAP20</span>
+              <span><i class="legend-dot st"></i>ST</span>
+            </div>
+          </div>
+          <div id="priceChart" class="chart"></div>
+          <div class="chart-note" id="chartNote">K 线用前复权价；成交量单位为股。</div>
+        </div>
+
+        <div class="side-stack">
+          <div class="panel quality-panel">
+            <div class="panel-head">
+              <div>
+                <h2>信号质量 · 四灯</h2>
+                <div class="panel-sub">日线收盘确认；周线只读上一完整周</div>
+              </div>
+              <span id="qualityBadge" class="mini-badge">--</span>
+            </div>
+            <div class="quality-score-row">
+              <div id="qualityScore" class="quality-score">--</div>
+              <div>
+                <div id="qualityStatus" class="trend-label">等待数据</div>
+                <div id="qualityAsOf" class="muted small">--</div>
+              </div>
+            </div>
+            <div id="qualityLights" class="quality-lights"></div>
+            <div class="reason-block">
+              <div class="mini-title">口径与提示</div>
+              <ul id="qualityNotes" class="reason-list"><li class="muted">--</li></ul>
+            </div>
+          </div>
+
+          <div class="panel trend-panel">
+            <div class="panel-head">
+              <div>
+                <h2>趋势状态</h2>
+                <div class="panel-sub">规则加权，不是涨跌预测</div>
+              </div>
+              <span id="trendConfidence" class="mini-badge">--</span>
+            </div>
+            <div class="trend-score-row">
+              <div id="trendScore" class="trend-score">--</div>
+              <div>
+                <div id="trendLabel" class="trend-label">等待数据</div>
+                <div id="trendAsOf" class="muted small">--</div>
+              </div>
+            </div>
+            <div class="score-bars" id="scoreBars"></div>
+            <div class="reason-block">
+              <div class="mini-title">支持因素</div>
+              <ul id="trendReasons" class="reason-list"><li class="muted">--</li></ul>
+            </div>
+            <div class="risk-block">
+              <div class="mini-title">需要留意</div>
+              <ul id="trendRisks" class="reason-list risk-list"><li class="muted">暂无明显风险项</li></ul>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head"><h2>关键位与指标</h2></div>
+            <div id="levelGrid" class="level-grid"></div>
+            <div id="indicatorTable" class="indicator-table"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel provenance-panel">
+        <div class="panel-head">
+          <div>
+            <h2>数据来源与校验</h2>
+            <div class="panel-sub" id="provenanceSub">每次分析同时核对 BaoStock 与腾讯</div>
+          </div>
+          <span id="sourceBadge" class="mini-badge">--</span>
+        </div>
+        <div id="checks" class="checks"></div>
+      </div>
+    </section>
+
+    <section id="page-screener" class="page">
+      <div class="page-head">
+        <div>
+          <div class="eyebrow">SCREENER</div>
+          <h1>条件选股</h1>
+          <p class="page-desc">在本地对沪深300 / 中证500 / 自选池逐只计算指标，结果可点开看单票趋势。</p>
+        </div>
+        <div class="head-badge">全市场数据不追求“多”，只追求每一条可核验</div>
+      </div>
+
+      <div class="panel screen-form-panel">
+        <div class="form-grid">
+          <label class="field">
+            <span>股票池</span>
+            <select id="universeSelect">
+              <option value="hs300">沪深300</option>
+              <option value="zz500">中证500</option>
+              <option value="broad">宽基池（约 800 只）</option>
+              <option value="watchlist">我的自选</option>
+              <option value="custom">自定义代码</option>
+            </select>
+          </label>
+          <label class="field" id="customField" style="display:none">
+            <span>自定义代码</span>
+            <input id="customSymbols" type="text" placeholder="600519, 300750, 000001">
+          </label>
+          <label class="field">
+            <span>匹配方式</span>
+            <select id="matchMode">
+              <option value="at_least">至少满足 N 项</option>
+              <option value="all">必须全部满足</option>
+              <option value="any">满足任意一项</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>最少命中</span>
+            <input id="minMatches" type="number" min="1" max="8" value="2">
+          </label>
+          <label class="field">
+            <span>最多结果</span>
+            <input id="maxResults" type="number" min="10" max="200" value="80">
+          </label>
+          <label class="field">
+            <span>信号质量过滤</span>
+            <select id="qualityFilter">
+              <option value="on">开启（P0 硬过滤）</option>
+              <option value="off">关闭（只看条件）</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>今日候选 Top K</span>
+            <input id="dailyTopK" type="number" min="0" max="20" value="5">
+          </label>
+          <label class="field">
+            <span>同票冷却（交易日）</span>
+            <input id="cooldownDays" type="number" min="1" max="60" value="10">
+          </label>
+        </div>
+
+        <div class="condition-head">
+          <div>
+            <div class="mini-title">筛选条件</div>
+            <div class="muted small">默认“至少满足 2 项”；清空条件则按趋势评分排序。</div>
+          </div>
+          <button class="text-btn" id="resetConditions">恢复默认</button>
+        </div>
+        <div id="conditionChips" class="condition-chips"></div>
+
+        <div class="run-row">
+          <button class="primary-btn" id="runScreen">开始选股</button>
+          <div class="run-status">
+            <div id="screenStatus" class="muted">尚未运行</div>
+            <div class="progress-track"><div id="screenProgress" class="progress-fill"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel top-picks-panel">
+        <div class="panel-head">
+          <div>
+            <h2>今日候选</h2>
+            <div class="panel-sub" id="topPicksSub">按 P0 信号质量排序，默认只取前 5 只</div>
+          </div>
+          <span id="topPicksBadge" class="mini-badge">--</span>
+        </div>
+        <div id="topPicks" class="top-picks">
+          <div class="empty">运行选股后显示今日候选</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>筛选结果</h2>
+            <div class="panel-sub" id="screenSummary">运行后显示命中标的</div>
+          </div>
+          <div id="screenErrorCount" class="muted small"></div>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table" id="screenTable">
+            <thead><tr><th>标的</th><th class="r">现价</th><th class="r">涨跌幅</th><th class="r">趋势分</th><th class="r">质量分</th><th>信号状态</th><th>命中条件</th><th class="r">RSI</th><th class="r">量比20</th><th class="r">20日涨幅</th></tr></thead>
+            <tbody><tr><td colspan="10" class="empty">尚未运行选股</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="page-sources" class="page">
+      <div class="page-head">
+        <div>
+          <div class="eyebrow">DATA PROVENANCE</div>
+          <h1>数据与来源</h1>
+          <p class="page-desc">看清楚每个数字从哪里来。这里会实际请求接口，不用“看起来可用”代替检测。</p>
+        </div>
+        <button class="ghost-btn" id="refreshSources">重新检测</button>
+      </div>
+
+      <div id="sourceCards" class="source-grid">
+        <div class="source-card skeleton"></div>
+        <div class="source-card skeleton"></div>
+        <div class="source-card skeleton"></div>
+        <div class="source-card skeleton"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><h2>校验规则</h2></div>
+        <div class="rule-grid">
+          <div class="rule-item">
+            <div class="rule-no">01</div>
+            <div><strong>双源收盘价</strong><p>优先 BaoStock 前复权历史，同时取腾讯 K 线最新收盘；差异超过 0.5% 标红。</p></div>
+          </div>
+          <div class="rule-item">
+            <div class="rule-no">02</div>
+            <div><strong>行情时间戳</strong><p>实时快照和 K 线分别展示时间；跨日时不强行比较。</p></div>
+          </div>
+          <div class="rule-item">
+            <div class="rule-no">03</div>
+            <div><strong>指标可复算</strong><p>MACD、RSI、KDJ、BOLL、ATR 用本地公式计算，已与 TA-Lib 对照。</p></div>
+          </div>
+          <div class="rule-item">
+            <div class="rule-no">04</div>
+            <div><strong>不做的事</strong><p>不生成买卖建议，不预测涨跌，不把缺失数据补成“看起来合理”的数字。</p></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div id="toast" class="toast hidden"></div>
+<script src="/static/echarts.min.js"></script>
+<script src="/static/app.js?v=20261123"></script>
+</body>
+</html>
