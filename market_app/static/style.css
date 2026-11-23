@@ -59,10 +59,9 @@ a { color: var(--accent); }
 .brand { display: flex; gap: 12px; align-items: center; padding: 2px 8px 24px; }
 .brand-mark {
   width: 38px; height: 38px; border-radius: 11px;
-  display: grid; place-items: center;
-  color: #07110f; font-weight: 800; font-size: 18px;
-  background: linear-gradient(135deg, #78e7db, #37b8ad);
-  box-shadow: 0 8px 24px rgba(79, 209, 197, 0.22);
+  display: block; object-fit: cover; flex: 0 0 38px;
+  background: var(--panel);
+  box-shadow: 0 8px 24px rgba(79, 209, 197, 0.18), 0 0 0 1px rgba(79, 209, 197, 0.22);
 }
 .brand-title { font-weight: 700; letter-spacing: .3px; }
 .brand-sub { color: var(--muted); font-size: 11px; margin-top: 3px; letter-spacing: .4px; }

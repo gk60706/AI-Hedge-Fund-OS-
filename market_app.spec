@@ -67,6 +67,7 @@ exe = EXE(
     [],
     exclude_binaries=True,
     name="AStockWorkbench",
+    icon=str(ROOT / "market_app" / "static" / "app-icon.ico"),
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
