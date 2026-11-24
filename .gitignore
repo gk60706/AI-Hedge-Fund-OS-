@@ -22,73 +22,24 @@ Thumbs.db
 
 # ---- 密钥：.env 绝不能提交 GitHub ----
 .env
+.env.*
+!.env.example
 
-# ---- 生成的报告（保留 .gitkeep）----
-reports/*.md
-!reports/.gitkeep
-!reports/four_ai_consensus_v1.2.md
+# ---- 工作台运行时数据（不入库）----
+market_data/
+data_cache/*
+!data_cache/.gitkeep
 
-# ---- v1.2 本地行情缓存与信号台账（运行时数据，不入库）----
-market_data/cache/
-market_data/signal_ledger.sqlite
-
-# ---- 测试 / 缓存 ----
+# ---- 测试 / 缓存 / 日志 ----
 .pytest_cache/
 .coverage
 htmlcov/
-
-# ---- V1.1 ChromaDB 本地向量库（运行时生成，不入库）----
-memory/
-
-# ---- uiautomation 调试日志（本机监控工具产生）----
-@AutomationLog.txt
-
-# ---- V0.7 SQLite 模拟交易记录（运行生成，不入库）----
-trade.db
-*.sqlite3
-
-# ---- V1.2 策略基因数据库（运行生成，不入库）----
-strategy.db
-*.db
-
-# ---- V1.3 冠军策略历史数据库（运行生成，不入库）----
-champion.db
-
-# ---- V3.0.4 模拟交易账本 + V3.0.1 行情缓存（运行生成，不入库）----
-data/trade_ledger.json
-data/cache/
-
-# ---- V3.8 AI Alpha 因子实验结果（运行生成，不入库）----
-experiments/results/
-!experiments/results/.gitkeep
-
-# ---- V3.9.3 进化实验 JSONL 运行记录（运行生成，不入库）----
-experiments/runs/
-!experiments/runs/.gitkeep
-
-# ---- V3.9.1 统一研究引擎：运行缓存（保留 .gitkeep）----
-.env.*
-!.env.example
-data_cache/*
-!data_cache/.gitkeep
-alpha_library/*
-!alpha_library/.gitkeep
 *.log
 
-# V3.10 generated runtime artifacts inside research cases
-research/**/ai_team/
-
-# ---- V3.10 多 AI 协作：本机运行产物（不入库）----
-ai_team/tasks/
-ai_team/reports/
-ai_team/evaluation/
-reports/generation.json
-reports/hybrid_smoke/validation.json
-
-# ---- V3.10 Colab 验收产物（本机运行生成，不入库）----
-reports/degraded.json
-reports/*.lock
-reports/colab_*/
+# ---- 生成的报告（保留 .gitkeep 与既有共识/汇总文档）----
+reports/*.md
+!reports/.gitkeep
+!reports/four_ai_consensus_v1.2.md
 
 # ---- 归档历史模块内的运行产物（本地保留，不入库）----
 _archive_legacy/**/*.lock
@@ -97,4 +48,3 @@ _archive_legacy/**/*.sqlite3
 _archive_legacy/**/*.db
 _archive_legacy/**/cache/**
 _archive_legacy/**/evolution_history.jsonl
-_archive_legacy/artifacts/market_data_v1.2.0_20261123_1330/**
