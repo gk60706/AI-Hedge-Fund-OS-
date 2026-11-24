@@ -1,0 +1,38 @@
+{
+    "report_id": "RPT-20261117-A86F8F1950",
+    "task_id": "TASK-20261117-1E0CC2F2",
+    "agent_id": "grok",
+    "agent_name": "Grok",
+    "agent_role": "intelligence",
+    "title": "300394.SZ manual report (grok)",
+    "format": "markdown",
+    "report_path": "C:\\Users\\Administrator\\Desktop\\股票分析\\ai_team\\reports\\TASK-20261117-1E0CC2F2\\grok_RPT-20261117-A86F8F1950.md",
+    "metadata_path": "C:\\Users\\Administrator\\Desktop\\股票分析\\ai_team\\reports\\_metadata\\RPT-20261117-A86F8F1950.json",
+    "quality": "complete",
+    "validation": {
+        "is_valid": true,
+        "quality": "complete",
+        "total_characters": 2695,
+        "total_words": 391,
+        "found_sections": [
+            "Executive Summary",
+            "Key Findings",
+            "Evidence and Sources",
+            "Analytical Reasoning",
+            "Risks and Limitations",
+            "Independent Conclusion",
+            "Confidence Level"
+        ],
+        "missing_sections": [],
+        "warnings": [],
+        "evidence_contract": {
+            "valid": null,
+            "status": "sources_not_provided"
+        }
+    },
+    "total_characters": 2695,
+    "total_words": 391,
+    "created_at": "2026-11-17T04:59:06.784447+00:00",
+    "source": "manual",
+    "notes": "manual seat import for hybrid acceptance"
+}

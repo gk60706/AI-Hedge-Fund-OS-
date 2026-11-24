@@ -1,0 +1,130 @@
+# AI Hedge Fund OS V3.10 自定义大模型配置（OpenAI 兼容协议）
+# 该文件可由桌面端「Provider 管理」面板自动生成；
+# API Key 写入 .env，变量名为 AIH_<ID>_API_KEY。
+providers:
+- provider_id: openai
+  display_name: OpenAI
+  protocol: openai
+  enabled: true
+  tags:
+  - global
+  base_url: ${AIH_OPENAI_BASE_URL:-https://api.openai.com/v1}
+  model: ${AIH_OPENAI_MODEL:-gpt-4o-mini}
+  api_key_env: AIH_OPENAI_API_KEY
+- provider_id: deepseek
+  display_name: DeepSeek
+  protocol: openai
+  enabled: true
+  tags:
+  - cn
+  - reasoning
+  base_url: ${AIH_DEEPSEEK_BASE_URL:-https://api.deepseek.com/v1}
+  model: ${AIH_DEEPSEEK_MODEL:-deepseek-chat}
+  api_key_env: AIH_DEEPSEEK_API_KEY
+- provider_id: moonshot
+  display_name: Kimi (Moonshot)
+  protocol: openai
+  enabled: true
+  tags:
+  - cn
+  - long-context
+  base_url: ${AIH_MOONSHOT_BASE_URL:-https://api.moonshot.cn/v1}
+  model: ${AIH_MOONSHOT_MODEL:-kimi-k2-turbo-preview}
+  api_key_env: AIH_MOONSHOT_API_KEY
+- provider_id: dashscope
+  display_name: Qwen (DashScope)
+  protocol: openai
+  enabled: true
+  tags:
+  - cn
+  base_url: ${AIH_DASHSCOPE_BASE_URL:-https://dashscope.aliyuncs.com/compatible-mode/v1}
+  model: ${AIH_DASHSCOPE_MODEL:-qwen-plus}
+  api_key_env: AIH_DASHSCOPE_API_KEY
+- provider_id: zhipu
+  display_name: Zhipu GLM
+  protocol: openai
+  enabled: true
+  tags:
+  - cn
+  base_url: ${AIH_ZHIPU_BASE_URL:-https://open.bigmodel.cn/api/paas/v4}
+  model: ${AIH_ZHIPU_MODEL:-glm-4.5}
+  api_key_env: AIH_ZHIPU_API_KEY
+- provider_id: minimax
+  display_name: MiniMax
+  protocol: openai
+  enabled: true
+  tags:
+  - cn
+  base_url: ${AIH_MINIMAX_BASE_URL:-https://api.minimaxi.com/v1}
+  model: ${AIH_MINIMAX_MODEL:-MiniMax-M2}
+  api_key_env: AIH_MINIMAX_API_KEY
+- provider_id: siliconflow
+  display_name: SiliconFlow · DeepSeek-V3.2
+  protocol: openai
+  enabled: true
+  tags:
+  - cn
+  - aggregator
+  - reasoning
+  - primary
+  base_url: https://api.siliconflow.cn/v1
+  model: deepseek-ai/DeepSeek-V3.2
+  api_key_env: AIH_SILICONFLOW_API_KEY
+- provider_id: openrouter
+  display_name: OpenRouter
+  protocol: openai
+  enabled: false
+  tags:
+  - global
+  - aggregator
+  base_url: ${AIH_OPENROUTER_BASE_URL:-https://openrouter.ai/api/v1}
+  model: ${AIH_OPENROUTER_MODEL:-openai/gpt-4o-mini}
+  api_key_env: AIH_OPENROUTER_API_KEY
+- provider_id: groq
+  display_name: Groq
+  protocol: openai
+  enabled: false
+  tags:
+  - global
+  - fast
+  base_url: ${AIH_GROQ_BASE_URL:-https://api.groq.com/openai/v1}
+  model: ${AIH_GROQ_MODEL:-llama-3.3-70b-versatile}
+  api_key_env: AIH_GROQ_API_KEY
+- provider_id: xai
+  display_name: Grok (xAI)
+  protocol: openai
+  enabled: false
+  tags:
+  - global
+  base_url: ${AIH_XAI_BASE_URL:-https://api.x.ai/v1}
+  model: ${AIH_XAI_MODEL:-grok-4}
+  api_key_env: AIH_XAI_API_KEY
+- provider_id: hark
+  display_name: Hark Gateway (self-hosted)
+  protocol: openai
+  enabled: false
+  tags:
+  - self-hosted
+  base_url: ${HARK_BASE_URL:-http://127.0.0.1:8000/v1}
+  model: ${AIH_HARK_MODEL:-hark-default}
+  api_key_env: AIH_HARK_API_KEY
+- provider_id: siliconflow_qwen
+  display_name: SiliconFlow · Qwen3.5-35B
+  protocol: openai
+  enabled: true
+  tags:
+  - cn
+  - aggregator
+  base_url: https://api.siliconflow.cn/v1
+  model: Qwen/Qwen3.5-35B-A3B
+  api_key_env: AIH_SILICONFLOW_QWEN_API_KEY
+- provider_id: siliconflow_glm
+  display_name: SiliconFlow · GLM-4.5-Air
+  protocol: openai
+  enabled: true
+  tags:
+  - cn
+  - aggregator
+  base_url: https://api.siliconflow.cn/v1
+  model: zai-org/GLM-4.5-Air
+  api_key_env: AIH_SILICONFLOW_GLM_API_KEY

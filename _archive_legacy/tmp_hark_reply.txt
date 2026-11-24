@@ -1,0 +1,157 @@
+摘要
+摘要
+VWAP + MTF Supertrend 指标的 A 股迁移评审
+1）迁移到 A 股是否成立
+
+源码核对：GPL-3.0，只有一个 .pine 文件，BUY/SELL 双向，高周期取 15m，用已收盘 bar 防重绘。README 没有写 Supertrend 的 ATR 参数。
+
+周期	是否成立	说明
+日线	改造后成立	日内 VWAP 在日线上没有意义，要换成「当日均价」或 N 日锚定 VWAP，高周期用周线
+60 分钟	部分成立	每天只有 4 根（20 根均量横跨 5 天），只适合择时，高周期用日线
+15 分钟	仅适合入场择时	16 根/天，高周期用 60m；当天买入不能当天卖，SELL 只对底仓有意义
+1/3/5 分钟（原版）	不成立	T+1 加上不能做空，「每天 3 次多空」在结构上就跑不了
+
+会带来的失真
+
+T+1：信号的价值取决于「隔夜持有」的收益。原版日内的胜率、盈亏比都不能照搬。
+涨跌停
+一字板的 H=L，实体占比会除以 0。
+缩量封板会被量能过滤剔掉，结果最强的票反而被判为弱。
+涨停价上触发的信号买不到，跌停时卖不掉。
+集合竞价
+9:25 开盘竞价的量并入第一根分钟线；沪深两市 14:57–15:00 有收盘竞价，最后一根放量。
+日内量能呈 U 型，「过去 20 根均量 × 1.2」会把信号集中在开盘和尾盘。
+20 根滚动窗口会把昨天尾盘混进来。
+缺口和复权：隔夜跳空会抬高第一根的 TR，除权日未复权的分钟线会让 Supertrend 假翻转。
+最小价位：低价股 0.01 的 tick 让实体占比在窄幅 bar 上全是噪音。
+数据上限（跟上次的数据层评审相关）：CNEquity 1m 源端只有 95 天，5m 约 491 天，15m/60m 的回测只能用 5m 聚合，样本约 2 年。
+2）吸收什么：优先级
+P0：日线选股过滤器包（只用日 K，你现有数据就够）
+收盘价 > 当日均价（尾盘强于全天持仓成本），且收盘价 > 20 日锚定 VWAP。
+日线 Supertrend 为多，周线 Supertrend 不为空。
+量比 ≥ 1.2（对比前 20 日均量，不含当日）。
+实体占比 ≥ 0.5，并剔除一字板和封死涨停。
+信号预算：从单票每天 3 次，改成「全市场每天最多新增 K 只候选」。只在条件由假变真的那一天入选，带冷却期。这是整篇文章最值钱的东西，管的是你自己的交易频率。
+P1：单票信号面板（只对自选和持仓）
+60m 和 15m 两档，显示：VWAP 位置、高周期 Supertrend、同时段量比、实体占比、距涨跌停的距离、今日剩余信号数。
+用于入场择时和持仓离场提示，不用来生成候选。依赖通达信 5m。
+P2：不做
+1/3/5 分钟剥头皮警报。
+照抄 Pine 源码：GPL-3.0，而且核心也就几十行，按下面的公式自己实现更干净。
+3）可落地的规则和公式
+# ---------- 基础 ----------
+# vol 单位统一为「股」（腾讯/TDX 多为「手」，需 ×100），amount 单位为元
+LIMIT = {"main": .10, "st": .05, "gem": .20, "star": .20, "bse": .30}
+def limit_up(prev_close, board):   # 新股无涨跌幅期间另行处理
+    return round(prev_close * (1 + LIMIT[board]) + 1e-9, 2)
+
+# ---------- VWAP ----------
+# 日线「当日均价」（未复权口径，只与当日收盘比较）
+vwap_d = amount / vol
+# N 日锚定 VWAP（跨日要复权：先把每日均价乘以前复权因子）
+avgp_adj = (amount / vol) * qfq_factor
+avwap20  = sum(avgp_adj * vol, 20) / sum(vol, 20)
+# 日内 VWAP：从 9:25 竞价累加到当前 bar，每日重置；竞价量是真实成交，应该计入
+vwap_i = cumsum_today(amount) / cumsum_today(vol)
+
+# ---------- Supertrend（Wilder ATR） ----------
+# 默认 (10, 3)；日线用前复权 OHLC；只在小网格里调参（见第 4 节）
+def supertrend(h, l, c, n=10, m=3.0):
+    tr  = max(h - l, abs(h - c.shift()), abs(l - c.shift()))
+    atr = rma(tr, n)
+    mid = (h + l) / 2
+    ub, lb = mid + m*atr, mid - m*atr
+    for t in range(1, len(c)):
+        fub[t] = ub[t] if ub[t] < fub[t-1] or c[t-1] > fub[t-1] else fub[t-1]
+        flb[t] = lb[t] if lb[t] > flb[t-1] or c[t-1] < flb[t-1] else flb[t-1]
+        dir[t] = 1 if c[t] > fub[t-1] else (-1 if c[t] < flb[t-1] else dir[t-1])
+    return dir   # 1 = 多，-1 = 空
+# 高周期防未来函数：日线信号只能读「上周已收盘」的周线 dir
+htf_dir = weekly_dir.shift(1).reindex(daily_index, method="ffill")
+
+# ---------- 量能 ----------
+vol_ratio_d = vol / mean(vol.shift(1), 20)   # 日线：不含当日
+# 日内：用「同一时段」基准，消除 U 型和竞价失真
+slot = bar_time            # 如 09:45、10:00 …
+vol_ratio_i = vol / median(vol[same slot, past 20 trading days])
+
+# ---------- 实体强度 ----------
+rng = h - l
+body_ratio = abs(c - o) / rng if rng >= 3 * tick else NaN   # 幅度不足 3 个 tick 不评分
+at_limit = (c >= limit_up(prev_c, board)) | (c <= limit_dn(prev_c, board))
+one_word = (h == l)
+
+# ---------- 日线选股信号（P0） ----------
+cond = (c > vwap_d) & (c > avwap20) & (dir == 1) & (htf_dir != -1) \
+     & (vol_ratio_d >= 1.2) & (body_ratio >= 0.5) & (c > o) \
+     & ~one_word & ~at_limit
+signal = cond & ~cond.shift(1)               # 状态跳变：由假变真才触发
+signal &= days_since_last_signal(symbol) > 10   # 同票冷却 10 个交易日
+
+# ---------- 信号预算 ----------
+# 全市场每日 Top-K（K=3～5），按客观分排序，不按「感觉」
+score = rank(vol_ratio_d) + rank(body_ratio) + rank((c - avwap20) / atr)
+daily_picks = signal_today.nlargest(K, score)
+
+# ---------- 单票面板（15m，高周期为 60m；P1） ----------
+max_buy_per_day = 1        # T+1：同票当日重复买入没有意义
+buy  = confirmed_bar & (c > vwap_i) & (dir60 == 1) & (vol_ratio_i >= 1.2) \
+       & (body_ratio >= 0.5) & ~at_limit & (buys_today < max_buy_per_day)
+exit = holding & (c < vwap_i) & (dir60 == -1)   # 只对昨日及更早的持仓有效
+
+4）过拟合与样本外验证
+
+参数纪律
+
+先定下默认值 (10, 3, 1.2, 0.5, K=5)。
+只在 3×3×3×3 = 81 组的小网格里看是否形成「平台」：ATR 7/10/14 × 倍数 2/3/4 × 量比 1.0/1.2/1.5 × 实体 0.4/0.5/0.6。
+不挑最优点。
+
+回测口径（这些不对，结果全是假的）
+
+股票池含退市股，按当日状态剔除 ST 和停牌。
+t 日收盘出信号，t+1 开盘成交；开盘即涨停视为买不到，跌停视为卖不掉，顺延。
+成本：佣金双边约万 2.5（最低 5 元）+ 卖出印花税 0.05% + 滑点 0.1%。
+固定离场：持有 5 和 10 日，或日线 Supertrend 翻空。
+
+切分
+
+日线 3 年数据：滚动 walk-forward，12 个月训练 / 3 个月测试，共约 8 个测试窗。
+最后 6 个月完全封存，只看一次。
+
+消融实验
+
+以「只用 Supertrend」为基线，逐一加入 VWAP、量比、实体、预算。
+每个过滤器都要在样本外单独证明自己有用，否则删掉。
+再加一组「同池、同持有期的随机入场」做对照。
+
+最小验收指标（全部是样本外、扣除成本后）
+
+交易数 ≥ 200。
+相对等权全 A 的平均超额 > 0，且 t 值 ≥ 2。
+盈亏比（Profit Factor）≥ 1.2。
+最大回撤不差于基准。
+3 个自然年中至少 2 年超额为正。
+参数各往左右挪一格，超额保留 ≥ 70%。
+假突破率（3 日内跌破信号 K 线低点的比例）比基线低。
+
+任一条不过，就只留作面板展示，不进选股。
+
+5）万得 AliceMarket
+是什么：34 个 Skill、一个统一的 MCP、专家 Agent，需要 WIND_API_KEY，按积分计费。
+免费能用到什么
+A 股行情免费，注册送 2000 积分，活跃还有加赠；个人套餐 49 元/月起。
+9 月的报道称 MCP 每天上限 1000 次，可能已经调整。
+财务、估值、EDB 这类数据很费积分。
+结论：自用点查基本免费；拿来拉全市场财务入湖，积分一天就烧光。数据能否落地缓存要看服务条款，我还没核实。
+比这个指标更值得接吗：是，但两者不是一类东西。它正好补你在东财被封后缺的财报、估值和机构持仓。定位是自选股几十只的「深度核查层」，不替代 CNEquity 的全市场湖。先验证海外网络能否访问。
+优先级：P1，和单票面板同一批。
+结论：部分有用
+
+最小落地清单
+
+filters.py：vwap_d、avwap20、supertrend(10,3)、周线 htf_dir、vol_ratio_d、body_ratio、at_limit/one_word，并附单元测试，覆盖一字板、除权日、「手」和「股」的单位换算。
+选股结果加「状态跳变 + 10 日冷却 + 每日 Top-K」，在 UI 里显示今日剩余名额。
+在 3 年日线上跑消融实验和 walk-forward，按上面的验收标准决定哪些过滤器保留。
+（P1）用通达信 5m 聚合 15m/60m 做单票面板；申请 AliceMarket key，在 5 只自选股上试财报和持仓点查。
+不做分钟级剥头皮，也不搬 GPL 源码。

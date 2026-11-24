@@ -1,0 +1,93 @@
+[
+  {
+    "ic": 0.010919386620026538,
+    "icir": 0.0968036642989552,
+    "positive_ic_ratio": 0.5387453874538746,
+    "q5_q1": 0.0006534357566195137,
+    "complexity": 1,
+    "complexity_penalty": 0.5,
+    "oos_ic": -0.004151587941233794,
+    "oos_positive_ratio": 0.45786516853932585,
+    "oos_days": 356,
+    "robust_score": 1.6342335661086462,
+    "expression": "volatility"
+  },
+  {
+    "ic": 0.003779303615820969,
+    "icir": 0.034526666317562384,
+    "positive_ic_ratio": 0.533210332103321,
+    "q5_q1": 0.00025183893505593947,
+    "complexity": 1,
+    "complexity_penalty": 0.5,
+    "oos_ic": 0.005426431622918609,
+    "oos_positive_ratio": 0.5028089887640449,
+    "oos_days": 356,
+    "robust_score": 0.6242357062997437,
+    "expression": "momentum"
+  },
+  {
+    "ic": 0.0022193850630489427,
+    "icir": 0.019620295915877425,
+    "positive_ic_ratio": 0.488929889298893,
+    "q5_q1": 0.0003030076324129063,
+    "complexity": 1,
+    "complexity_penalty": 0.5,
+    "oos_ic": 0.0006878927711668416,
+    "oos_positive_ratio": 0.4859550561797753,
+    "oos_days": 356,
+    "robust_score": -0.2139456809767022,
+    "expression": "value"
+  },
+  {
+    "ic": 0.001115503708172392,
+    "icir": 0.010061106293126319,
+    "positive_ic_ratio": 0.5018450184501845,
+    "q5_q1": 0.0001936162409088078,
+    "complexity": 1,
+    "complexity_penalty": 0.5,
+    "oos_ic": -0.007456827956474118,
+    "oos_positive_ratio": 0.47752808988764045,
+    "oos_days": 356,
+    "robust_score": -0.4731708842043595,
+    "expression": "pb"
+  },
+  {
+    "ic": -0.007738784138896241,
+    "icir": -0.06940046552140829,
+    "positive_ic_ratio": 0.47232472324723246,
+    "q5_q1": -0.0002607359026616488,
+    "complexity": 1,
+    "complexity_penalty": 0.5,
+    "oos_ic": -0.0019028824728582951,
+    "oos_positive_ratio": 0.5112359550561798,
+    "oos_days": 356,
+    "robust_score": -2.142707654598167,
+    "expression": "liquidity"
+  },
+  {
+    "ic": -0.006704648270111394,
+    "icir": -0.058536249908451674,
+    "positive_ic_ratio": 0.474169741697417,
+    "q5_q1": -0.0003126425177754717,
+    "complexity": 1,
+    "complexity_penalty": 0.5,
+    "oos_ic": -0.010670469929465805,
+    "oos_positive_ratio": 0.46348314606741575,
+    "oos_days": 356,
+    "robust_score": -2.145586832287536,
+    "expression": "quality"
+  },
+  {
+    "ic": -0.010325659163764633,
+    "icir": -0.09178774245418443,
+    "positive_ic_ratio": 0.4612546125461255,
+    "q5_q1": -0.00065389886884977,
+    "complexity": 1,
+    "complexity_penalty": 0.5,
+    "oos_ic": 0.011195657327075332,
+    "oos_positive_ratio": 0.5337078651685393,
+    "oos_days": 356,
+    "robust_score": -2.3621241206276347,
+    "expression": "turnover"
+  }
+]

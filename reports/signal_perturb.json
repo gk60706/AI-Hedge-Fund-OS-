@@ -1,0 +1,145 @@
+{
+  "universe": "hs300",
+  "symbols_loaded": 100,
+  "baseline": {
+    "trades": 2143,
+    "win_rate": 48.72,
+    "avg_return": 0.655,
+    "median_return": -0.182,
+    "profit_factor": 1.27,
+    "avg_excess": 0.212,
+    "t_excess": 1.302,
+    "max_drawdown": -99.61
+  },
+  "variants": [
+    {
+      "variant": {
+        "name": "base",
+        "st_period": 10,
+        "st_multiplier": 3.0,
+        "volume_threshold": 1.2,
+        "body_threshold": 0.5
+      },
+      "trades": 894,
+      "win_rate": 46.2,
+      "avg_return": 0.483,
+      "median_return": -0.486,
+      "profit_factor": 1.172,
+      "avg_excess": 0.203,
+      "t_excess": 0.743,
+      "max_drawdown": -99.63,
+      "edge_kept": false
+    },
+    {
+      "variant": {
+        "name": "vol_1.1",
+        "st_period": 10,
+        "st_multiplier": 3.0,
+        "volume_threshold": 1.1,
+        "body_threshold": 0.5
+      },
+      "trades": 980,
+      "win_rate": 46.22,
+      "avg_return": 0.458,
+      "median_return": -0.532,
+      "profit_factor": 1.163,
+      "avg_excess": 0.182,
+      "t_excess": 0.683,
+      "max_drawdown": -99.7,
+      "edge_kept": false
+    },
+    {
+      "variant": {
+        "name": "vol_1.3",
+        "st_period": 10,
+        "st_multiplier": 3.0,
+        "volume_threshold": 1.3,
+        "body_threshold": 0.5
+      },
+      "trades": 823,
+      "win_rate": 46.78,
+      "avg_return": 0.482,
+      "median_return": -0.445,
+      "profit_factor": 1.17,
+      "avg_excess": 0.254,
+      "t_excess": 0.89,
+      "max_drawdown": -99.5,
+      "edge_kept": true
+    },
+    {
+      "variant": {
+        "name": "body_45",
+        "st_period": 10,
+        "st_multiplier": 3.0,
+        "volume_threshold": 1.2,
+        "body_threshold": 0.45
+      },
+      "trades": 924,
+      "win_rate": 46.21,
+      "avg_return": 0.521,
+      "median_return": -0.515,
+      "profit_factor": 1.185,
+      "avg_excess": 0.217,
+      "t_excess": 0.804,
+      "max_drawdown": -99.7,
+      "edge_kept": true
+    },
+    {
+      "variant": {
+        "name": "body_55",
+        "st_period": 10,
+        "st_multiplier": 3.0,
+        "volume_threshold": 1.2,
+        "body_threshold": 0.55
+      },
+      "trades": 841,
+      "win_rate": 46.85,
+      "avg_return": 0.375,
+      "median_return": -0.375,
+      "profit_factor": 1.134,
+      "avg_excess": 0.082,
+      "t_excess": 0.294,
+      "max_drawdown": -99.44,
+      "edge_kept": false
+    },
+    {
+      "variant": {
+        "name": "st_2.5",
+        "st_period": 10,
+        "st_multiplier": 2.5,
+        "volume_threshold": 1.2,
+        "body_threshold": 0.5
+      },
+      "trades": 935,
+      "win_rate": 46.2,
+      "avg_return": 0.546,
+      "median_return": -0.538,
+      "profit_factor": 1.193,
+      "avg_excess": 0.167,
+      "t_excess": 0.604,
+      "max_drawdown": -98.08,
+      "edge_kept": false
+    },
+    {
+      "variant": {
+        "name": "st_3.5",
+        "st_period": 10,
+        "st_multiplier": 3.5,
+        "volume_threshold": 1.2,
+        "body_threshold": 0.5
+      },
+      "trades": 879,
+      "win_rate": 46.53,
+      "avg_return": 0.339,
+      "median_return": -0.4,
+      "profit_factor": 1.118,
+      "avg_excess": 0.07,
+      "t_excess": 0.253,
+      "max_drawdown": -99.65,
+      "edge_kept": false
+    }
+  ],
+  "edge_kept": 2,
+  "edge_kept_pct": 28.6,
+  "generated_at": "2026-11-23 09:37:50"
+}

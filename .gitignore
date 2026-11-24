@@ -89,3 +89,12 @@ reports/hybrid_smoke/validation.json
 reports/degraded.json
 reports/*.lock
 reports/colab_*/
+
+# ---- 归档历史模块内的运行产物（本地保留，不入库）----
+_archive_legacy/**/*.lock
+_archive_legacy/**/*.sqlite
+_archive_legacy/**/*.sqlite3
+_archive_legacy/**/*.db
+_archive_legacy/**/cache/**
+_archive_legacy/**/evolution_history.jsonl
+_archive_legacy/artifacts/market_data_v1.2.0_20261123_1330/**

@@ -1,0 +1,40 @@
+{
+    "report_id": "RPT-20261118-B2FC02C842",
+    "task_id": "TASK-20261118-F2713859",
+    "agent_id": "hark",
+    "agent_name": "Hark",
+    "agent_role": "analyst",
+    "title": "hark research report (Qwen/Qwen2.5-1.5B-Instruct)",
+    "format": "markdown",
+    "report_path": "C:\\Users\\Administrator\\Desktop\\股票分析\\ai_team\\reports\\TASK-20261118-F2713859\\hark_RPT-20261118-B2FC02C842.md",
+    "metadata_path": "C:\\Users\\Administrator\\Desktop\\股票分析\\ai_team\\reports\\_metadata\\RPT-20261118-B2FC02C842.json",
+    "quality": "incomplete",
+    "validation": {
+        "is_valid": true,
+        "quality": "incomplete",
+        "total_characters": 596,
+        "total_words": 77,
+        "found_sections": [],
+        "missing_sections": [
+            "Executive Summary",
+            "Key Findings",
+            "Evidence and Sources",
+            "Analytical Reasoning",
+            "Risks and Limitations",
+            "Independent Conclusion",
+            "Confidence Level"
+        ],
+        "warnings": [
+            "Some required report sections are missing."
+        ],
+        "evidence_contract": {
+            "valid": null,
+            "status": "sources_not_provided"
+        }
+    },
+    "total_characters": 596,
+    "total_words": 77,
+    "created_at": "2026-11-18T03:52:42.465225+00:00",
+    "source": "api:Qwen/Qwen2.5-1.5B-Instruct",
+    "notes": "Research only; not investment advice. content_sha256=01d871fefcefa3d53115537ad0fc245d810f37d8046603a8fa70cbe8bf9c84dd incomplete=true"
+}

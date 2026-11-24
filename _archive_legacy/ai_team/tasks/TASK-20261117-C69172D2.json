@@ -1,0 +1,52 @@
+{
+    "task_id": "TASK-20261117-C69172D2",
+    "title": "300394.SZ 2026-11-17",
+    "description": "Multi-AI research on 300394.SZ. Research governance only; no trade execution.",
+    "task_type": "stock_research",
+    "project_mode": "both",
+    "priority": "high",
+    "status": "in_progress",
+    "target": "300394.SZ",
+    "deadline": null,
+    "requirements": [
+        "Independent research from each agent",
+        "Cross-agent validation",
+        "Debate and consensus",
+        "Investment committee review"
+    ],
+    "expected_outputs": [
+        "Independent research reports",
+        "Cross-validation result",
+        "Debate result",
+        "Consensus report",
+        "Investment committee decision"
+    ],
+    "assignments": {
+        "chatgpt": {
+            "agent_id": "chatgpt",
+            "agent_name": "ChatGPT",
+            "role": "cio",
+            "instruction": "AI HEDGE FUND OS - MULTI-AI RESEARCH TASK\n\nTask ID: TASK-20261117-C69172D2\n\nAgent: ChatGPT\nPlatform: OpenAI ChatGPT\nRole: cio\n\nTASK TITLE:\n300394.SZ 2026-11-17\n\nTASK DESCRIPTION:\nMulti-AI research on 300394.SZ. Research governance only; no trade execution.\n\nRESEARCH TARGET:\n300394.SZ\n\nTASK TYPE:\nstock_research\n\nPROJECT MODE:\nboth\n\nPRIORITY:\nhigh\n\nYOUR ROLE:\nAct as the Chief Investment Officer. Define the analytical framework, identify decision criteria and evaluate evidence.\n\nRESPONSIBILITIES:\n- task_planning\n- research_framework\n- strategic_analysis\n- cross_validation\n- final_decision\n- report_generation\n\nREQUIREMENTS:\n- Independent research from each agent\n- Cross-agent validation\n- Debate and consensus\n- Investment committee review\n\nEXPECTED OUTPUTS:\n- Independent research reports\n- Cross-validation result\n- Debate result\n- Consensus report\n- Investment committee decision\n\nIMPORTANT RULES:\n1. Conduct independent analysis.\n2. Do not assume other AI conclusions are correct.\n3. Separate verified facts from assumptions.\n4. Identify missing information.\n5. Provide source names and source dates when available.\n6. Never invent financial data or market prices.\n7. Clearly explain uncertainty.\n8. Do not execute financial transactions.\n\nREPORT FORMAT:\n1. Executive Summary\n2. Key Findings\n3. Evidence and Sources\n4. Analytical Reasoning\n5. Risks and Limitations\n6. Independent Conclusion\n7. Confidence Level\n\nReturn a complete, structured report.",
+            "status": "in_progress",
+            "assigned_at": "2026-11-17T07:40:33.027935+00:00",
+            "submitted_at": null,
+            "report_path": null
+        },
+        "grok": {
+            "agent_id": "grok",
+            "agent_name": "Grok",
+            "role": "intelligence",
+            "instruction": "AI HEDGE FUND OS - MULTI-AI RESEARCH TASK\n\nTask ID: TASK-20261117-C69172D2\n\nAgent: Grok\nPlatform: xAI Grok\nRole: intelligence\n\nTASK TITLE:\n300394.SZ 2026-11-17\n\nTASK DESCRIPTION:\nMulti-AI research on 300394.SZ. Research governance only; no trade execution.\n\nRESEARCH TARGET:\n300394.SZ\n\nTASK TYPE:\nstock_research\n\nPROJECT MODE:\nboth\n\nPRIORITY:\nhigh\n\nYOUR ROLE:\nAct as the independent market intelligence officer. Focus on external information, recent developments, sentiment and counter-evidence.\n\nRESPONSIBILITIES:\n- market_intelligence\n- news_monitoring\n- public_opinion\n- industry_trends\n- negative_evidence\n- counter_arguments\n\nREQUIREMENTS:\n- Independent research from each agent\n- Cross-agent validation\n- Debate and consensus\n- Investment committee review\n\nEXPECTED OUTPUTS:\n- Independent research reports\n- Cross-validation result\n- Debate result\n- Consensus report\n- Investment committee decision\n\nIMPORTANT RULES:\n1. Conduct independent analysis.\n2. Do not assume other AI conclusions are correct.\n3. Separate verified facts from assumptions.\n4. Identify missing information.\n5. Provide source names and source dates when available.\n6. Never invent financial data or market prices.\n7. Clearly explain uncertainty.\n8. Do not execute financial transactions.\n\nREPORT FORMAT:\n1. Executive Summary\n2. Key Findings\n3. Evidence and Sources\n4. Analytical Reasoning\n5. Risks and Limitations\n6. Independent Conclusion\n7. Confidence Level\n\nReturn a complete, structured report.",
+            "status": "in_progress",
+            "assigned_at": "2026-11-17T07:40:33.027935+00:00",
+            "submitted_at": null,
+            "report_path": null
+        }
+    },
+    "created_at": "2026-11-17T07:40:33.005249+00:00",
+    "updated_at": "2026-11-17T07:40:33.054088+00:00",
+    "created_by": "v310_research_pipeline",
+    "metadata": {
+        "paper_trade_only": true
+    }
+}

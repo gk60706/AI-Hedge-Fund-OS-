@@ -1,0 +1,43 @@
+{
+    "report_id": "RPT-20261120-67D4A2D51D",
+    "task_id": "TASK-20261120-051B3E4C",
+    "agent_id": "chatgpt",
+    "agent_name": "ChatGPT",
+    "agent_role": "cio",
+    "title": "chatgpt research report (deepseek-ai/DeepSeek-V3.2)",
+    "format": "markdown",
+    "report_path": "C:\\Users\\Administrator\\Desktop\\股票分析\\ai_team\\reports\\TASK-20261120-051B3E4C\\chatgpt_RPT-20261120-67D4A2D51D.md",
+    "metadata_path": "C:\\Users\\Administrator\\Desktop\\股票分析\\ai_team\\reports\\_metadata\\RPT-20261120-67D4A2D51D.json",
+    "quality": "complete",
+    "validation": {
+        "is_valid": true,
+        "quality": "complete",
+        "total_characters": 3497,
+        "total_words": 319,
+        "found_sections": [
+            "Executive Summary",
+            "Key Findings",
+            "Evidence and Sources",
+            "Analytical Reasoning",
+            "Risks and Limitations",
+            "Independent Conclusion",
+            "Confidence Level"
+        ],
+        "missing_sections": [],
+        "warnings": [],
+        "evidence_contract": {
+            "valid": true,
+            "source_count": 3,
+            "verified_count": 3,
+            "unverified_count": 0,
+            "errors": [],
+            "unverified_sources": [],
+            "status": "validated"
+        }
+    },
+    "total_characters": 3497,
+    "total_words": 319,
+    "created_at": "2026-11-20T01:57:56.462439+00:00",
+    "source": "api:deepseek-ai/DeepSeek-V3.2",
+    "notes": "Research only; not investment advice. content_sha256=9bb2dea362f6025946ea9244978931779c5cd7851499bddfdf7a660952f2f10c"
+}

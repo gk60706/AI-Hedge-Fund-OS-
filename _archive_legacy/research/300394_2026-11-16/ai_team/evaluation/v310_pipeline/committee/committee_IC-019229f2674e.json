@@ -1,0 +1,132 @@
+{
+  "decision_id": "IC-019229f2674e",
+  "task_id": "TASK-20261116-E4F6787E",
+  "consensus_id": "consensus_a4d7ef0ab7a746868bdf5ee339e54113",
+  "status": "approved_with_conditions",
+  "members": [
+    {
+      "member_id": "cio",
+      "name": "Chief Investment Officer",
+      "role": "cio",
+      "weight": 1.5,
+      "required": true,
+      "enabled": true
+    },
+    {
+      "member_id": "risk",
+      "name": "Risk Officer",
+      "role": "risk_officer",
+      "weight": 1.5,
+      "required": true,
+      "enabled": true
+    },
+    {
+      "member_id": "quant",
+      "name": "Quant Analyst",
+      "role": "quant_analyst",
+      "weight": 1.0,
+      "required": false,
+      "enabled": true
+    },
+    {
+      "member_id": "fundamental",
+      "name": "Fundamental Analyst",
+      "role": "fundamental_analyst",
+      "weight": 1.0,
+      "required": false,
+      "enabled": true
+    },
+    {
+      "member_id": "industry",
+      "name": "Industry Analyst",
+      "role": "industry_analyst",
+      "weight": 1.0,
+      "required": false,
+      "enabled": true
+    },
+    {
+      "member_id": "compliance",
+      "name": "Compliance Officer",
+      "role": "compliance_officer",
+      "weight": 1.0,
+      "required": true,
+      "enabled": true
+    }
+  ],
+  "ballots": [
+    {
+      "member_id": "cio",
+      "vote": "approve_with_conditions",
+      "rationale": "ChatGPT: attractive business, valuation-sensitive.",
+      "conditions": [],
+      "risk_flags": [],
+      "created_at": "2026-11-16T01:58:02.681098+00:00"
+    },
+    {
+      "member_id": "quant",
+      "vote": "approve_with_conditions",
+      "rationale": "ChatGPT: needs inventory-to-revenue conversion evidence.",
+      "conditions": [],
+      "risk_flags": [],
+      "created_at": "2026-11-16T01:58:02.681138+00:00"
+    },
+    {
+      "member_id": "industry",
+      "vote": "approve_with_conditions",
+      "rationale": "Grok: supply chain constructive into 2027.",
+      "conditions": [],
+      "risk_flags": [],
+      "created_at": "2026-11-16T01:58:02.681157+00:00"
+    },
+    {
+      "member_id": "compliance",
+      "vote": "approve_with_conditions",
+      "rationale": "Grok: US export restriction risk requires monitoring.",
+      "conditions": [],
+      "risk_flags": [],
+      "created_at": "2026-11-16T01:58:02.681170+00:00"
+    },
+    {
+      "member_id": "risk",
+      "vote": "approve_with_conditions",
+      "rationale": "Hark: cash conversion 0.52x and 178.7% inventory build are material risks.",
+      "conditions": [],
+      "risk_flags": [],
+      "created_at": "2026-11-16T01:58:02.681182+00:00"
+    },
+    {
+      "member_id": "fundamental",
+      "vote": "approve_with_conditions",
+      "rationale": "Hark: 52x TTM versus peers 23x/18x leaves no margin of safety.",
+      "conditions": [],
+      "risk_flags": [],
+      "created_at": "2026-11-16T01:58:02.681196+00:00"
+    }
+  ],
+  "approval_score": 1.0,
+  "participation_rate": 1.0,
+  "quorum_met": true,
+  "required_members_met": true,
+  "conditions": [],
+  "risk_flags": [
+    "仅形成部分共识：仍有观点分歧或未解决事项。",
+    "交叉验证识别出 3 项待核查分歧。",
+    "仍有 3 项未解决问题。"
+  ],
+  "rationale": "Committee ballots are mapped from the three agents' own votes: ChatGPT to cio+quant, Grok to industry+compliance, Hark to risk+fundamental. Research governance only; no trade execution.",
+  "recommendation": "Committee approved the research conclusion with conditions based on consensus consensus_a4d7ef0ab7a746868bdf5ee339e54113. Conditions and risks: 仅形成部分共识：仍有观点分歧或未解决事项。; 交叉验证识别出 3 项待核查分歧。; 仍有 3 项未解决问题。 This is not an order.",
+  "metadata": {
+    "consensus_status": "partial_consensus",
+    "consensus_confidence": 0.65,
+    "consensus_agreement_score": 1.0,
+    "consensus_evidence_score": 1.0,
+    "approval_threshold": 0.67,
+    "quorum_threshold": 0.6,
+    "minimum_confidence": 0.5,
+    "risk_veto_enabled": true,
+    "veto_triggered": false,
+    "veto_decisive": false,
+    "force": false
+  },
+  "created_at": "2026-11-16T01:58:02.681364+00:00"
+}

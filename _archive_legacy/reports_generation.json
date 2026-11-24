@@ -1,0 +1,25 @@
+{
+  "task_id": "TASK-20261118-1F517CF5",
+  "symbol": "300394.SZ",
+  "as_of_date": "2026-11-18",
+  "registry": {
+    "available": [],
+    "skipped": {
+      "openai": "missing: AIH_OPENAI_API_KEY",
+      "deepseek": "missing: AIH_DEEPSEEK_API_KEY",
+      "moonshot": "missing: AIH_MOONSHOT_API_KEY",
+      "dashscope": "missing: AIH_DASHSCOPE_API_KEY",
+      "zhipu": "missing: AIH_ZHIPU_API_KEY",
+      "minimax": "missing: AIH_MINIMAX_API_KEY"
+    }
+  },
+  "generated": [],
+  "failures": {
+    "dashscope": "AdapterUnavailableError: missing: AIH_DASHSCOPE_API_KEY",
+    "deepseek": "AdapterUnavailableError: missing: AIH_DEEPSEEK_API_KEY",
+    "minimax": "AdapterUnavailableError: missing: AIH_MINIMAX_API_KEY",
+    "moonshot": "AdapterUnavailableError: missing: AIH_MOONSHOT_API_KEY",
+    "openai": "AdapterUnavailableError: missing: AIH_OPENAI_API_KEY",
+    "zhipu": "AdapterUnavailableError: missing: AIH_ZHIPU_API_KEY"
+  }
+}

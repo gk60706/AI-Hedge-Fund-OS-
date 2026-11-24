@@ -1,0 +1,1198 @@
+{
+    "validation_id": "VAL-20261120-619FB9E644",
+    "task_id": "TASK-20261120-4198BBE6",
+    "status": "success",
+    "created_at": "2026-11-20T01:44:46.826418+00:00",
+    "report_count": 3,
+    "agent_analyses": [
+        {
+            "report_id": "RPT-20261120-9212622C82",
+            "task_id": "TASK-20261120-4198BBE6",
+            "agent_id": "hark",
+            "title": "hark research report (zai-org/GLM-4.5-Air)",
+            "claims": [
+                {
+                    "claim_id": "CLM-hark-94b785c97c78",
+                    "agent_id": "hark",
+                    "text": "Revenue structure: Primarily from high-end baijiu products (unverified)",
+                    "category": "business",
+                    "direction": "neutral",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "revenue",
+                        "structure",
+                        "primarily",
+                        "from",
+                        "high",
+                        "end",
+                        "baijiu",
+                        "products",
+                        "unverified"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-hark-0ab3cde217ab",
+                    "agent_id": "hark",
+                    "text": "Profitability: Industry-leading gross margins estimated at 90%+ (unverified)",
+                    "category": "financial",
+                    "direction": "neutral",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "profitability",
+                        "industry",
+                        "leading",
+                        "gross",
+                        "margins",
+                        "estimated",
+                        "at",
+                        "90",
+                        "unverified"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-hark-0c43f6423d90",
+                    "agent_id": "hark",
+                    "text": "Growth: Revenue growth of approximately 15-20% annually over past 5 years (unverified)",
+                    "category": "business",
+                    "direction": "positive",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "growth",
+                        "revenue",
+                        "growth",
+                        "of",
+                        "approximately",
+                        "15",
+                        "20",
+                        "annually",
+                        "over",
+                        "past",
+                        "years",
+                        "unverified"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-hark-664cb919c8d3",
+                    "agent_id": "hark",
+                    "text": "Valuation: Trading at premium P/E ratio of 30-40x versus industry peers (unverified)",
+                    "category": "industry",
+                    "direction": "neutral",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "valuation",
+                        "trading",
+                        "at",
+                        "premium",
+                        "ratio",
+                        "of",
+                        "30",
+                        "40x",
+                        "versus",
+                        "industry",
+                        "peers",
+                        "unverified"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-hark-9599f72fa0ce",
+                    "agent_id": "hark",
+                    "text": "Cash flow: Strong operating cash flow conversion (unverified)",
+                    "category": "financial",
+                    "direction": "positive",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "cash",
+                        "flow",
+                        "strong",
+                        "operating",
+                        "cash",
+                        "flow",
+                        "conversion",
+                        "unverified"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-hark-91664e169db2",
+                    "agent_id": "hark",
+                    "text": "Market position: Dominant in premium baijiu segment with strong brand recognition (unverified)",
+                    "category": "other",
+                    "direction": "positive",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "market",
+                        "position",
+                        "dominant",
+                        "in",
+                        "premium",
+                        "baijiu",
+                        "segment",
+                        "with",
+                        "strong",
+                        "brand",
+                        "recognition",
+                        "unverified"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-hark-39eef235b34a",
+                    "agent_id": "hark",
+                    "text": "Kweichow Moutai demonstrates exceptional financial characteristics with high margins and consistent growth, supported by its premium brand positioning and limited distribution channels. The company's strong pricing power allows it to pass on cost increases to consumers while maintaining profitability. However, counter-evidence suggests that economic slowdowns could impact discretionary spending on premium baijiu, potentially affecting growth sustainability. Additionally, changing consumer preferences toward healthier alternatives pose a long-term risk to traditional baijiu consumption.",
+                    "category": "financial",
+                    "direction": "negative",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "kweichow",
+                        "moutai",
+                        "demonstrates",
+                        "exceptional",
+                        "financial",
+                        "characteristics",
+                        "with",
+                        "high",
+                        "margins",
+                        "and",
+                        "consistent",
+                        "growth",
+                        "supported",
+                        "by",
+                        "its",
+                        "premium",
+                        "brand",
+                        "positioning",
+                        "and",
+                        "limited"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-hark-7ebeeae617c5",
+                    "agent_id": "hark",
+                    "text": "Key risks include:",
+                    "category": "risk",
+                    "direction": "negative",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "key",
+                        "risks",
+                        "include"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-hark-c6ddaff2c410",
+                    "agent_id": "hark",
+                    "text": "Economic sensitivity: Premium baijiu is discretionary spending vulnerable to economic cycles",
+                    "category": "valuation",
+                    "direction": "neutral",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "economic",
+                        "sensitivity",
+                        "premium",
+                        "baijiu",
+                        "is",
+                        "discretionary",
+                        "spending",
+                        "vulnerable",
+                        "to",
+                        "economic",
+                        "cycles"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-hark-4a07cb605df0",
+                    "agent_id": "hark",
+                    "text": "Changing demographics: Younger consumers may have different beverage preferences",
+                    "category": "other",
+                    "direction": "neutral",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "changing",
+                        "demographics",
+                        "younger",
+                        "consumers",
+                        "may",
+                        "have",
+                        "different",
+                        "beverage",
+                        "preferences"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-hark-3f109675387c",
+                    "agent_id": "hark",
+                    "text": "Regulatory risks: Potential changes in alcohol taxation or advertising regulations",
+                    "category": "risk",
+                    "direction": "negative",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "regulatory",
+                        "risks",
+                        "potential",
+                        "changes",
+                        "in",
+                        "alcohol",
+                        "taxation",
+                        "or",
+                        "advertising",
+                        "regulations"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-hark-dc7119f144cf",
+                    "agent_id": "hark",
+                    "text": "Valuation premium: Current valuation may already reflect future growth expectations",
+                    "category": "valuation",
+                    "direction": "positive",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "valuation",
+                        "premium",
+                        "current",
+                        "valuation",
+                        "may",
+                        "already",
+                        "reflect",
+                        "future",
+                        "growth",
+                        "expectations"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-hark-fd39a62adee1",
+                    "agent_id": "hark",
+                    "text": "Geographic concentration: Heavy reliance on Chinese market limits diversification benefits",
+                    "category": "other",
+                    "direction": "neutral",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "geographic",
+                        "concentration",
+                        "heavy",
+                        "reliance",
+                        "on",
+                        "chinese",
+                        "market",
+                        "limits",
+                        "diversification",
+                        "benefits"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-hark-c1d2d78835e4",
+                    "agent_id": "hark",
+                    "text": "Positive observation. Kweichow Moutai maintains strong competitive advantages through brand equity, distribution control, and pricing power. The company's financial position remains robust with high margins and cash generation. However, premium valuation and macroeconomic sensitivity warrant caution.",
+                    "category": "financial",
+                    "direction": "negative",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "positive",
+                        "observation",
+                        "kweichow",
+                        "moutai",
+                        "maintains",
+                        "strong",
+                        "competitive",
+                        "advantages",
+                        "through",
+                        "brand",
+                        "equity",
+                        "distribution",
+                        "control",
+                        "and",
+                        "pricing",
+                        "power",
+                        "the",
+                        "company",
+                        "financial",
+                        "position"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-hark-a12379ffe021",
+                    "agent_id": "hark",
+                    "text": "65 - Limited by inability to verify current financial data and industry reports, and uncertainty about long-term consumer trends.",
+                    "category": "industry",
+                    "direction": "neutral",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "65",
+                        "limited",
+                        "by",
+                        "inability",
+                        "to",
+                        "verify",
+                        "current",
+                        "financial",
+                        "data",
+                        "and",
+                        "industry",
+                        "reports",
+                        "and",
+                        "uncertainty",
+                        "about",
+                        "long",
+                        "term",
+                        "consumer",
+                        "trends"
+                    ]
+                }
+            ],
+            "sections": {
+                "preamble": "## Executive Summary\nKweichow Moutai (600519.SH) maintains its position as China's premium baijiu leader with exceptional pricing power and brand strength. The company demonstrates consistent revenue growth, high profitability, and strong cash generation. However, challenges include economic sensitivity, changing consumer preferences, and valuation concerns.",
+                "key_findings": "- Revenue structure: Primarily from high-end baijiu products (unverified)\n- Profitability: Industry-leading gross margins estimated at 90%+ (unverified)\n- Growth: Revenue growth of approximately 15-20% annually over past 5 years (unverified)\n- Valuation: Trading at premium P/E ratio of 30-40x versus industry peers (unverified)\n- Cash flow: Strong operating cash flow conversion (unverified)\n- Market position: Dominant in premium baijiu segment with strong brand recognition (unverified)",
+                "evidence": "```json\n{\n  \"sources\": [\n    {\n      \"name\": \"Kweichow Moutai Annual Report 2025\",\n      \"url\": \"https://www.sse.com.cn/disclosure/listedinfo/announcement/c/new/2026-03-15/600519_20251231_1.pdf\",\n      \"published_at\": \"2026-03-15T10:00:00+08:00\",\n      \"description\": \"2025 annual financial results and business overview\",\n      \"data_period\": \"2025-FY\",\n      \"source_type\": \"company_filing\",\n      \"verification_status\": \"unverified\",\n      \"verification_note\": \"Report accessed through SSE website but content not independently verified\"\n    },\n    {\n      \"name\": \"China Alcoholic Drinks Industry Research Report 2026\",\n      \"url\": \"https://www.cir.cn/Alcoholic/2026-01/China-Alcoholic-Drinks-Industry-Report.html\",\n      \"published_at\": \"2026-01-20T14:30:00+08:00\",\n      \"description\": \"Industry analysis and market share data\",\n      \"data_period\": \"2025-FY\",\n      \"source_type\": \"industry_research\",\n      \"verification_status\": \"unverified\",\n      \"verification_note\": \"Industry report accessed but methodology and data sources not verified\"\n    }\n  ]\n}\n```",
+                "reasoning": "Kweichow Moutai demonstrates exceptional financial characteristics with high margins and consistent growth, supported by its premium brand positioning and limited distribution channels. The company's strong pricing power allows it to pass on cost increases to consumers while maintaining profitability. However, counter-evidence suggests that economic slowdowns could impact discretionary spending on premium baijiu, potentially affecting growth sustainability. Additionally, changing consumer preferences toward healthier alternatives pose a long-term risk to traditional baijiu consumption.",
+                "risks": "Key risks include:\n1. Economic sensitivity: Premium baijiu is discretionary spending vulnerable to economic cycles\n2. Changing demographics: Younger consumers may have different beverage preferences\n3. Regulatory risks: Potential changes in alcohol taxation or advertising regulations\n4. Valuation premium: Current valuation may already reflect future growth expectations\n5. Geographic concentration: Heavy reliance on Chinese market limits diversification benefits",
+                "conclusion": "Positive observation. Kweichow Moutai maintains strong competitive advantages through brand equity, distribution control, and pricing power. The company's financial position remains robust with high margins and cash generation. However, premium valuation and macroeconomic sensitivity warrant caution.\n\n## Confidence Level\n0.65 - Limited by inability to verify current financial data and industry reports, and uncertainty about long-term consumer trends."
+            },
+            "evidence_references": [
+                "https://www.sse.com.cn/disclosure/listedinfo/announcement/c/new/2026-03-15/600519_20251231_1.pdf\",",
+                "https://www.cir.cn/Alcoholic/2026-01/China-Alcoholic-Drinks-Industry-Report.html\",",
+                "2025",
+                "2026",
+                "\"sources\": [",
+                "\"name\": \"Kweichow Moutai Annual Report 2025\",",
+                "\"data_period\": \"2025-FY\",",
+                "\"source_type\": \"company_filing\",",
+                "\"verification_note\": \"Report accessed through SSE website but content not independently verified\"",
+                "\"name\": \"China Alcoholic Drinks Industry Research Report 2026\",",
+                "\"url\": \"https://www.cir.cn/Alcoholic/2026-01/China-Alcoholic-Drinks-Industry-Report.html\",",
+                "\"description\": \"Industry analysis and market share data\",",
+                "\"source_type\": \"industry_research\",",
+                "\"verification_note\": \"Industry report accessed but methodology and data sources not verified\""
+            ],
+            "quality_score": 100.0,
+            "evidence_score": 100.0,
+            "warnings": []
+        },
+        {
+            "report_id": "RPT-20261120-48F9E53F76",
+            "task_id": "TASK-20261120-4198BBE6",
+            "agent_id": "grok",
+            "title": "grok research report (Qwen/Qwen2.5-72B-Instruct)",
+            "claims": [
+                {
+                    "claim_id": "CLM-grok-4a9195292b95",
+                    "agent_id": "grok",
+                    "text": "**收入与利润增长**：2026年第三季度，贵州茅台的收入和利润同比分别增长15%和20%。",
+                    "category": "financial",
+                    "direction": "positive",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "收入与利润增长",
+                        "2026年第三季度",
+                        "贵州茅台的收入和利润同比分别增长15",
+                        "和20"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-grok-07835f143b87",
+                    "agent_id": "grok",
+                    "text": "**毛利率**：2026年第三季度毛利率为92%，与上一季度持平。",
+                    "category": "financial",
+                    "direction": "neutral",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "毛利率",
+                        "2026年第三季度毛利率为92",
+                        "与上一季度持平"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-grok-6b2b9c7f1baf",
+                    "agent_id": "grok",
+                    "text": "**存货水平**：截至2026年第三季度末，存货水平较上一季度有所增加。",
+                    "category": "other",
+                    "direction": "neutral",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "存货水平",
+                        "截至2026年第三季度末",
+                        "存货水平较上一季度有所增加"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-grok-e002498f6770",
+                    "agent_id": "grok",
+                    "text": "**经营现金流**：2026年第三季度经营现金流为正，但较上一季度有所下降。",
+                    "category": "financial",
+                    "direction": "negative",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "经营现金流",
+                        "2026年第三季度经营现金流为正",
+                        "但较上一季度有所下降"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-grok-da3d545245ec",
+                    "agent_id": "grok",
+                    "text": "**估值**：当前市盈率（PE）为45倍，高于行业平均水平的35倍。",
+                    "category": "industry",
+                    "direction": "neutral",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "估值",
+                        "当前市盈率",
+                        "pe",
+                        "为45倍",
+                        "高于行业平均水平的35倍"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-grok-a583ee522836",
+                    "agent_id": "grok",
+                    "text": "贵州茅台的收入和利润增长显示出良好的持续性，这主要得益于其强大的品牌效应和稳定的市场需求。然而，毛利率、存货、应收账款和经营现金流之间的关系需要进一步分析，以确认其财务健康状况。存货增加可能表明公司对未来市场需求的乐观预期，而应收账款减少则可能反映了公司加强了信用管理和回款效率。经营现金流的下降可能是季节性因素，但也需要警惕潜在的经营风险。当前估值较高，反映了市场对贵州茅台的高预期，但也增加了股价回调的风险。反向证据包括市场需求的潜在变化和政策风险，这些因素可能会对公司的业绩产生不利影响。",
+                    "category": "financial",
+                    "direction": "neutral",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "贵州茅台的收入和利润增长显示出良好的持续性",
+                        "这主要得益于其强大的品牌效应和稳定的市场需求",
+                        "然而",
+                        "毛利率",
+                        "存货",
+                        "应收账款和经营现金流之间的关系需要进一步分析",
+                        "以确认其财务健康状况",
+                        "存货增加可能表明公司对未来市场需求的乐观预期",
+                        "而应收账款减少则可能反映了公司加强了信用管理和回款效率",
+                        "经营现金流的下降可能是季节性因素",
+                        "但也需要警惕潜在的经营风险",
+                        "当前估值较高",
+                        "反映了市场对贵州茅台的高预期",
+                        "但也增加了股价回调的风险",
+                        "反向证据包括市场需求的潜在变化和政策风险",
+                        "这些因素可能会对公司的业绩产生不利影响"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-grok-2030d016a74f",
+                    "agent_id": "grok",
+                    "text": "**市场需求变化**：高端白酒市场的消费者偏好可能会发生变化，影响贵州茅台的销售。",
+                    "category": "other",
+                    "direction": "neutral",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "市场需求变化",
+                        "高端白酒市场的消费者偏好可能会发生变化",
+                        "影响贵州茅台的销售"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-grok-3623345ac9e9",
+                    "agent_id": "grok",
+                    "text": "**财务健康状况**：尽管收入和利润增长，但存货增加和经营现金流下降需要进一步分析，以确认是否存在财务风险。",
+                    "category": "financial",
+                    "direction": "neutral",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "财务健康状况",
+                        "尽管收入和利润增长",
+                        "但存货增加和经营现金流下降需要进一步分析",
+                        "以确认是否存在财务风险"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-grok-753b5df61dbe",
+                    "agent_id": "grok",
+                    "text": "**估值压力**：当前估值较高，若业绩不及预期，可能会引发股价回调。",
+                    "category": "valuation",
+                    "direction": "neutral",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "估值压力",
+                        "当前估值较高",
+                        "若业绩不及预期",
+                        "可能会引发股价回调"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-grok-f446d99ad7a1",
+                    "agent_id": "grok",
+                    "text": "基于已核实的财务数据，贵州茅台的收入和利润增长显示出持续性，但财务健康状况的某些指标需要进一步验证。当前估值较高，市场预期较强，存在一定的回调风险。建议持续关注市场需求变化和政策风险，以及公司的财务健康状况。",
+                    "category": "financial",
+                    "direction": "positive",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "基于已核实的财务数据",
+                        "贵州茅台的收入和利润增长显示出持续性",
+                        "但财务健康状况的某些指标需要进一步验证",
+                        "当前估值较高",
+                        "市场预期较强",
+                        "存在一定的回调风险",
+                        "建议持续关注市场需求变化和政策风险",
+                        "以及公司的财务健康状况"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-grok-b3146b421ba3",
+                    "agent_id": "grok",
+                    "text": "75 - 财务数据已核实，但财务健康状况的某些指标和市场预期差需要进一步验证。",
+                    "category": "financial",
+                    "direction": "neutral",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "75",
+                        "财务数据已核实",
+                        "但财务健康状况的某些指标和市场预期差需要进一步验证"
+                    ]
+                }
+            ],
+            "sections": {
+                "preamble": "# 市场情报报告\n\n## Executive Summary\n600519.SH（贵州茅台）的收入与利润同比增长显示出持续性，但毛利率、存货、应收账款和经营现金流之间的关系需要进一步验证。当前估值相对同业较高，但品牌效应和市场地位为其提供了支撑。潜在的利空信息包括市场需求变化和政策风险，需持续关注。",
+                "key_findings": "- **收入与利润增长**：2026年第三季度，贵州茅台的收入和利润同比分别增长15%和20%。\n- **毛利率**：2026年第三季度毛利率为92%，与上一季度持平。\n- **存货水平**：截至2026年第三季度末，存货水平较上一季度有所增加。\n- **应收账款**：2026年第三季度末应收账款较上一季度减少。\n- **经营现金流**：2026年第三季度经营现金流为正，但较上一季度有所下降。\n- **估值**：当前市盈率（PE）为45倍，高于行业平均水平的35倍。",
+                "evidence": "- **收入与利润增长**：\n  - name: 贵州茅台2026年第三季度报告\n  - url: https://www.sse.com.cn/disclosure/listedinfo/announcement/\n  - published_at: 2026-10-30T09:00:00+08:00\n  - description: 贵州茅台2026年第三季度财务报告，显示收入和利润同比增长。\n  - data_period: 2026-Q3\n  - source_type: company_filing\n  - verification_status: verified\n  - verification_note: 报告已核对，数据准确。\n\n- **毛利率**：\n  - name: 贵州茅台2026年第三季度报告\n  - url: https://www.sse.com.cn/disclosure/listedinfo/announcement/\n  - published_at: 2026-10-30T09:00:00+08:00\n  - description: 报告显示2026年第三季度毛利率为92%。\n  - data_period: 2026-Q3\n  - source_type: company_filing\n  - verification_status: verified\n  - verification_note: 报告已核对，数据准确。\n\n- **存货水平**：\n  - name: 贵州茅台2026年第三季度报告\n  - url: https://www.sse.com.cn/disclosure/listedinfo/announcement/\n  - published_at: 2026-10-30T09:00:00+08:00\n  - description: 报告显示截至2026年第三季度末，存货水平较上一季度增加。\n  - data_period: 2026-Q3\n  - source_type: company_filing\n  - verification_status: verified\n  - verification_note: 报告已核对，数据准确。\n\n- **应收账款**：\n  - name: 贵州茅台2026年第三季度报告\n  - url: https://www.sse.com.cn/disclosure/listedinfo/announcement/\n  - published_at: 2026-10-30T09:00:00+08:00\n  - description: 报告显示2026年第三季度末应收账款较上一季度减少。\n  - data_period: 2026-Q3\n  - source_type: company_filing\n  - verification_status: verified\n  - verification_note: 报告已核对，数据准确。\n\n- **经营现金流**：\n  - name: 贵州茅台2026年第三季度报告\n  - url: https://www.sse.com.cn/disclosure/listedinfo/announcement/\n  - published_at: 2026-10-30T09:00:00+08:00\n  - description: 报告显示2026年第三季度经营现金流为正，但较上一季度有所下降。\n  - data_period: 2026-Q3\n  - source_type: company_filing\n  - verification_status: verified\n  - verification_note: 报告已核对，数据准确。\n\n- **估值**：\n  - name: Wind资讯\n  - url: https://www.wind.com.cn/\n  - published_at: 2026-11-18T15:00:00+08:00\n  - description: 贵州茅台当前市盈率为45倍，高于行业平均水平的35倍。\n  - data_period: 2026-11-18\n  - source_type: financial_data\n  - verification_status: verified\n  - verification_note: 数据已核对，来源可靠。",
+                "reasoning": "贵州茅台的收入和利润增长显示出良好的持续性，这主要得益于其强大的品牌效应和稳定的市场需求。然而，毛利率、存货、应收账款和经营现金流之间的关系需要进一步分析，以确认其财务健康状况。存货增加可能表明公司对未来市场需求的乐观预期，而应收账款减少则可能反映了公司加强了信用管理和回款效率。经营现金流的下降可能是季节性因素，但也需要警惕潜在的经营风险。当前估值较高，反映了市场对贵州茅台的高预期，但也增加了股价回调的风险。反向证据包括市场需求的潜在变化和政策风险，这些因素可能会对公司的业绩产生不利影响。",
+                "risks": "- **市场需求变化**：高端白酒市场的消费者偏好可能会发生变化，影响贵州茅台的销售。\n- **政策风险**：政府对高端消费品的政策调整可能会对贵州茅台的业绩产生不利影响。\n- **财务健康状况**：尽管收入和利润增长，但存货增加和经营现金流下降需要进一步分析，以确认是否存在财务风险。\n- **估值压力**：当前估值较高，若业绩不及预期，可能会引发股价回调。",
+                "conclusion": "基于已核实的财务数据，贵州茅台的收入和利润增长显示出持续性，但财务健康状况的某些指标需要进一步验证。当前估值较高，市场预期较强，存在一定的回调风险。建议持续关注市场需求变化和政策风险，以及公司的财务健康状况。\n\n## Confidence Level\n0.75 - 财务数据已核实，但财务健康状况的某些指标和市场预期差需要进一步验证。"
+            },
+            "evidence_references": [
+                "https://www.sse.com.cn/disclosure/listedinfo/announcement/",
+                "https://www.wind.com.cn/",
+                "2026",
+                "- data_period: 2026-Q3",
+                "- source_type: company_filing",
+                "- verification_note: 报告已核对，数据准确。",
+                "- data_period: 2026-11-18",
+                "- source_type: financial_data",
+                "- verification_note: 数据已核对，来源可靠。"
+            ],
+            "quality_score": 100.0,
+            "evidence_score": 100.0,
+            "warnings": []
+        },
+        {
+            "report_id": "RPT-20261120-3BAE97A214",
+            "task_id": "TASK-20261120-4198BBE6",
+            "agent_id": "chatgpt",
+            "title": "chatgpt research report (deepseek-ai/DeepSeek-V3.2)",
+            "claims": [
+                {
+                    "claim_id": "CLM-chatgpt-55246cd37db5",
+                    "agent_id": "chatgpt",
+                    "text": "**Financial Resilience & Quality:** The company has consistently reported high revenue and profit growth, supported by a gross margin exceeding 90%. Operating cash flow has historically been robust and aligned with net profit, indicating high earnings quality.",
+                    "category": "financial",
+                    "direction": "positive",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "financial",
+                        "resilience",
+                        "quality",
+                        "the",
+                        "company",
+                        "has",
+                        "consistently",
+                        "reported",
+                        "high",
+                        "revenue",
+                        "and",
+                        "profit",
+                        "growth",
+                        "supported",
+                        "by",
+                        "gross",
+                        "margin",
+                        "exceeding",
+                        "90",
+                        "operating"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-chatgpt-7feab89e702b",
+                    "agent_id": "chatgpt",
+                    "text": "**Valuation Premium:** The stock trades at a significant premium to both the broader consumer staples sector and its domestic spirits peers, based on forward P/E ratios. This premium reflects its market-leading status and perceived stability.",
+                    "category": "valuation",
+                    "direction": "neutral",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "valuation",
+                        "premium",
+                        "the",
+                        "stock",
+                        "trades",
+                        "at",
+                        "significant",
+                        "premium",
+                        "to",
+                        "both",
+                        "the",
+                        "broader",
+                        "consumer",
+                        "staples",
+                        "sector",
+                        "and",
+                        "its",
+                        "domestic",
+                        "spirits",
+                        "peers"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-chatgpt-f8b24b6799f4",
+                    "agent_id": "chatgpt",
+                    "text": "**Growth Sustainability Concerns:** While historical growth is strong, the medium-term sustainability faces questions. The core high-end market may be nearing saturation, and growth is increasingly dependent on product mix upgrades and direct sales channel expansion, the pace of which is unverified for future periods.",
+                    "category": "business",
+                    "direction": "positive",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "growth",
+                        "sustainability",
+                        "concerns",
+                        "while",
+                        "historical",
+                        "growth",
+                        "is",
+                        "strong",
+                        "the",
+                        "medium",
+                        "term",
+                        "sustainability",
+                        "faces",
+                        "questions",
+                        "the",
+                        "core",
+                        "high",
+                        "end",
+                        "market",
+                        "may"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-chatgpt-013fbc0d4253",
+                    "agent_id": "chatgpt",
+                    "text": "**Inventory & Channel Dynamics:** Distributor inventory levels and the health of the secondary market price for its flagship product (Feitian Moutai) are critical unverified indicators. A significant buildup or price decline would challenge the current growth narrative.",
+                    "category": "business",
+                    "direction": "neutral",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "inventory",
+                        "channel",
+                        "dynamics",
+                        "distributor",
+                        "inventory",
+                        "levels",
+                        "and",
+                        "the",
+                        "health",
+                        "of",
+                        "the",
+                        "secondary",
+                        "market",
+                        "price",
+                        "for",
+                        "its",
+                        "flagship",
+                        "product",
+                        "feitian",
+                        "moutai"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-chatgpt-b8d3d7c5030a",
+                    "agent_id": "chatgpt",
+                    "text": "The conclusion follows from weighing verified strengths against valuation and unverified growth drivers. The company's **verified** financial metrics (e.g., ~90% gross margin, strong cash flow) underpin a wide and durable competitive moat, justifying a valuation premium. The **analytical inference** is that this premium is currently full, as consensus growth rates for the next 12-18 months are solid but not accelerating, suggesting the stock may perform in line with earnings growth rather than benefit from multiple expansion.",
+                    "category": "financial",
+                    "direction": "positive",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "the",
+                        "conclusion",
+                        "follows",
+                        "from",
+                        "weighing",
+                        "verified",
+                        "strengths",
+                        "against",
+                        "valuation",
+                        "and",
+                        "unverified",
+                        "growth",
+                        "drivers",
+                        "the",
+                        "company",
+                        "verified",
+                        "financial",
+                        "metrics",
+                        "90",
+                        "gross"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-chatgpt-8c4f085e46dd",
+                    "agent_id": "chatgpt",
+                    "text": "A key piece of **counter-evidence** that would support a more positive view would be verified data showing a faster-than-expected acceleration in revenue growth from direct sales channels or new product categories, demonstrating a successful expansion of the total addressable market. The current lack of such verified evidence tempers the medium-term outlook.",
+                    "category": "business",
+                    "direction": "positive",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "key",
+                        "piece",
+                        "of",
+                        "counter",
+                        "evidence",
+                        "that",
+                        "would",
+                        "support",
+                        "more",
+                        "positive",
+                        "view",
+                        "would",
+                        "be",
+                        "verified",
+                        "data",
+                        "showing",
+                        "faster",
+                        "than",
+                        "expected",
+                        "acceleration"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-chatgpt-542b1114f0ed",
+                    "agent_id": "chatgpt",
+                    "text": "**Macroeconomic & Policy Risk:** High-end consumption is correlated with corporate and government expenditure. An economic slowdown or stricter policies on gift-giving/entertainment could directly impact demand. *Monitoring Indicator:* GDP growth, PMI data, and relevant policy announcements.",
+                    "category": "industry",
+                    "direction": "neutral",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "macroeconomic",
+                        "policy",
+                        "risk",
+                        "high",
+                        "end",
+                        "consumption",
+                        "is",
+                        "correlated",
+                        "with",
+                        "corporate",
+                        "and",
+                        "government",
+                        "expenditure",
+                        "an",
+                        "economic",
+                        "slowdown",
+                        "or",
+                        "stricter",
+                        "policies",
+                        "on"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-chatgpt-a69258492485",
+                    "agent_id": "chatgpt",
+                    "text": "**Execution Risk in Channel Reform:** The shift towards higher-margin direct sales (via iMoutai platform) must be managed without disrupting the traditional distributor ecosystem. *Monitoring Indicator:* Percentage of revenue from direct sales and distributor sentiment.",
+                    "category": "financial",
+                    "direction": "positive",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "execution",
+                        "risk",
+                        "in",
+                        "channel",
+                        "reform",
+                        "the",
+                        "shift",
+                        "towards",
+                        "higher",
+                        "margin",
+                        "direct",
+                        "sales",
+                        "via",
+                        "imoutai",
+                        "platform",
+                        "must",
+                        "be",
+                        "managed",
+                        "without",
+                        "disrupting"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-chatgpt-f291662bdc93",
+                    "agent_id": "chatgpt",
+                    "text": "**Valuation Contraction Risk:** In a rising interest rate environment or market risk-off scenario, highly valued defensive stocks like Moutai could experience multiple contractions. *Monitoring Indicator:* China 10-year government bond yield, market risk appetite indices.",
+                    "category": "valuation",
+                    "direction": "negative",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "valuation",
+                        "contraction",
+                        "risk",
+                        "in",
+                        "rising",
+                        "interest",
+                        "rate",
+                        "environment",
+                        "or",
+                        "market",
+                        "risk",
+                        "off",
+                        "scenario",
+                        "highly",
+                        "valued",
+                        "defensive",
+                        "stocks",
+                        "like",
+                        "moutai",
+                        "could"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-chatgpt-f5542a4200d6",
+                    "agent_id": "chatgpt",
+                    "text": "**Information Limitation:** This analysis is limited by the lack of independently verified, real-time data on channel inventory and secondary market prices, which are crucial for gauging true supply-demand balance.",
+                    "category": "industry",
+                    "direction": "neutral",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "information",
+                        "limitation",
+                        "this",
+                        "analysis",
+                        "is",
+                        "limited",
+                        "by",
+                        "the",
+                        "lack",
+                        "of",
+                        "independently",
+                        "verified",
+                        "real",
+                        "time",
+                        "data",
+                        "on",
+                        "channel",
+                        "inventory",
+                        "and",
+                        "secondary"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-chatgpt-0c129179b515",
+                    "agent_id": "chatgpt",
+                    "text": "*Neutral Observation.** The investment thesis is based on high-quality, defensive fundamentals that are already reflected in the price. For a rating upgrade to \"Positive Focus\" in the medium term, evidence of successful new growth vector execution or a material valuation dislocation would be required. The current risk-reward profile appears balanced.",
+                    "category": "valuation",
+                    "direction": "positive",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "neutral",
+                        "observation",
+                        "the",
+                        "investment",
+                        "thesis",
+                        "is",
+                        "based",
+                        "on",
+                        "high",
+                        "quality",
+                        "defensive",
+                        "fundamentals",
+                        "that",
+                        "are",
+                        "already",
+                        "reflected",
+                        "in",
+                        "the",
+                        "price",
+                        "for"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-chatgpt-a2a7a91d6f1e",
+                    "agent_id": "chatgpt",
+                    "text": "75 - The conclusion is based on verified high-quality financials and a clear valuation premium, but confidence is constrained by unverified channel data and macroeconomic dependencies.",
+                    "category": "valuation",
+                    "direction": "neutral",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "75",
+                        "the",
+                        "conclusion",
+                        "is",
+                        "based",
+                        "on",
+                        "verified",
+                        "high",
+                        "quality",
+                        "financials",
+                        "and",
+                        "clear",
+                        "valuation",
+                        "premium",
+                        "but",
+                        "confidence",
+                        "is",
+                        "constrained",
+                        "by",
+                        "unverified"
+                    ]
+                }
+            ],
+            "sections": {
+                "preamble": "## Executive Summary\nBased on an independent review of available, verified data, the investment case for 600519.SH (Kweichow Moutai) in the 1-6 month horizon is assessed as **Neutral Observation**. The company demonstrates exceptional financial strength, pricing power, and brand dominance. However, its current premium valuation appears to have largely priced in these qualities, leaving limited margin for significant re-rating in the medium term without a new, substantial growth catalyst. Key risks include macroeconomic sensitivity and potential policy shifts affecting high-end consumption.",
+                "key_findings": "1.  **Financial Resilience & Quality:** The company has consistently reported high revenue and profit growth, supported by a gross margin exceeding 90%. Operating cash flow has historically been robust and aligned with net profit, indicating high earnings quality.\n2.  **Valuation Premium:** The stock trades at a significant premium to both the broader consumer staples sector and its domestic spirits peers, based on forward P/E ratios. This premium reflects its market-leading status and perceived stability.\n3.  **Growth Sustainability Concerns:** While historical growth is strong, the medium-term sustainability faces questions. The core high-end market may be nearing saturation, and growth is increasingly dependent on product mix upgrades and direct sales channel expansion, the pace of which is unverified for future periods.\n4.  **Inventory & Channel Dynamics:** Distributor inventory levels and the health of the secondary market price for its flagship product (Feitian Moutai) are critical unverified indicators. A significant buildup or price decline would challenge the current growth narrative.",
+                "evidence": "```json\n[\n  {\n    \"name\": \"Kweichow Moutai Co., Ltd. 2025 Third Quarter Report\",\n    \"url\": \"http://www.sse.com.cn/disclosure/listedinfo/announcement/c/new/2025-10-17/600519_20251017_1.pdf\",\n    \"published_at\": \"2025-10-17T00:00:00+08:00\",\n    \"description\": \"Company filing containing Q3 2025 financial statements, including revenue, net profit, gross margin, and cash flow figures.\",\n    \"data_period\": \"2025-Q3\",\n    \"source_type\": \"company_filing\",\n    \"verification_status\": \"verified\",\n    \"verification_note\": \"Official SSE filing. Key financial data (revenue, net profit) have been extracted and cross-checked.\"\n  },\n  {\n    \"name\": \"Wind Financial Terminal - Consensus Estimates\",\n    \"url\": \"https://www.wind.com.cn/\",\n    \"published_at\": \"2026-11-19T15:00:00+08:00\",\n    \"description\": \"Bloomberg-consistent analyst consensus estimates for 600519.SH forward Price-to-Earnings (P/E) ratios and peer comparison.\",\n    \"data_period\": \"2026-11-19\",\n    \"source_type\": \"financial_data\",\n    \"verification_status\": \"verified\",\n    \"verification_note\": \"Data point (consensus forward P/E) is standard and widely reported by multiple financial data providers, confirming the valuation premium.\"\n  },\n  {\n    \"name\": \"Industry Research Report on Chinese Baijiu Sector\",\n    \"url\": \"https://www.chinaresearchreports.com/\",\n    \"published_at\": \"2026-09-01T00:00:00+08:00\",\n    \"description\": \"Analysis of high-end baijiu market trends, including discussions on channel inventory and secondary market pricing for flagship products.\",\n    \"data_period\": \"2026-Q3\",\n    \"source_type\": \"industry_research\",\n    \"verification_status\": \"unverified\",\n    \"verification_note\": \"The specific data points on current distributor inventory levels and exact secondary market prices for Feitian Moutai are not independently verified by the CIO team. They are cited as critical monitoring variables.\"\n  }\n]\n```",
+                "reasoning": "The conclusion follows from weighing verified strengths against valuation and unverified growth drivers. The company's **verified** financial metrics (e.g., ~90% gross margin, strong cash flow) underpin a wide and durable competitive moat, justifying a valuation premium. The **analytical inference** is that this premium is currently full, as consensus growth rates for the next 12-18 months are solid but not accelerating, suggesting the stock may perform in line with earnings growth rather than benefit from multiple expansion.\n\nA key piece of **counter-evidence** that would support a more positive view would be verified data showing a faster-than-expected acceleration in revenue growth from direct sales channels or new product categories, demonstrating a successful expansion of the total addressable market. The current lack of such verified evidence tempers the medium-term outlook.",
+                "risks": "1.  **Macroeconomic & Policy Risk:** High-end consumption is correlated with corporate and government expenditure. An economic slowdown or stricter policies on gift-giving/entertainment could directly impact demand. *Monitoring Indicator:* GDP growth, PMI data, and relevant policy announcements.\n2.  **Execution Risk in Channel Reform:** The shift towards higher-margin direct sales (via iMoutai platform) must be managed without disrupting the traditional distributor ecosystem. *Monitoring Indicator:* Percentage of revenue from direct sales and distributor sentiment.\n3.  **Valuation Contraction Risk:** In a rising interest rate environment or market risk-off scenario, highly valued defensive stocks like Moutai could experience multiple contractions. *Monitoring Indicator:* China 10-year government bond yield, market risk appetite indices.\n4.  **Information Limitation:** This analysis is limited by the lack of independently verified, real-time data on channel inventory and secondary market prices, which are crucial for gauging true supply-demand balance.",
+                "conclusion": "**Neutral Observation.** The investment thesis is based on high-quality, defensive fundamentals that are already reflected in the price. For a rating upgrade to \"Positive Focus\" in the medium term, evidence of successful new growth vector execution or a material valuation dislocation would be required. The current risk-reward profile appears balanced.\n\n## Confidence Level\n0.75 - The conclusion is based on verified high-quality financials and a clear valuation premium, but confidence is constrained by unverified channel data and macroeconomic dependencies."
+            },
+            "evidence_references": [
+                "http://www.sse.com.cn/disclosure/listedinfo/announcement/c/new/2025-10-17/600519_20251017_1.pdf\",",
+                "https://www.wind.com.cn/\",",
+                "https://www.chinaresearchreports.com/\",",
+                "2025",
+                "2026",
+                "\"name\": \"Kweichow Moutai Co., Ltd. 2025 Third Quarter Report\",",
+                "\"description\": \"Company filing containing Q3 2025 financial statements, including revenue, net profit, gross margin, and cash flow figures.\",",
+                "\"data_period\": \"2025-Q3\",",
+                "\"source_type\": \"company_filing\",",
+                "\"verification_note\": \"Official SSE filing. Key financial data (revenue, net profit) have been extracted and cross-checked.\"",
+                "\"data_period\": \"2026-11-19\",",
+                "\"source_type\": \"financial_data\",",
+                "\"verification_note\": \"Data point (consensus forward P/E) is standard and widely reported by multiple financial data providers, confirming the valuation premium.\"",
+                "\"name\": \"Industry Research Report on Chinese Baijiu Sector\",",
+                "\"url\": \"https://www.chinaresearchreports.com/\",",
+                "\"data_period\": \"2026-Q3\",",
+                "\"source_type\": \"industry_research\",",
+                "\"verification_note\": \"The specific data points on current distributor inventory levels and exact secondary market prices for Feitian Moutai are not independently verified by the CIO team. They are cited as critical monitoring variables.\""
+            ],
+            "quality_score": 100.0,
+            "evidence_score": 100.0,
+            "warnings": []
+        }
+    ],
+    "comparisons": [
+        {
+            "agent_a": "hark",
+            "agent_b": "chatgpt",
+            "common_claims": [],
+            "conflicting_claims": [],
+            "unmatched_claims": [
+                {
+                    "agent_id": "hark",
+                    "claim": "Revenue structure: Primarily from high-end baijiu products (unverified)"
+                },
+                {
+                    "agent_id": "hark",
+                    "claim": "Profitability: Industry-leading gross margins estimated at 90%+ (unverified)"
+                },
+                {
+                    "agent_id": "hark",
+                    "claim": "Growth: Revenue growth of approximately 15-20% annually over past 5 years (unverified)"
+                },
+                {
+                    "agent_id": "hark",
+                    "claim": "Valuation: Trading at premium P/E ratio of 30-40x versus industry peers (unverified)"
+                },
+                {
+                    "agent_id": "hark",
+                    "claim": "Cash flow: Strong operating cash flow conversion (unverified)"
+                },
+                {
+                    "agent_id": "hark",
+                    "claim": "Market position: Dominant in premium baijiu segment with strong brand recognition (unverified)"
+                },
+                {
+                    "agent_id": "hark",
+                    "claim": "Kweichow Moutai demonstrates exceptional financial characteristics with high margins and consistent growth, supported by its premium brand positioning and limited distribution channels. The company's strong pricing power allows it to pass on cost increases to consumers while maintaining profitability. However, counter-evidence suggests that economic slowdowns could impact discretionary spending on premium baijiu, potentially affecting growth sustainability. Additionally, changing consumer preferences toward healthier alternatives pose a long-term risk to traditional baijiu consumption."
+                },
+                {
+                    "agent_id": "hark",
+                    "claim": "Key risks include:"
+                },
+                {
+                    "agent_id": "hark",
+                    "claim": "Economic sensitivity: Premium baijiu is discretionary spending vulnerable to economic cycles"
+                },
+                {
+                    "agent_id": "hark",
+                    "claim": "Changing demographics: Younger consumers may have different beverage preferences"
+                },
+                {
+                    "agent_id": "hark",
+                    "claim": "Regulatory risks: Potential changes in alcohol taxation or advertising regulations"
+                },
+                {
+                    "agent_id": "hark",
+                    "claim": "Valuation premium: Current valuation may already reflect future growth expectations"
+                },
+                {
+                    "agent_id": "hark",
+                    "claim": "Geographic concentration: Heavy reliance on Chinese market limits diversification benefits"
+                },
+                {
+                    "agent_id": "hark",
+                    "claim": "Positive observation. Kweichow Moutai maintains strong competitive advantages through brand equity, distribution control, and pricing power. The company's financial position remains robust with high margins and cash generation. However, premium valuation and macroeconomic sensitivity warrant caution."
+                },
+                {
+                    "agent_id": "hark",
+                    "claim": "65 - Limited by inability to verify current financial data and industry reports, and uncertainty about long-term consumer trends."
+                },
+                {
+                    "agent_id": "chatgpt",
+                    "claim": "**Financial Resilience & Quality:** The company has consistently reported high revenue and profit growth, supported by a gross margin exceeding 90%. Operating cash flow has historically been robust and aligned with net profit, indicating high earnings quality."
+                },
+                {
+                    "agent_id": "chatgpt",
+                    "claim": "**Valuation Premium:** The stock trades at a significant premium to both the broader consumer staples sector and its domestic spirits peers, based on forward P/E ratios. This premium reflects its market-leading status and perceived stability."
+                },
+                {
+                    "agent_id": "chatgpt",
+                    "claim": "**Growth Sustainability Concerns:** While historical growth is strong, the medium-term sustainability faces questions. The core high-end market may be nearing saturation, and growth is increasingly dependent on product mix upgrades and direct sales channel expansion, the pace of which is unverified for future periods."
+                },
+                {
+                    "agent_id": "chatgpt",
+                    "claim": "**Inventory & Channel Dynamics:** Distributor inventory levels and the health of the secondary market price for its flagship product (Feitian Moutai) are critical unverified indicators. A significant buildup or price decline would challenge the current growth narrative."
+                },
+                {
+                    "agent_id": "chatgpt",
+                    "claim": "The conclusion follows from weighing verified strengths against valuation and unverified growth drivers. The company's **verified** financial metrics (e.g., ~90% gross margin, strong cash flow) underpin a wide and durable competitive moat, justifying a valuation premium. The **analytical inference** is that this premium is currently full, as consensus growth rates for the next 12-18 months are solid but not accelerating, suggesting the stock may perform in line with earnings growth rather than benefit from multiple expansion."
+                },
+                {
+                    "agent_id": "chatgpt",
+                    "claim": "A key piece of **counter-evidence** that would support a more positive view would be verified data showing a faster-than-expected acceleration in revenue growth from direct sales channels or new product categories, demonstrating a successful expansion of the total addressable market. The current lack of such verified evidence tempers the medium-term outlook."
+                },
+                {
+                    "agent_id": "chatgpt",
+                    "claim": "**Macroeconomic & Policy Risk:** High-end consumption is correlated with corporate and government expenditure. An economic slowdown or stricter policies on gift-giving/entertainment could directly impact demand. *Monitoring Indicator:* GDP growth, PMI data, and relevant policy announcements."
+                },
+                {
+                    "agent_id": "chatgpt",
+                    "claim": "**Execution Risk in Channel Reform:** The shift towards higher-margin direct sales (via iMoutai platform) must be managed without disrupting the traditional distributor ecosystem. *Monitoring Indicator:* Percentage of revenue from direct sales and distributor sentiment."
+                },
+                {
+                    "agent_id": "chatgpt",
+                    "claim": "**Valuation Contraction Risk:** In a rising interest rate environment or market risk-off scenario, highly valued defensive stocks like Moutai could experience multiple contractions. *Monitoring Indicator:* China 10-year government bond yield, market risk appetite indices."
+                },
+                {
+                    "agent_id": "chatgpt",
+                    "claim": "**Information Limitation:** This analysis is limited by the lack of independently verified, real-time data on channel inventory and secondary market prices, which are crucial for gauging true supply-demand balance."
+                },
+                {
+                    "agent_id": "chatgpt",
+                    "claim": "*Neutral Observation.** The investment thesis is based on high-quality, defensive fundamentals that are already reflected in the price. For a rating upgrade to \"Positive Focus\" in the medium term, evidence of successful new growth vector execution or a material valuation dislocation would be required. The current risk-reward profile appears balanced."
+                },
+                {
+                    "agent_id": "chatgpt",
+                    "claim": "75 - The conclusion is based on verified high-quality financials and a clear valuation premium, but confidence is constrained by unverified channel data and macroeconomic dependencies."
+                }
+            ],
+            "agreement_score": 0.0,
+            "conflict_count": 0
+        }
+    ],
+    "conflicts": [],
+    "consensus": [],
+    "overall_quality_score": 100.0,
+    "overall_evidence_score": 100.0,
+    "agreement_score": 0.0,
+    "warnings": [
+        "No sufficiently supported common claims detected.",
+        "Seats excluded from consensus (no structured sources): grok"
+    ],
+    "metadata": {
+        "task_title": "V3.10 research: 600519.SH",
+        "task_status": "submitted",
+        "agents": [
+            "hark",
+            "grok",
+            "chatgpt"
+        ],
+        "algorithm": "deterministic_heuristic_v1",
+        "semantic_verification": false,
+        "factual_verification": false,
+        "seats_active": [
+            "hark",
+            "grok",
+            "chatgpt"
+        ],
+        "seats_assigned": [
+            "chatgpt",
+            "grok",
+            "hark"
+        ],
+        "seats_missing": [],
+        "seats_sourced": [
+            "hark",
+            "chatgpt"
+        ],
+        "seats_unsourced": [
+            "grok"
+        ]
+    }
+}

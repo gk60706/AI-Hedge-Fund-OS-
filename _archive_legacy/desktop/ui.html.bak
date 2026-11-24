@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI Hedge Fund OS V3.10 · 桌面客户端</title>
+<style>
+:root {
+    color-scheme: dark;
+    --bg:#10141d;
+    --panel:#1a2230;
+    --border:#303b4d;
+    --text:#e8edf5;
+    --muted:#8996a9;
+    --green:#32c98b;
+    --red:#ff6474;
+    --blue:#559bff;
+    --orange:#ffbd59;
+}
+* {box-sizing:border-box}
+body {
+    margin:0;
+    padding:22px;
+    background:var(--bg);
+    color:var(--text);
+    font-family:"Microsoft YaHei",Arial,sans-serif;
+    font-size:14px;
+}
+header {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:22px;
+}
+h1 {font-size:22px;margin:0}
+h2 {font-size:16px;margin:0 0 16px}
+.panel {
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:18px;
+    margin-bottom:16px;
+}
+.row {
+    display:flex;
+    align-items:center;
+    gap:12px;
+    flex-wrap:wrap;
+}
+.space {justify-content:space-between}
+button {
+    border:0;
+    border-radius:6px;
+    padding:9px 17px;
+    background:var(--blue);
+    color:white;
+    cursor:pointer;
+    font-weight:600;
+}
+button:disabled {opacity:.45;cursor:not-allowed}
+input {
+    background:#101722;
+    border:1px solid var(--border);
+    color:var(--text);
+    padding:9px;
+    border-radius:5px;
+    min-width:0;
+    width:100%;
+}
+input[type=checkbox] {width:auto}
+label {display:block;color:var(--muted);margin-bottom:7px}
+.field {flex:1;min-width:160px}
+.grid {
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:15px;
+}
+.status {
+    display:inline-flex;
+    align-items:center;
+    gap:7px;
+    padding:6px 12px;
+    border-radius:20px;
+    background:#263345;
+}
+.dot {
+    width:8px;height:8px;border-radius:50%;
+    background:var(--orange);
+}
+.ok {color:var(--green)}
+.bad {color:var(--red)}
+.muted {color:var(--muted)}
+table {width:100%;border-collapse:collapse}
+th,td {
+    text-align:left;
+    padding:10px;
+    border-bottom:1px solid var(--border);
+}
+th {color:var(--muted);font-weight:500}
+pre {
+    background:#0c1119;
+    border:1px solid var(--border);
+    padding:14px;
+    border-radius:7px;
+    overflow:auto;
+    white-space:pre-wrap;
+    word-break:break-word;
+}
+#log {
+    height:230px;
+    overflow:auto;
+    font-family:Consolas,monospace;
+    font-size:12px;
+    line-height:1.7;
+    white-space:pre-wrap;
+    word-break:break-all;
+}
+.file {
+    padding:10px;
+    border-bottom:1px solid var(--border);
+    cursor:pointer;
+}
+.file:hover {background:#273448}
+.file-name {color:var(--blue)}
+#preview {max-height:450px;overflow:auto}
+#error {
+    display:none;
+    color:#ff8b95;
+    background:#401f2a;
+    padding:12px;
+    border-radius:6px;
+    margin-bottom:15px;
+    white-space:pre-wrap;
+}
+.checkbox {
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding-top:23px;
+}
+details summary {cursor:pointer;color:var(--blue);padding:8px 0}
+@media(max-width:760px) {
+    .grid {grid-template-columns:1fr}
+    body {padding:12px}
+    header {align-items:flex-start;gap:12px;flex-direction:column}
+}
+</style>
+</head>
+<body>
+
+<header>
+    <h1>AI Hedge Fund OS V3.10 · 桌面客户端</h1>
+    <div class="status">
+        <span class="dot" id="healthDot"></span>
+        <span id="healthText">正在连接...</span>
+    </div>
+</header>
+
+<div id="error"></div>
+
+<section class="panel">
+    <div class="row space">
+        <h2>AI Provider 状态</h2>
+        <button onclick="loadProviders()">刷新 Provider</button>
+    </div>
+    <div style="overflow:auto">
+        <table>
+            <thead>
+                <tr>
+                    <th>Provider</th>
+                    <th>名称</th>
+                    <th>模型</th>
+                    <th>Base URL</th>
+                    <th>标签</th>
+                    <th>状态</th>
+                </tr>
+            </thead>
+            <tbody id="providerTable">
+                <tr><td colspan="6">正在加载...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<section class="panel">
+    <h2>AI 多模型研究任务</h2>
+    <form id="researchForm">
+        <div class="grid">
+            <div class="field">
+                <label>股票代码</label>
+                <input id="symbol" value="300394.SZ" required>
+            </div>
+            <div class="field">
+                <label>研究截止日期</label>
+                <input id="as_of" type="date" required>
+            </div>
+            <div class="field">
+                <label>Provider 配置文件</label>
+                <input id="providers_file" value="configs/ai_providers.yaml" required>
+            </div>
+            <div class="field">
+                <label>Call Budget</label>
+                <input id="call_budget" type="number" min="1" max="100" value="1">
+            </div>
+            <div class="field">
+                <label>Adapter Timeout（秒）</label>
+                <input id="adapter_timeout" type="number" min="1" max="3600" value="300">
+            </div>
+            <div class="checkbox">
+                <input type="checkbox" id="allow_missing_agents" checked>
+                <label for="allow_missing_agents" style="margin:0">允许缺失 Agent</label>
+            </div>
+        </div>
+        <div class="row" style="margin-top:20px">
+            <button type="submit" id="runButton">启动 AI 研究</button>
+            <span id="taskStatus" class="muted">等待任务</span>
+        </div>
+    </form>
+</section>
+
+<section class="panel">
+    <div class="row space">
+        <h2>实时运行日志</h2>
+        <span id="jobId" class="muted"></span>
+    </div>
+    <div id="log"><span class="muted">尚未启动任务...</span></div>
+</section>
+
+<section class="panel">
+    <h2>研究结果</h2>
+    <div id="resultStatus" class="muted">等待研究完成</div>
+    <details style="margin-top:12px">
+        <summary>展开完整 JSON 结果</summary>
+        <pre id="resultJson">暂无结果</pre>
+    </details>
+</section>
+
+<section class="panel">
+    <div class="row space">
+        <h2>研究报告文件</h2>
+        <button onclick="loadFiles()">刷新文件</button>
+    </div>
+    <div class="grid" style="grid-template-columns:minmax(180px,1fr) 2fr">
+        <div id="fileList">正在加载文件...</div>
+        <div>
+            <div id="previewTitle" class="muted">选择左侧文件预览</div>
+            <pre id="preview">暂无文件</pre>
+        </div>
+    </div>
+</section>
+
+<script>
+const $ = id => document.getElementById(id);
+
+let currentJob = null;
+let polling = false;
+
+function showError(message) {
+    $("error").style.display = "block";
+    $("error").textContent = String(message);
+}
+
+function clearError() {
+    $("error").style.display = "none";
+    $("error").textContent = "";
+}
+
+async function api(url, options={}) {
+    let response;
+    try {
+        response = await fetch(url, options);
+    } catch (e) {
+        throw new Error("网络请求失败：" + e.message);
+    }
+
+    let data;
+    try {
+        data = await response.json();
+    } catch {
+        throw new Error("服务器返回了无效响应");
+    }
+
+    if (!response.ok) {
+        throw new Error(
+            data.detail || data.error || `HTTP ${response.status}`
+        );
+    }
+    return data;
+}
+
+function localDate() {
+    const d = new Date();
+    const offset = d.getTimezoneOffset() * 60000;
+    return new Date(d - offset).toISOString().slice(0,10);
+}
+
+async function checkHealth() {
+    try {
+        const data = await api("/api/health");
+        $("healthDot").style.background = "var(--green)";
+        $("healthText").textContent = "服务正常 · V" + data.version;
+    } catch (e) {
+        $("healthDot").style.background = "var(--red)";
+        $("healthText").textContent = "服务异常";
+        showError(e.message);
+    }
+}
+
+async function loadProviders() {
+    try {
+        clearError();
+        const file = $("providers_file").value;
+        const data = await api(
+            "/api/providers?file=" + encodeURIComponent(file)
+        );
+
+        const tbody = $("providerTable");
+        tbody.innerHTML = "";
+
+        for (const p of data.providers || []) {
+            const tr = document.createElement("tr");
+
+            const values = [
+                p.provider_id,
+                p.display_name,
+                p.model,
+                p.base_url,
+                Array.isArray(p.tags) ? p.tags.join(", ") : p.tags,
+                p.status
+            ];
+
+            values.forEach((value, index) => {
+                const td = document.createElement("td");
+                td.textContent = value || "-";
+
+                if (index === 5) {
+                    const status = String(value).toLowerCase();
+                    td.className =
+                        status === "skipped" ||
+                        status === "error" ||
+                        status === "disabled"
+                        ? "bad"
+                        : status === "ready" ||
+                          status === "ok" ||
+                          status === "active"
+                        ? "ok"
+                        : "muted";
+                }
+
+                tr.appendChild(td);
+            });
+
+            tbody.appendChild(tr);
+        }
+
+        if (!data.providers || !data.providers.length) {
+            tbody.innerHTML =
+                '<tr><td colspan="6">没有 Provider 数据</td></tr>';
+        }
+    } catch (e) {
+        showError("Provider 加载失败：" + e.message);
+        $("providerTable").innerHTML =
+            '<tr><td colspan="6" class="bad">加载失败</td></tr>';
+    }
+}
+
+function addLog(lines) {
+    const log = $("log");
+    const oldHeight = log.scrollHeight;
+    const wasBottom =
+        log.scrollTop + log.clientHeight >= oldHeight - 30;
+
+    log.textContent = Array.isArray(lines)
+        ? lines.join("\n")
+        : String(lines || "");
+
+    if (wasBottom) log.scrollTop = log.scrollHeight;
+}
+
+async function startResearch(event) {
+    event.preventDefault();
+    if (currentJob && polling) return;
+
+    clearError();
+
+    const payload = {
+        symbol: $("symbol").value.trim(),
+        as_of: $("as_of").value,
+        providers_file: $("providers_file").value.trim(),
+        call_budget: Number($("call_budget").value),
+        adapter_timeout: Number($("adapter_timeout").value),
+        allow_missing_agents: $("allow_missing_agents").checked
+    };
+
+    $("runButton").disabled = true;
+    $("taskStatus").textContent = "正在提交任务...";
+
+    try {
+        const data = await api("/api/research", {
+            method: "POST",
+            headers: {"Content-Type":"application/json"},
+            body: JSON.stringify(payload)
+        });
+
+        currentJob = data.job_id;
+        polling = true;
+
+        $("jobId").textContent = "Job ID: " + currentJob;
+        $("taskStatus").textContent = "任务已启动";
+        $("resultStatus").textContent = "正在执行...";
+        $("resultJson").textContent = "等待结果...";
+        addLog(["任务提交成功", "Job ID: " + currentJob]);
+
+        await pollJob(currentJob);
+
+    } catch (e) {
+        showError("启动研究失败：" + e.message);
+        $("taskStatus").textContent = "启动失败";
+        $("runButton").disabled = false;
+        polling = false;
+    }
+}
+
+async function pollJob(jobId) {
+    while (polling && currentJob === jobId) {
+        try {
+            const data = await api("/api/jobs/" + encodeURIComponent(jobId));
+
+            addLog(data.log || []);
+
+            $("taskStatus").textContent = {
+                queued: "排队中",
+                running: "运行中",
+                done: "已完成",
+                error: "执行失败"
+            }[data.status] || data.status;
+
+            if (data.status === "done") {
+                $("resultStatus").textContent = "研究完成";
+                $("resultJson").textContent =
+                    JSON.stringify(data.result, null, 2);
+
+                $("taskStatus").textContent = "完成";
+                await loadFiles();
+                break;
+            }
+
+            if (data.status === "error") {
+                $("resultStatus").textContent = "研究失败";
+                $("resultJson").textContent = data.error || "未知错误";
+                showError("研究任务失败：" + (data.error || "未知错误"));
+                break;
+            }
+
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
+        } catch (e) {
+            showError("任务状态轮询失败：" + e.message);
+            $("taskStatus").textContent = "轮询异常";
+            break;
+        }
+    }
+
+    polling = false;
+    $("runButton").disabled = false;
+}
+
+async function loadFiles() {
+    try {
+        const data = await api("/api/files");
+        const container = $("fileList");
+        container.innerHTML = "";
+
+        for (const file of data.files || []) {
+            const item = document.createElement("div");
+            item.className = "file";
+
+            const name = document.createElement("div");
+            name.className = "file-name";
+            name.textContent = file.path;
+
+            const meta = document.createElement("div");
+            meta.className = "muted";
+            meta.textContent =
+                `${file.size} bytes · ${new Date(file.mtime*1000).toLocaleString()}`;
+
+            item.append(name, meta);
+            item.addEventListener("click", () => previewFile(file.path));
+            container.appendChild(item);
+        }
+
+        if (!data.files || !data.files.length) {
+            container.textContent = "暂无研究报告";
+        }
+
+    } catch (e) {
+        showError("文件列表加载失败：" + e.message);
+        $("fileList").textContent = "加载失败";
+    }
+}
+
+async function previewFile(path) {
+    try {
+        clearError();
+        const data = await api(
+            "/api/files/" + path.split("/").map(encodeURIComponent).join("/")
+        );
+        $("previewTitle").textContent = data.path;
+        $("preview").textContent = data.content;
+    } catch (e) {
+        showError("文件预览失败：" + e.message);
+    }
+}
+
+$("researchForm").addEventListener("submit", startResearch);
+$("as_of").value = localDate();
+
+checkHealth();
+loadProviders();
+loadFiles();
+</script>
+</body>
+</html>

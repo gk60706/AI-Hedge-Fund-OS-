@@ -1,0 +1,62 @@
+[
+  {
+    "formula": "NEG(LOG(RANK(momentum_20)))",
+    "ic": -0.14469470867367717,
+    "complexity": 4,
+    "adjusted_score": 0.10469470867367717
+  },
+  {
+    "formula": "ABS(LOG(0.7498))",
+    "ic": NaN,
+    "complexity": 3,
+    "adjusted_score": NaN
+  },
+  {
+    "formula": "ABS(LOG(0.7498))",
+    "ic": NaN,
+    "complexity": 3,
+    "adjusted_score": NaN
+  },
+  {
+    "formula": "ABS(LOG(0.7498))",
+    "ic": NaN,
+    "complexity": 3,
+    "adjusted_score": NaN
+  },
+  {
+    "formula": "ABS(LOG(0.7498))",
+    "ic": NaN,
+    "complexity": 3,
+    "adjusted_score": NaN
+  },
+  {
+    "formula": "ABS(LOG(0.7498))",
+    "ic": NaN,
+    "complexity": 3,
+    "adjusted_score": NaN
+  },
+  {
+    "formula": "ABS(LOG(0.7498))",
+    "ic": NaN,
+    "complexity": 3,
+    "adjusted_score": NaN
+  },
+  {
+    "formula": "ABS(LOG(0.7498))",
+    "ic": NaN,
+    "complexity": 3,
+    "adjusted_score": NaN
+  },
+  {
+    "formula": "ABS(LOG(0.7498))",
+    "ic": NaN,
+    "complexity": 3,
+    "adjusted_score": NaN
+  },
+  {
+    "formula": "ABS(LOG(0.7498))",
+    "ic": NaN,
+    "complexity": 3,
+    "adjusted_score": NaN
+  }
+]

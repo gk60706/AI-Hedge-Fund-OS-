@@ -1,0 +1,38 @@
+{
+    "report_id": "RPT-20261120-8EEC17BA11",
+    "task_id": "TASK-20261120-8BD8A93F",
+    "agent_id": "grok",
+    "agent_name": "Grok",
+    "agent_role": "intelligence",
+    "title": "grok research report (Qwen/Qwen2.5-72B-Instruct)",
+    "format": "markdown",
+    "report_path": "C:\\Users\\Administrator\\Desktop\\股票分析\\ai_team\\reports\\TASK-20261120-8BD8A93F\\grok_RPT-20261120-8EEC17BA11.md",
+    "metadata_path": "C:\\Users\\Administrator\\Desktop\\股票分析\\ai_team\\reports\\_metadata\\RPT-20261120-8EEC17BA11.json",
+    "quality": "complete",
+    "validation": {
+        "is_valid": true,
+        "quality": "complete",
+        "total_characters": 3095,
+        "total_words": 264,
+        "found_sections": [
+            "Executive Summary",
+            "Key Findings",
+            "Evidence and Sources",
+            "Analytical Reasoning",
+            "Risks and Limitations",
+            "Independent Conclusion",
+            "Confidence Level"
+        ],
+        "missing_sections": [],
+        "warnings": [],
+        "evidence_contract": {
+            "valid": null,
+            "status": "sources_not_provided"
+        }
+    },
+    "total_characters": 3095,
+    "total_words": 264,
+    "created_at": "2026-11-20T01:51:03.953214+00:00",
+    "source": "api:Qwen/Qwen2.5-72B-Instruct",
+    "notes": "Research only; not investment advice. content_sha256=35ce2b0f17e85db0557842cbbe3cd99e577c9255ec81fa71eee01bb92cc61db6"
+}

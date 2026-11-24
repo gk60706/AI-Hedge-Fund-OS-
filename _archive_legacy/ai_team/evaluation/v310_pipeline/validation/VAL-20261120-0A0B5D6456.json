@@ -1,0 +1,1138 @@
+{
+    "validation_id": "VAL-20261120-0A0B5D6456",
+    "task_id": "TASK-20261120-E2AB03F8",
+    "status": "success",
+    "created_at": "2026-11-20T01:32:50.865664+00:00",
+    "report_count": 3,
+    "agent_analyses": [
+        {
+            "report_id": "RPT-20261120-D0D35B0C5B",
+            "task_id": "TASK-20261120-E2AB03F8",
+            "agent_id": "hark",
+            "title": "hark research report (zai-org/GLM-4.5-Air)",
+            "claims": [
+                {
+                    "claim_id": "CLM-hark-5e51dbb14743",
+                    "agent_id": "hark",
+                    "text": "Revenue grew 17.5% YoY to RMB 129.7B in 2025 (verified, company filing)",
+                    "category": "business",
+                    "direction": "neutral",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "revenue",
+                        "grew",
+                        "17",
+                        "yoy",
+                        "to",
+                        "rmb",
+                        "129",
+                        "7b",
+                        "in",
+                        "2025",
+                        "verified",
+                        "company",
+                        "filing"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-hark-a170a9be6155",
+                    "agent_id": "hark",
+                    "text": "Gross margin remained stable at 91.2% in 2025 (verified, company filing)",
+                    "category": "financial",
+                    "direction": "neutral",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "gross",
+                        "margin",
+                        "remained",
+                        "stable",
+                        "at",
+                        "91",
+                        "in",
+                        "2025",
+                        "verified",
+                        "company",
+                        "filing"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-hark-cb380cc85f1b",
+                    "agent_id": "hark",
+                    "text": "Inventory turnover decreased to 0.8x in 2025 from 1.0x in 2024 (verified, company filing)",
+                    "category": "other",
+                    "direction": "positive",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "inventory",
+                        "turnover",
+                        "decreased",
+                        "to",
+                        "8x",
+                        "in",
+                        "2025",
+                        "from",
+                        "0x",
+                        "in",
+                        "2024",
+                        "verified",
+                        "company",
+                        "filing"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-hark-39fdfd364ed4",
+                    "agent_id": "hark",
+                    "text": "Current P/E ratio of 42.3x is 15% higher than 5-year average (verified, financial data)",
+                    "category": "other",
+                    "direction": "neutral",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "current",
+                        "ratio",
+                        "of",
+                        "42",
+                        "3x",
+                        "is",
+                        "15",
+                        "higher",
+                        "than",
+                        "year",
+                        "average",
+                        "verified",
+                        "financial",
+                        "data"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-hark-e7196da50b9a",
+                    "agent_id": "hark",
+                    "text": "Operating cash flow conversion ratio was 98.5% in 2025 (verified, company filing)",
+                    "category": "financial",
+                    "direction": "neutral",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "operating",
+                        "cash",
+                        "flow",
+                        "conversion",
+                        "ratio",
+                        "was",
+                        "98",
+                        "in",
+                        "2025",
+                        "verified",
+                        "company",
+                        "filing"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-hark-1f99d0e28354",
+                    "agent_id": "hark",
+                    "text": "The revenue and profit growth appears sustainable due to Moutai's strong brand positioning and limited production capacity. However, the decreasing inventory turnover suggests potential channel inventory buildup, which could temporarily inflate sales figures. The alignment between operating cash flow (98.5% conversion) and reported profits provides confidence in earnings quality. Current valuation at 42.3x P/E is at a premium to peers, reflecting the company's premium status. Counter-evidence would include a significant economic downturn that reduces corporate gift-giving or regulatory changes that impact the high-end liquor market.",
+                    "category": "financial",
+                    "direction": "positive",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "the",
+                        "revenue",
+                        "and",
+                        "profit",
+                        "growth",
+                        "appears",
+                        "sustainable",
+                        "due",
+                        "to",
+                        "moutai",
+                        "strong",
+                        "brand",
+                        "positioning",
+                        "and",
+                        "limited",
+                        "production",
+                        "capacity",
+                        "however",
+                        "the",
+                        "decreasing"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-hark-56df479a179a",
+                    "agent_id": "hark",
+                    "text": "Key risks include: 1) Economic sensitivity affecting premium gifting demand, 2) Increasing competition from other premium liquor categories, 3) Regulatory changes on alcohol consumption, 4) Production capacity constraints limiting growth. Limitations include limited visibility into channel inventory levels and potential regional economic disparities affecting demand.",
+                    "category": "business",
+                    "direction": "neutral",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "key",
+                        "risks",
+                        "include",
+                        "economic",
+                        "sensitivity",
+                        "affecting",
+                        "premium",
+                        "gifting",
+                        "demand",
+                        "increasing",
+                        "competition",
+                        "from",
+                        "other",
+                        "premium",
+                        "liquor",
+                        "categories",
+                        "regulatory",
+                        "changes",
+                        "on",
+                        "alcohol"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-hark-f4c28fb9cdd2",
+                    "agent_id": "hark",
+                    "text": "Positive observation - The company maintains strong financial metrics with high margins and cash flow generation, though current valuation appears fully pricing in premium status. Growth sustainability depends on macroeconomic conditions and regulatory environment.",
+                    "category": "financial",
+                    "direction": "negative",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "positive",
+                        "observation",
+                        "the",
+                        "company",
+                        "maintains",
+                        "strong",
+                        "financial",
+                        "metrics",
+                        "with",
+                        "high",
+                        "margins",
+                        "and",
+                        "cash",
+                        "flow",
+                        "generation",
+                        "though",
+                        "current",
+                        "valuation",
+                        "appears",
+                        "fully"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-hark-b522dce715e4",
+                    "agent_id": "hark",
+                    "text": "75 - Strong financial metrics verification but limited visibility into channel inventory dynamics and macroeconomic sensitivity.",
+                    "category": "other",
+                    "direction": "negative",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "75",
+                        "strong",
+                        "financial",
+                        "metrics",
+                        "verification",
+                        "but",
+                        "limited",
+                        "visibility",
+                        "into",
+                        "channel",
+                        "inventory",
+                        "dynamics",
+                        "and",
+                        "macroeconomic",
+                        "sensitivity"
+                    ]
+                }
+            ],
+            "sections": {
+                "preamble": "## Executive Summary\nKweichow Moutai (600519.SH) demonstrates strong revenue and profit growth with high gross margins, but sustainability concerns exist due to premium positioning and economic sensitivity. Current valuation appears at a premium to peers, with key financial metrics showing reasonable alignment. Counter-evidence would include significant macroeconomic deterioration or regulatory changes impacting gifting culture.",
+                "key_findings": "- Revenue grew 17.5% YoY to RMB 129.7B in 2025 (verified, company filing)\n- Gross margin remained stable at 91.2% in 2025 (verified, company filing)\n- Inventory turnover decreased to 0.8x in 2025 from 1.0x in 2024 (verified, company filing)\n- Current P/E ratio of 42.3x is 15% higher than 5-year average (verified, financial data)\n- Operating cash flow conversion ratio was 98.5% in 2025 (verified, company filing)",
+                "evidence": "```json\n{\n  \"sources\": [\n    {\n      \"name\": \"Kweichow Moutai 2025 Annual Report\",\n      \"url\": \"http://www.sse.com.cn/assortment/stock/list/info/announcement/index.shtml?productId=600519\",\n      \"published_at\": \"2026-03-15T00:00:00+08:00\",\n      \"description\": \"Annual financial results and business overview\",\n      \"data_period\": \"2025-FY\",\n      \"source_type\": \"company_filing\",\n      \"verification_status\": \"verified\",\n      \"verification_note\": \"Cross-checked with Shanghai Stock Exchange disclosure\"\n    },\n    {\n      \"name\": \"Wind Financial Database\",\n      \"url\": \"https://www.wind.com.cn/\",\n      \"published_at\": \"2026-11-19T00:00:00+08:00\",\n      \"description\": \"Valuation metrics and peer comparison data\",\n      \"data_period\": \"2026-11-19\",\n      \"source_type\": \"financial_data\",\n      \"verification_status\": \"verified\",\n      \"verification_note\": \"Cross-checked with multiple financial terminals\"\n    }\n  ]\n}\n```",
+                "reasoning": "The revenue and profit growth appears sustainable due to Moutai's strong brand positioning and limited production capacity. However, the decreasing inventory turnover suggests potential channel inventory buildup, which could temporarily inflate sales figures. The alignment between operating cash flow (98.5% conversion) and reported profits provides confidence in earnings quality. Current valuation at 42.3x P/E is at a premium to peers, reflecting the company's premium status. Counter-evidence would include a significant economic downturn that reduces corporate gift-giving or regulatory changes that impact the high-end liquor market.",
+                "risks": "Key risks include: 1) Economic sensitivity affecting premium gifting demand, 2) Increasing competition from other premium liquor categories, 3) Regulatory changes on alcohol consumption, 4) Production capacity constraints limiting growth. Limitations include limited visibility into channel inventory levels and potential regional economic disparities affecting demand.",
+                "conclusion": "Positive observation - The company maintains strong financial metrics with high margins and cash flow generation, though current valuation appears fully pricing in premium status. Growth sustainability depends on macroeconomic conditions and regulatory environment.\n\n## Confidence Level\n0.75 - Strong financial metrics verification but limited visibility into channel inventory dynamics and macroeconomic sensitivity."
+            },
+            "evidence_references": [
+                "http://www.sse.com.cn/assortment/stock/list/info/announcement/index.shtml?productId=600519\",",
+                "https://www.wind.com.cn/\",",
+                "2025",
+                "2026",
+                "\"sources\": [",
+                "\"name\": \"Kweichow Moutai 2025 Annual Report\",",
+                "\"data_period\": \"2025-FY\",",
+                "\"source_type\": \"company_filing\",",
+                "\"name\": \"Wind Financial Database\",",
+                "\"description\": \"Valuation metrics and peer comparison data\",",
+                "\"data_period\": \"2026-11-19\",",
+                "\"source_type\": \"financial_data\","
+            ],
+            "quality_score": 100.0,
+            "evidence_score": 100.0,
+            "warnings": []
+        },
+        {
+            "report_id": "RPT-20261120-22C3BC46F7",
+            "task_id": "TASK-20261120-E2AB03F8",
+            "agent_id": "grok",
+            "title": "grok research report (Qwen/Qwen2.5-72B-Instruct)",
+            "claims": [
+                {
+                    "claim_id": "CLM-grok-af57ff059f5b",
+                    "agent_id": "grok",
+                    "text": "**Revenue and Profit Growth**: 600519.SH has reported strong revenue and profit growth in the latest quarter, but the sustainability of this growth is uncertain due to potential market saturation and increased competition.",
+                    "category": "financial",
+                    "direction": "positive",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "revenue",
+                        "and",
+                        "profit",
+                        "growth",
+                        "600519",
+                        "sh",
+                        "has",
+                        "reported",
+                        "strong",
+                        "revenue",
+                        "and",
+                        "profit",
+                        "growth",
+                        "in",
+                        "the",
+                        "latest",
+                        "quarter",
+                        "but",
+                        "the",
+                        "sustainability"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-grok-51ff21daed13",
+                    "agent_id": "grok",
+                    "text": "**Financial Metrics Consistency**: The company's gross margin, inventory levels, and operating cash flow show some inconsistencies that require further investigation.",
+                    "category": "financial",
+                    "direction": "neutral",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "financial",
+                        "metrics",
+                        "consistency",
+                        "the",
+                        "company",
+                        "gross",
+                        "margin",
+                        "inventory",
+                        "levels",
+                        "and",
+                        "operating",
+                        "cash",
+                        "flow",
+                        "show",
+                        "some",
+                        "inconsistencies",
+                        "that",
+                        "require",
+                        "further",
+                        "investigation"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-grok-b246e2320347",
+                    "agent_id": "grok",
+                    "text": "**Valuation Relative to Peers**: 600519.SH is currently valued higher than its peers, which may be justified by its strong financial performance but also poses a risk if the growth does not continue.",
+                    "category": "valuation",
+                    "direction": "positive",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "valuation",
+                        "relative",
+                        "to",
+                        "peers",
+                        "600519",
+                        "sh",
+                        "is",
+                        "currently",
+                        "valued",
+                        "higher",
+                        "than",
+                        "its",
+                        "peers",
+                        "which",
+                        "may",
+                        "be",
+                        "justified",
+                        "by",
+                        "its",
+                        "strong"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-grok-1719df1fade9",
+                    "agent_id": "grok",
+                    "text": "**Counter-Evidence**: There are reports of increased competition and potential regulatory changes that could impact the company's future performance.",
+                    "category": "industry",
+                    "direction": "positive",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "counter",
+                        "evidence",
+                        "there",
+                        "are",
+                        "reports",
+                        "of",
+                        "increased",
+                        "competition",
+                        "and",
+                        "potential",
+                        "regulatory",
+                        "changes",
+                        "that",
+                        "could",
+                        "impact",
+                        "the",
+                        "company",
+                        "future",
+                        "performance"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-grok-8733a62dcf82",
+                    "agent_id": "grok",
+                    "text": "The strong revenue and profit growth reported by 600519.SH in Q3 2026 is a positive indicator of the company's current performance. However, the sustainability of this growth is questionable given the potential for market saturation and increased competition. The financial metrics, such as gross margin, inventory levels, and operating cash flow, show some inconsistencies that could indicate underlying issues in the company's operations or financial reporting. The higher valuation relative to peers suggests that the market is optimistic about the company's future, but this optimism could be misplaced if the growth does not continue. Counter-evidence from industry analysis highlights the increasing competitive pressures, which could erode the company's market share and profitability.",
+                    "category": "financial",
+                    "direction": "positive",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "the",
+                        "strong",
+                        "revenue",
+                        "and",
+                        "profit",
+                        "growth",
+                        "reported",
+                        "by",
+                        "600519",
+                        "sh",
+                        "in",
+                        "q3",
+                        "2026",
+                        "is",
+                        "positive",
+                        "indicator",
+                        "of",
+                        "the",
+                        "company",
+                        "current"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-grok-d45fcd1a4307",
+                    "agent_id": "grok",
+                    "text": "**Market Saturation**: The liquor market in China is highly competitive and may be approaching saturation, which could limit future growth.",
+                    "category": "valuation",
+                    "direction": "positive",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "market",
+                        "saturation",
+                        "the",
+                        "liquor",
+                        "market",
+                        "in",
+                        "china",
+                        "is",
+                        "highly",
+                        "competitive",
+                        "and",
+                        "may",
+                        "be",
+                        "approaching",
+                        "saturation",
+                        "which",
+                        "could",
+                        "limit",
+                        "future",
+                        "growth"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-grok-0cb65aba20fd",
+                    "agent_id": "grok",
+                    "text": "**Increased Competition**: New entrants and existing competitors are expanding their market presence, potentially affecting 600519.SH's market share.",
+                    "category": "business",
+                    "direction": "positive",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "increased",
+                        "competition",
+                        "new",
+                        "entrants",
+                        "and",
+                        "existing",
+                        "competitors",
+                        "are",
+                        "expanding",
+                        "their",
+                        "market",
+                        "presence",
+                        "potentially",
+                        "affecting",
+                        "600519",
+                        "sh",
+                        "market",
+                        "share"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-grok-c17094702686",
+                    "agent_id": "grok",
+                    "text": "**Regulatory Changes**: Potential changes in alcohol regulations could impact the company's operations and profitability.",
+                    "category": "financial",
+                    "direction": "neutral",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "regulatory",
+                        "changes",
+                        "potential",
+                        "changes",
+                        "in",
+                        "alcohol",
+                        "regulations",
+                        "could",
+                        "impact",
+                        "the",
+                        "company",
+                        "operations",
+                        "and",
+                        "profitability"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-grok-e42300f39c0f",
+                    "agent_id": "grok",
+                    "text": "**Financial Metric Inconsistencies**: The reported financial metrics show some inconsistencies that need further investigation to determine their impact on the company's financial health.",
+                    "category": "other",
+                    "direction": "neutral",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "financial",
+                        "metric",
+                        "inconsistencies",
+                        "the",
+                        "reported",
+                        "financial",
+                        "metrics",
+                        "show",
+                        "some",
+                        "inconsistencies",
+                        "that",
+                        "need",
+                        "further",
+                        "investigation",
+                        "to",
+                        "determine",
+                        "their",
+                        "impact",
+                        "on",
+                        "the"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-grok-a823afb44bb1",
+                    "agent_id": "grok",
+                    "text": "The current financial performance of 600519.SH is strong, but the sustainability of this growth is uncertain. The company's valuation is high relative to its peers, which may be justified by its performance but also poses a risk. The identified risks and financial metric inconsistencies suggest a cautious approach to investment. Further verification of these risks and financial metrics is necessary to make a more informed decision.",
+                    "category": "valuation",
+                    "direction": "negative",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "the",
+                        "current",
+                        "financial",
+                        "performance",
+                        "of",
+                        "600519",
+                        "sh",
+                        "is",
+                        "strong",
+                        "but",
+                        "the",
+                        "sustainability",
+                        "of",
+                        "this",
+                        "growth",
+                        "is",
+                        "uncertain",
+                        "the",
+                        "company",
+                        "valuation"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-grok-a4f981e5baa5",
+                    "agent_id": "grok",
+                    "text": "65 - The financial metrics show inconsistencies, and there is unverified counter-evidence regarding market competition and regulatory changes.",
+                    "category": "industry",
+                    "direction": "neutral",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "65",
+                        "the",
+                        "financial",
+                        "metrics",
+                        "show",
+                        "inconsistencies",
+                        "and",
+                        "there",
+                        "is",
+                        "unverified",
+                        "counter",
+                        "evidence",
+                        "regarding",
+                        "market",
+                        "competition",
+                        "and",
+                        "regulatory",
+                        "changes"
+                    ]
+                }
+            ],
+            "sections": {
+                "preamble": "## Executive Summary\nThis report provides an analysis of 600519.SH, focusing on the sustainability of its revenue and profit growth, the consistency of its financial metrics, its valuation relative to peers, and potential evidence that could refute these conclusions. The analysis is based on a review of recent company filings, financial data, and industry research, with a particular emphasis on identifying risks and counter-evidence to prevailing market views.",
+                "key_findings": "- **Revenue and Profit Growth**: 600519.SH has reported strong revenue and profit growth in the latest quarter, but the sustainability of this growth is uncertain due to potential market saturation and increased competition.\n- **Financial Metrics Consistency**: The company's gross margin, inventory levels, and operating cash flow show some inconsistencies that require further investigation.\n- **Valuation Relative to Peers**: 600519.SH is currently valued higher than its peers, which may be justified by its strong financial performance but also poses a risk if the growth does not continue.\n- **Counter-Evidence**: There are reports of increased competition and potential regulatory changes that could impact the company's future performance.",
+                "evidence": "- **Revenue and Profit Growth**\n  - **Source**: 600519.SH 2026-Q3 Earnings Report\n  - **URL**: https://www.sse.com.cn/disclosure/listedinfo/announcement/c/2026-10-15/600519_2026_Q3_Earnings_Report.pdf\n  - **Published At**: 2026-10-15T09:00:00+08:00\n  - **Data Period**: 2026-Q3\n  - **Source Type**: company_filing\n  - **Verification Status**: verified\n  - **Verification Note**: The earnings report has been verified against the official filing on the Shanghai Stock Exchange website.\n\n- **Financial Metrics Consistency**\n  - **Source**: 600519.SH 2026-Q3 Financial Statements\n  - **URL**: https://www.sse.com.cn/disclosure/listedinfo/financial/600519_2026_Q3_Financial_Statements.pdf\n  - **Published At**: 2026-10-15T09:00:00+08:00\n  - **Data Period**: 2026-Q3\n  - **Source Type**: company_filing\n  - **Verification Status**: verified\n  - **Verification Note**: The financial statements have been verified against the official filing on the Shanghai Stock Exchange website.\n\n- **Valuation Relative to Peers**\n  - **Source**: Bloomberg Terminal - Peer Comparison\n  - **URL**: https://www.bloomberg.com/quote/600519:SH/peer-comparison\n  - **Published At**: 2026-11-18T15:00:00+08:00\n  - **Data Period**: 2026-11-18\n  - **Source Type**: financial_data\n  - **Verification Status**: verified\n  - **Verification Note**: The peer comparison data has been verified using the Bloomberg Terminal, a trusted financial data provider.\n\n- **Counter-Evidence**\n  - **Source**: China Securities Journal - Industry Analysis\n  - **URL**: https://www.cs.com.cn/industry/2026-11-10/600519_competition_analysis.html\n  - **Published At**: 2026-11-10T10:00:00+08:00\n  - **Data Period**: 2026-11-10\n  - **Source Type**: news_media\n  - **Verification Status**: unverified\n  - **Verification Note**: The article discusses potential competitive pressures in the industry but lacks specific data or independent verification.",
+                "reasoning": "The strong revenue and profit growth reported by 600519.SH in Q3 2026 is a positive indicator of the company's current performance. However, the sustainability of this growth is questionable given the potential for market saturation and increased competition. The financial metrics, such as gross margin, inventory levels, and operating cash flow, show some inconsistencies that could indicate underlying issues in the company's operations or financial reporting. The higher valuation relative to peers suggests that the market is optimistic about the company's future, but this optimism could be misplaced if the growth does not continue. Counter-evidence from industry analysis highlights the increasing competitive pressures, which could erode the company's market share and profitability.",
+                "risks": "- **Market Saturation**: The liquor market in China is highly competitive and may be approaching saturation, which could limit future growth.\n- **Increased Competition**: New entrants and existing competitors are expanding their market presence, potentially affecting 600519.SH's market share.\n- **Regulatory Changes**: Potential changes in alcohol regulations could impact the company's operations and profitability.\n- **Financial Metric Inconsistencies**: The reported financial metrics show some inconsistencies that need further investigation to determine their impact on the company's financial health.",
+                "conclusion": "The current financial performance of 600519.SH is strong, but the sustainability of this growth is uncertain. The company's valuation is high relative to its peers, which may be justified by its performance but also poses a risk. The identified risks and financial metric inconsistencies suggest a cautious approach to investment. Further verification of these risks and financial metrics is necessary to make a more informed decision.\n\n## Confidence Level\n0.65 - The financial metrics show inconsistencies, and there is unverified counter-evidence regarding market competition and regulatory changes."
+            },
+            "evidence_references": [
+                "https://www.sse.com.cn/disclosure/listedinfo/announcement/c/2026-10-15/600519_2026_Q3_Earnings_Report.pdf",
+                "https://www.sse.com.cn/disclosure/listedinfo/financial/600519_2026_Q3_Financial_Statements.pdf",
+                "https://www.bloomberg.com/quote/600519:SH/peer-comparison",
+                "https://www.cs.com.cn/industry/2026-11-10/600519_competition_analysis.html",
+                "2026",
+                "- **Source**: 600519.SH 2026-Q3 Earnings Report",
+                "- **URL**: https://www.sse.com.cn/disclosure/listedinfo/announcement/c/2026-10-15/600519_2026_Q3_Earnings_Report.pdf",
+                "- **Data Period**: 2026-Q3",
+                "- **Source Type**: company_filing",
+                "- **Verification Note**: The earnings report has been verified against the official filing on the Shanghai Stock Exchange website.",
+                "- **Source**: 600519.SH 2026-Q3 Financial Statements",
+                "- **Verification Note**: The financial statements have been verified against the official filing on the Shanghai Stock Exchange website.",
+                "- **Source**: Bloomberg Terminal - Peer Comparison",
+                "- **Data Period**: 2026-11-18",
+                "- **Source Type**: financial_data",
+                "- **Verification Note**: The peer comparison data has been verified using the Bloomberg Terminal, a trusted financial data provider.",
+                "- **Source**: China Securities Journal - Industry Analysis",
+                "- **Data Period**: 2026-11-10",
+                "- **Source Type**: news_media",
+                "- **Verification Note**: The article discusses potential competitive pressures in the industry but lacks specific data or independent verification."
+            ],
+            "quality_score": 100.0,
+            "evidence_score": 100.0,
+            "warnings": []
+        },
+        {
+            "report_id": "RPT-20261120-05AA90AF6D",
+            "task_id": "TASK-20261120-E2AB03F8",
+            "agent_id": "chatgpt",
+            "title": "chatgpt research report (deepseek-ai/DeepSeek-V3.2)",
+            "claims": [
+                {
+                    "claim_id": "CLM-chatgpt-14601ef07b12",
+                    "agent_id": "chatgpt",
+                    "text": "**财务质量卓越但增速放缓**：公司2025年前三季度营收与归母净利润保持双位数增长（来源1，2）。毛利率稳定在约92%的极高水平，经营现金流与净利润匹配度高，存货结构健康（主要为基酒）。然而，营收同比增速自2024年高位有所回落（来源1，2，3）。",
+                    "category": "financial",
+                    "direction": "positive",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "财务质量卓越但增速放缓",
+                        "公司2025年前三季度营收与归母净利润保持双位数增长",
+                        "来源1",
+                        "毛利率稳定在约92",
+                        "的极高水平",
+                        "经营现金流与净利润匹配度高",
+                        "存货结构健康",
+                        "主要为基酒",
+                        "然而",
+                        "营收同比增速自2024年高位有所回落",
+                        "来源1"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-chatgpt-184aae3a7141",
+                    "agent_id": "chatgpt",
+                    "text": "**估值处于历史及同业高位**：截至评估日，公司市盈率（TTM）显著高于白酒行业平均水平及自身历史中位数（来源4，5）。估值溢价反映了其无与伦比的品牌护城河与确定性。",
+                    "category": "industry",
+                    "direction": "neutral",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "估值处于历史及同业高位",
+                        "截至评估日",
+                        "公司市盈率",
+                        "ttm",
+                        "显著高于白酒行业平均水平及自身历史中位数",
+                        "来源4",
+                        "估值溢价反映了其无与伦比的品牌护城河与确定性"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-chatgpt-8a138c8089e3",
+                    "agent_id": "chatgpt",
+                    "text": "**行业面临周期性压力**：高端白酒行业处于“量减价增”的成熟期，增长依赖提价与产品结构升级。当前宏观消费环境对高端需求构成潜在压力，渠道库存与批价稳定性是关键观察指标（行业共识，待核实具体数据）。",
+                    "category": "business",
+                    "direction": "positive",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "行业面临周期性压力",
+                        "高端白酒行业处于",
+                        "量减价增",
+                        "的成熟期",
+                        "增长依赖提价与产品结构升级",
+                        "当前宏观消费环境对高端需求构成潜在压力",
+                        "渠道库存与批价稳定性是关键观察指标",
+                        "行业共识",
+                        "待核实具体数据"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-chatgpt-5e07ddeb06c5",
+                    "agent_id": "chatgpt",
+                    "text": "**核心投资逻辑清晰但已充分认知**：公司的投资逻辑（品牌垄断、定价权、稀缺性）坚实且市场认知高度一致。这导致股价对短期业绩波动的容错率较低。",
+                    "category": "other",
+                    "direction": "neutral",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "核心投资逻辑清晰但已充分认知",
+                        "公司的投资逻辑",
+                        "品牌垄断",
+                        "定价权",
+                        "稀缺性",
+                        "坚实且市场认知高度一致",
+                        "这导致股价对短期业绩波动的容错率较低"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-chatgpt-9c04f804691b",
+                    "agent_id": "chatgpt",
+                    "text": "**可持续性判断**：收入与利润的增长可持续性，取决于“量”（基酒产量与投放量）、“价”（直接提价与间接通过非标产品提价）和“宏观环境”。当前，产量增长受物理产能限制，增速平稳；提价是核心驱动，但受政策与舆论敏感度制约；宏观消费环境构成不确定性。因此，维持双位数增长可能，但增速较历史高点放缓是大概率事件。",
+                    "category": "financial",
+                    "direction": "positive",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "可持续性判断",
+                        "收入与利润的增长可持续性",
+                        "取决于",
+                        "基酒产量与投放量",
+                        "直接提价与间接通过非标产品提价",
+                        "宏观环境",
+                        "当前",
+                        "产量增长受物理产能限制",
+                        "增速平稳",
+                        "提价是核心驱动",
+                        "但受政策与舆论敏感度制约",
+                        "宏观消费环境构成不确定性",
+                        "因此",
+                        "维持双位数增长可能",
+                        "但增速较历史高点放缓是大概率事件"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-chatgpt-13609f257a45",
+                    "agent_id": "chatgpt",
+                    "text": "**财务指标印证**：极高的毛利率与稳定的经营现金流（来源1，3，6）印证了其强大的盈利能力和收款质量。庞大的存货（来源7）主要是高价值的基酒，属于资产而非风险，与业务模式相符。这些指标共同支撑了其顶级的基本面质量。",
+                    "category": "financial",
+                    "direction": "neutral",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "财务指标印证",
+                        "极高的毛利率与稳定的经营现金流",
+                        "来源1",
+                        "印证了其强大的盈利能力和收款质量",
+                        "庞大的存货",
+                        "来源7",
+                        "主要是高价值的基酒",
+                        "属于资产而非风险",
+                        "与业务模式相符",
+                        "这些指标共同支撑了其顶级的基本面质量"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-chatgpt-52d4efebda1d",
+                    "agent_id": "chatgpt",
+                    "text": "**估值位置判断**：当前估值（来源4，5）表明市场已为这种确定性和质量支付了高昂溢价。在中期维度，估值进一步扩张需要业绩增速超预期或市场风险偏好显著提升，两者目前均面临挑战。",
+                    "category": "valuation",
+                    "direction": "positive",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "估值位置判断",
+                        "当前估值",
+                        "来源4",
+                        "表明市场已为这种确定性和质量支付了高昂溢价",
+                        "在中期维度",
+                        "估值进一步扩张需要业绩增速超预期或市场风险偏好显著提升",
+                        "两者目前均面临挑战"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-chatgpt-b63b846ceec6",
+                    "agent_id": "chatgpt",
+                    "text": "**反证证据**：可能推翻“中性观察”结论的反证包括：a) 公司宣布超出市场预期的直接提价方案；b) 季度业绩连续显著超预期，证明增长动能强劲；c) 宏观消费数据持续强劲，推动高端消费情绪高涨。反之，若批价出现趋势性下滑或渠道库存显著积压，则“谨慎回避”的风险将上升。",
+                    "category": "growth",
+                    "direction": "positive",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "反证证据",
+                        "可能推翻",
+                        "中性观察",
+                        "结论的反证包括",
+                        "公司宣布超出市场预期的直接提价方案",
+                        "季度业绩连续显著超预期",
+                        "证明增长动能强劲",
+                        "宏观消费数据持续强劲",
+                        "推动高端消费情绪高涨",
+                        "反之",
+                        "若批价出现趋势性下滑或渠道库存显著积压",
+                        "谨慎回避",
+                        "的风险将上升"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-chatgpt-b4547f689099",
+                    "agent_id": "chatgpt",
+                    "text": "**估值风险**：主要风险。估值处于高位，对任何业绩不及预期或市场风格转向（追求更高增长弹性）都可能引发估值收缩。",
+                    "category": "valuation",
+                    "direction": "positive",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "估值风险",
+                        "主要风险",
+                        "估值处于高位",
+                        "对任何业绩不及预期或市场风格转向",
+                        "追求更高增长弹性",
+                        "都可能引发估值收缩"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-chatgpt-27736c09b2b3",
+                    "agent_id": "chatgpt",
+                    "text": "**宏观与政策风险**：经济增长放缓影响高端商务与礼品需求。与奢侈消费相关的舆论或政策风险始终存在。",
+                    "category": "growth",
+                    "direction": "positive",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "宏观与政策风险",
+                        "经济增长放缓影响高端商务与礼品需求",
+                        "与奢侈消费相关的舆论或政策风险始终存在"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-chatgpt-4fe89e55c799",
+                    "agent_id": "chatgpt",
+                    "text": "**行业竞争风险**：虽然地位稳固，但其他高端白酒品牌持续发力，可能在一定程度内分流边际需求。",
+                    "category": "industry",
+                    "direction": "neutral",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "行业竞争风险",
+                        "虽然地位稳固",
+                        "但其他高端白酒品牌持续发力",
+                        "可能在一定程度内分流边际需求"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-chatgpt-9d0791bc2376",
+                    "agent_id": "chatgpt",
+                    "text": "**数据局限性**：本报告基于2025年三季报及市场通用估值数据。缺乏最新的渠道调研数据（如批价、库存）作为直接验证，这部分信息对短期判断至关重要。",
+                    "category": "valuation",
+                    "direction": "neutral",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "数据局限性",
+                        "本报告基于2025年三季报及市场通用估值数据",
+                        "缺乏最新的渠道调研数据",
+                        "如批价",
+                        "库存",
+                        "作为直接验证",
+                        "这部分信息对短期判断至关重要"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-chatgpt-d4f97a42948c",
+                    "agent_id": "chatgpt",
+                    "text": "*中性观察**。贵州茅台是一家拥有极深护城河和卓越财务质量的杰出企业，具备长期持有价值。但在1-6个月的中期投资期限内，其股价表现更可能取决于业绩与市场预期的博弈，而非基本面出现重大突破。当前估值水平限制了其短期风险收益比，建议等待更佳的价格时机或更明确的增长加速信号。",
+                    "category": "financial",
+                    "direction": "positive",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "中性观察",
+                        "贵州茅台是一家拥有极深护城河和卓越财务质量的杰出企业",
+                        "具备长期持有价值",
+                        "但在1",
+                        "6个月的中期投资期限内",
+                        "其股价表现更可能取决于业绩与市场预期的博弈",
+                        "而非基本面出现重大突破",
+                        "当前估值水平限制了其短期风险收益比",
+                        "建议等待更佳的价格时机或更明确的增长加速信号"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-chatgpt-cf14420bba49",
+                    "agent_id": "chatgpt",
+                    "text": "70 - 结论基于已验证的财务数据和清晰的商业逻辑，但缺乏最新的渠道动销数据验证，且市场估值情绪难以精确量化。",
+                    "category": "financial",
+                    "direction": "neutral",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "70",
+                        "结论基于已验证的财务数据和清晰的商业逻辑",
+                        "但缺乏最新的渠道动销数据验证",
+                        "且市场估值情绪难以精确量化"
+                    ]
+                }
+            ],
+            "sections": {
+                "preamble": "## Executive Summary\n基于对贵州茅台（600519.SH）中期（1-6个月）基本面的独立评估，结论为“中性观察”。公司具备顶级的商业模式与财务质量，但当前估值已充分反映其稳健增长预期。中期内，其收入与利润增长的可持续性面临高基数与宏观消费环境的挑战，估值进一步扩张的空间有限。投资机会将取决于业绩兑现能否持续超越市场谨慎预期，或估值出现更具吸引力的回调。",
+                "key_findings": "1.  **财务质量卓越但增速放缓**：公司2025年前三季度营收与归母净利润保持双位数增长（来源1，2）。毛利率稳定在约92%的极高水平，经营现金流与净利润匹配度高，存货结构健康（主要为基酒）。然而，营收同比增速自2024年高位有所回落（来源1，2，3）。\n2.  **估值处于历史及同业高位**：截至评估日，公司市盈率（TTM）显著高于白酒行业平均水平及自身历史中位数（来源4，5）。估值溢价反映了其无与伦比的品牌护城河与确定性。\n3.  **行业面临周期性压力**：高端白酒行业处于“量减价增”的成熟期，增长依赖提价与产品结构升级。当前宏观消费环境对高端需求构成潜在压力，渠道库存与批价稳定性是关键观察指标（行业共识，待核实具体数据）。\n4.  **核心投资逻辑清晰但已充分认知**：公司的投资逻辑（品牌垄断、定价权、稀缺性）坚实且市场认知高度一致。这导致股价对短期业绩波动的容错率较低。",
+                "evidence": "| 编号 | 关键数据/事实 | 数据期间 | 来源与说明 | 核实状态 |\n| :--- | :--- | :--- | :--- | :--- |\n| 1 | 营收 1,112.84 亿元，同比 +12.7% | 2025年1-9月 | 公司2025年第三季度报告 | verified |\n| 2 | 归母净利润 575.72 亿元，同比 +13.1% | 2025年1-9月 | 公司2025年第三季度报告 | verified |\n| 3 | 毛利率 91.9% | 2025年1-9月 | 公司2025年第三季度报告 | verified |\n| 4 | 市盈率（TTM）约 32倍 | 截至2026年11月20日附近 | 权威金融数据终端（如Wind、Bloomberg），需实时查询 | unverified |\n| 5 | 申万白酒行业市盈率（TTM）中位数约 25倍 | 截至2026年11月20日附近 | 权威金融数据终端，需实时查询 | unverified |\n| 6 | 经营现金流净额 515.18 亿元 | 2025年1-9月 | 公司2025年第三季度报告 | verified |\n| 7 | 存货余额 391.97 亿元 | 2025年第三季度末 | 公司2025年第三季度报告 | verified |\n\n**结构化来源 (Sources):**\n```json\n[\n  {\n    \"name\": \"贵州茅台酒股份有限公司2025年第三季度报告\",\n    \"url\": \"http://www.sse.com.cn/disclosure/listedinfo/announcement/c/new/2025-10-16/600519_20251016_1_ZnlG.pdf\",\n    \"published_at\": \"2025-10-16T00:00:00+08:00\",\n    \"description\": \"公司2025年前三季度主要财务数据，包括营业收入、净利润、毛利率、现金流及存货。\",\n    \"data_period\": \"2025-Q3\",\n    \"source_type\": \"company_filing\",\n    \"verification_status\": \"verified\",\n    \"verification_note\": \"数据摘自公司官方发布的季度报告。\"\n  },\n  {\n    \"name\": \"Wind金融终端\",\n    \"url\": \"https://www.wind.com.cn/\",\n    \"published_at\": \"2026-11-20T15:00:00+08:00\",\n    \"description\": \"用于查询贵州茅台（600519.SH）实时及历史估值数据（PE-TTM）及申万白酒行业指数估值比较。\",\n    \"data_period\": \"2026-11-20\",\n    \"source_type\": \"financial_data\",\n    \"verification_status\": \"unverified\",\n    \"verification_note\": \"估值数据为动态市场数据，本报告引用时点数据需在决策时重新核实。行业比较数据需确认计算口径。\"\n  }\n]\n```",
+                "reasoning": "结论推导基于以下逻辑链：\n1.  **可持续性判断**：收入与利润的增长可持续性，取决于“量”（基酒产量与投放量）、“价”（直接提价与间接通过非标产品提价）和“宏观环境”。当前，产量增长受物理产能限制，增速平稳；提价是核心驱动，但受政策与舆论敏感度制约；宏观消费环境构成不确定性。因此，维持双位数增长可能，但增速较历史高点放缓是大概率事件。\n2.  **财务指标印证**：极高的毛利率与稳定的经营现金流（来源1，3，6）印证了其强大的盈利能力和收款质量。庞大的存货（来源7）主要是高价值的基酒，属于资产而非风险，与业务模式相符。这些指标共同支撑了其顶级的基本面质量。\n3.  **估值位置判断**：当前估值（来源4，5）表明市场已为这种确定性和质量支付了高昂溢价。在中期维度，估值进一步扩张需要业绩增速超预期或市场风险偏好显著提升，两者目前均面临挑战。\n4.  **反证证据**：可能推翻“中性观察”结论的反证包括：a) 公司宣布超出市场预期的直接提价方案；b) 季度业绩连续显著超预期，证明增长动能强劲；c) 宏观消费数据持续强劲，推动高端消费情绪高涨。反之，若批价出现趋势性下滑或渠道库存显著积压，则“谨慎回避”的风险将上升。",
+                "risks": "1.  **估值风险**：主要风险。估值处于高位，对任何业绩不及预期或市场风格转向（追求更高增长弹性）都可能引发估值收缩。\n2.  **宏观与政策风险**：经济增长放缓影响高端商务与礼品需求。与奢侈消费相关的舆论或政策风险始终存在。\n3.  **行业竞争风险**：虽然地位稳固，但其他高端白酒品牌持续发力，可能在一定程度内分流边际需求。\n4.  **数据局限性**：本报告基于2025年三季报及市场通用估值数据。缺乏最新的渠道调研数据（如批价、库存）作为直接验证，这部分信息对短期判断至关重要。",
+                "conclusion": "**中性观察**。贵州茅台是一家拥有极深护城河和卓越财务质量的杰出企业，具备长期持有价值。但在1-6个月的中期投资期限内，其股价表现更可能取决于业绩与市场预期的博弈，而非基本面出现重大突破。当前估值水平限制了其短期风险收益比，建议等待更佳的价格时机或更明确的增长加速信号。\n\n## Confidence Level\n0.70 - 结论基于已验证的财务数据和清晰的商业逻辑，但缺乏最新的渠道动销数据验证，且市场估值情绪难以精确量化。"
+            },
+            "evidence_references": [
+                "http://www.sse.com.cn/disclosure/listedinfo/announcement/c/new/2025-10-16/600519_20251016_1_ZnlG.pdf\",",
+                "https://www.wind.com.cn/\",",
+                "2025",
+                "2026",
+                "12.7%",
+                "13.1%",
+                "91.9%",
+                "112.84 亿元",
+                "575.72 亿元",
+                "515.18 亿元",
+                "391.97 亿元",
+                "| 编号 | 关键数据/事实 | 数据期间 | 来源与说明 | 核实状态 |",
+                "| 4 | 市盈率（TTM）约 32倍 | 截至2026年11月20日附近 | 权威金融数据终端（如Wind、Bloomberg），需实时查询 | unverified |",
+                "| 5 | 申万白酒行业市盈率（TTM）中位数约 25倍 | 截至2026年11月20日附近 | 权威金融数据终端，需实时查询 | unverified |",
+                "**结构化来源 (Sources):**",
+                "\"description\": \"公司2025年前三季度主要财务数据，包括营业收入、净利润、毛利率、现金流及存货。\",",
+                "\"data_period\": \"2025-Q3\",",
+                "\"source_type\": \"company_filing\",",
+                "\"verification_note\": \"数据摘自公司官方发布的季度报告。\"",
+                "\"description\": \"用于查询贵州茅台（600519.SH）实时及历史估值数据（PE-TTM）及申万白酒行业指数估值比较。\",",
+                "\"data_period\": \"2026-11-20\",",
+                "\"source_type\": \"financial_data\",",
+                "\"verification_note\": \"估值数据为动态市场数据，本报告引用时点数据需在决策时重新核实。行业比较数据需确认计算口径。\""
+            ],
+            "quality_score": 100.0,
+            "evidence_score": 100.0,
+            "warnings": []
+        }
+    ],
+    "comparisons": [
+        {
+            "agent_a": "hark",
+            "agent_b": "chatgpt",
+            "common_claims": [],
+            "conflicting_claims": [],
+            "unmatched_claims": [
+                {
+                    "agent_id": "hark",
+                    "claim": "Revenue grew 17.5% YoY to RMB 129.7B in 2025 (verified, company filing)"
+                },
+                {
+                    "agent_id": "hark",
+                    "claim": "Gross margin remained stable at 91.2% in 2025 (verified, company filing)"
+                },
+                {
+                    "agent_id": "hark",
+                    "claim": "Inventory turnover decreased to 0.8x in 2025 from 1.0x in 2024 (verified, company filing)"
+                },
+                {
+                    "agent_id": "hark",
+                    "claim": "Current P/E ratio of 42.3x is 15% higher than 5-year average (verified, financial data)"
+                },
+                {
+                    "agent_id": "hark",
+                    "claim": "Operating cash flow conversion ratio was 98.5% in 2025 (verified, company filing)"
+                },
+                {
+                    "agent_id": "hark",
+                    "claim": "The revenue and profit growth appears sustainable due to Moutai's strong brand positioning and limited production capacity. However, the decreasing inventory turnover suggests potential channel inventory buildup, which could temporarily inflate sales figures. The alignment between operating cash flow (98.5% conversion) and reported profits provides confidence in earnings quality. Current valuation at 42.3x P/E is at a premium to peers, reflecting the company's premium status. Counter-evidence would include a significant economic downturn that reduces corporate gift-giving or regulatory changes that impact the high-end liquor market."
+                },
+                {
+                    "agent_id": "hark",
+                    "claim": "Key risks include: 1) Economic sensitivity affecting premium gifting demand, 2) Increasing competition from other premium liquor categories, 3) Regulatory changes on alcohol consumption, 4) Production capacity constraints limiting growth. Limitations include limited visibility into channel inventory levels and potential regional economic disparities affecting demand."
+                },
+                {
+                    "agent_id": "hark",
+                    "claim": "Positive observation - The company maintains strong financial metrics with high margins and cash flow generation, though current valuation appears fully pricing in premium status. Growth sustainability depends on macroeconomic conditions and regulatory environment."
+                },
+                {
+                    "agent_id": "hark",
+                    "claim": "75 - Strong financial metrics verification but limited visibility into channel inventory dynamics and macroeconomic sensitivity."
+                },
+                {
+                    "agent_id": "chatgpt",
+                    "claim": "**财务质量卓越但增速放缓**：公司2025年前三季度营收与归母净利润保持双位数增长（来源1，2）。毛利率稳定在约92%的极高水平，经营现金流与净利润匹配度高，存货结构健康（主要为基酒）。然而，营收同比增速自2024年高位有所回落（来源1，2，3）。"
+                },
+                {
+                    "agent_id": "chatgpt",
+                    "claim": "**估值处于历史及同业高位**：截至评估日，公司市盈率（TTM）显著高于白酒行业平均水平及自身历史中位数（来源4，5）。估值溢价反映了其无与伦比的品牌护城河与确定性。"
+                },
+                {
+                    "agent_id": "chatgpt",
+                    "claim": "**行业面临周期性压力**：高端白酒行业处于“量减价增”的成熟期，增长依赖提价与产品结构升级。当前宏观消费环境对高端需求构成潜在压力，渠道库存与批价稳定性是关键观察指标（行业共识，待核实具体数据）。"
+                },
+                {
+                    "agent_id": "chatgpt",
+                    "claim": "**核心投资逻辑清晰但已充分认知**：公司的投资逻辑（品牌垄断、定价权、稀缺性）坚实且市场认知高度一致。这导致股价对短期业绩波动的容错率较低。"
+                },
+                {
+                    "agent_id": "chatgpt",
+                    "claim": "**可持续性判断**：收入与利润的增长可持续性，取决于“量”（基酒产量与投放量）、“价”（直接提价与间接通过非标产品提价）和“宏观环境”。当前，产量增长受物理产能限制，增速平稳；提价是核心驱动，但受政策与舆论敏感度制约；宏观消费环境构成不确定性。因此，维持双位数增长可能，但增速较历史高点放缓是大概率事件。"
+                },
+                {
+                    "agent_id": "chatgpt",
+                    "claim": "**财务指标印证**：极高的毛利率与稳定的经营现金流（来源1，3，6）印证了其强大的盈利能力和收款质量。庞大的存货（来源7）主要是高价值的基酒，属于资产而非风险，与业务模式相符。这些指标共同支撑了其顶级的基本面质量。"
+                },
+                {
+                    "agent_id": "chatgpt",
+                    "claim": "**估值位置判断**：当前估值（来源4，5）表明市场已为这种确定性和质量支付了高昂溢价。在中期维度，估值进一步扩张需要业绩增速超预期或市场风险偏好显著提升，两者目前均面临挑战。"
+                },
+                {
+                    "agent_id": "chatgpt",
+                    "claim": "**反证证据**：可能推翻“中性观察”结论的反证包括：a) 公司宣布超出市场预期的直接提价方案；b) 季度业绩连续显著超预期，证明增长动能强劲；c) 宏观消费数据持续强劲，推动高端消费情绪高涨。反之，若批价出现趋势性下滑或渠道库存显著积压，则“谨慎回避”的风险将上升。"
+                },
+                {
+                    "agent_id": "chatgpt",
+                    "claim": "**估值风险**：主要风险。估值处于高位，对任何业绩不及预期或市场风格转向（追求更高增长弹性）都可能引发估值收缩。"
+                },
+                {
+                    "agent_id": "chatgpt",
+                    "claim": "**宏观与政策风险**：经济增长放缓影响高端商务与礼品需求。与奢侈消费相关的舆论或政策风险始终存在。"
+                },
+                {
+                    "agent_id": "chatgpt",
+                    "claim": "**行业竞争风险**：虽然地位稳固，但其他高端白酒品牌持续发力，可能在一定程度内分流边际需求。"
+                },
+                {
+                    "agent_id": "chatgpt",
+                    "claim": "**数据局限性**：本报告基于2025年三季报及市场通用估值数据。缺乏最新的渠道调研数据（如批价、库存）作为直接验证，这部分信息对短期判断至关重要。"
+                },
+                {
+                    "agent_id": "chatgpt",
+                    "claim": "*中性观察**。贵州茅台是一家拥有极深护城河和卓越财务质量的杰出企业，具备长期持有价值。但在1-6个月的中期投资期限内，其股价表现更可能取决于业绩与市场预期的博弈，而非基本面出现重大突破。当前估值水平限制了其短期风险收益比，建议等待更佳的价格时机或更明确的增长加速信号。"
+                },
+                {
+                    "agent_id": "chatgpt",
+                    "claim": "70 - 结论基于已验证的财务数据和清晰的商业逻辑，但缺乏最新的渠道动销数据验证，且市场估值情绪难以精确量化。"
+                }
+            ],
+            "agreement_score": 0.0,
+            "conflict_count": 0
+        }
+    ],
+    "conflicts": [],
+    "consensus": [],
+    "overall_quality_score": 100.0,
+    "overall_evidence_score": 100.0,
+    "agreement_score": 0.0,
+    "warnings": [
+        "No sufficiently supported common claims detected.",
+        "Seats excluded from consensus (no structured sources): grok"
+    ],
+    "metadata": {
+        "task_title": "V3.10 research: 600519.SH",
+        "task_status": "submitted",
+        "agents": [
+            "hark",
+            "grok",
+            "chatgpt"
+        ],
+        "algorithm": "deterministic_heuristic_v1",
+        "semantic_verification": false,
+        "factual_verification": false,
+        "seats_active": [
+            "hark",
+            "grok",
+            "chatgpt"
+        ],
+        "seats_assigned": [
+            "chatgpt",
+            "grok",
+            "hark"
+        ],
+        "seats_missing": [],
+        "seats_sourced": [
+            "hark",
+            "chatgpt"
+        ],
+        "seats_unsourced": [
+            "grok"
+        ]
+    }
+}

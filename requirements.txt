@@ -1,53 +1,23 @@
+# A股趋势工作台 v1.3.0 · 运行与打包依赖
+# 旧 AI-Hedge-Fund-OS 的全量历史依赖见 _archive_legacy/requirements_legacy.txt
+
+# Web 服务
 fastapi>=0.115,<1
 uvicorn[standard]>=0.34,<1
-openai>=2,<3
-langgraph>=1,<2
-akshare>=1.18,<2
+pydantic>=2.10,<3
+
+# 数据计算与网络
 pandas>=2.2,<3
 numpy>=2,<3
-python-dotenv>=1.0,<2
-pydantic>=2.10,<3
-pypdf>=4,<7
-chromadb>=0.5,<1
-pytest>=8,<9
-# V1.1 声明依赖（按需安装）
-langchain>=0.3,<1
-langchain-openai>=0.2,<1
-sentence-transformers>=3,<4
-# V0.5 回测与因子系统
-backtrader>=1.9,<2
-scikit-learn>=1.5,<2
-scipy>=1.13,<2
-optuna>=4,<5
-matplotlib>=3.9,<4
-# V0.8 实时行情系统
-websockets>=13,<16
-# V0.9 AI 交易大脑
-tiktoken>=0.8,<1
-# V1.4 自动交易生产系统
-tushare>=1.4,<2
-pymysql>=1.1,<2
-sqlalchemy>=2.0,<3
-apscheduler>=3.10,<4
+requests>=2.31,<3
+urllib3>=2,<3
 
-# V1.6 机器学习交易引擎
-xgboost>=2.0,<3
-torch>=2.2,<3
+# A 股历史复权数据（深度校验 / 兜底）
+baostock>=0.9.4
 
-# V1.7 强化学习交易 Agent
-gymnasium>=1.0,<2
+# 桌面窗口（pywebview 依赖 pythonnet）
+pywebview>=6.0,<7
+pythonnet>=3.2,<4
 
-# V1.8 真实市场强化学习训练平台
-
-# V2.1 财报 + 新闻 + MCP 工具生态（Research Intelligence Layer）
-beautifulsoup4>=4.12,<5
-
-# V2.3 实时市场感知系统（Real-Time Market Intelligence Engine）
-websocket-client>=1.8,<2
-redis>=5,<9
-
-# V3.9.2 data/cache.py Parquet 缓存引擎
-fastparquet>=2024.5,<2027
-
-# V3.10 自定义大模型 YAML 配置（ai_team/providers.py）
-PyYAML>=6.0
+# 打包
+pyinstaller>=6.0,<7

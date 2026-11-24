@@ -1,0 +1,36 @@
+# Executive Summary
+
+TFC's profitability is excellent, but its earnings quality is getting worse. After a roughly 60% drawdown it still trades at a premium to its module peers.
+
+# Key Findings
+
+- 9M26 revenue RMB 4.75bn (+21.3%) and net profit RMB 2.08bn (+42.2%). Q3 revenue grew 31.5% YoY and 28.4% QoQ.
+- Gross margin 62.6% for 9M (51.9% a year earlier) and 65.1% in Q3.
+- 9M operating cash flow RMB 1.46bn (+8.8%), or 0.70x net profit. Q3 OCF about RMB 0.46bn, or 0.52x net profit.
+- Inventory RMB 1.27bn (+178.7% YTD). Receivables about RMB 1.95bn (+77% YoY) [unverified].
+- Equipment prepayments rose 446.6% and contract liabilities rose 128%.
+- TTM P/E about 52x, against about 23x for Innolight and about 18x for Eoptolink.
+
+# Evidence and Sources
+
+- TFC 2026 Q3 report (CNINFO, notice 2026-064, 28 October): revenue, net profit, OCF, inventory, prepayments, contract liabilities.
+- IR activity record 2026-012 (28 October): management explanation of strategic stockpiling for CPO and QoQ growth drivers.
+- Broker notes, Tianfeng (13 November) and Changjiang (5 November), plus 13 November closing prices: forward EPS and peer P/E derivation [partly unverified].
+
+# Analytical Reasoning
+
+TFC's net profit is growing far faster than its cash. Q3 OCF covered only 0.52x net profit, while inventory rose 178.7% YTD and receivables about 77% YoY [unverified]. With revenue up 21% and cost of sales down 5.69%, and no explanation for that in the filing, weak cash conversion is the test of whether the 65% gross margin is real economics or partly timing, capitalization or stock build.
+
+# Risks and Limitations
+
+- Customer concentration is not disclosed quarterly; the top-five share is [unverified].
+- Q3 figures are unaudited. A write-down on the stockpiled inventory (+178.7% YTD) would hit margins directly.
+- Peer P/E multiples are derived from mixed TTM bases and are approximate.
+
+# Independent Conclusion
+
+TFC's earnings are high-margin but under-converted to cash (Q3 OCF was 0.52x net profit). Its roughly 52x TTM premium over peers rests mainly on the 2027 CPO ramp.
+
+# Confidence Level
+
+0.68

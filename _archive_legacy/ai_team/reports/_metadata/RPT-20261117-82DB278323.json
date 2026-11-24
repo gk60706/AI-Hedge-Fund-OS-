@@ -1,0 +1,38 @@
+{
+    "report_id": "RPT-20261117-82DB278323",
+    "task_id": "TASK-20261117-4CEEE3A1",
+    "agent_id": "chatgpt",
+    "agent_name": "ChatGPT",
+    "agent_role": "cio",
+    "title": "Manual research: chatgpt",
+    "format": "markdown",
+    "report_path": "C:\\Users\\Administrator\\Desktop\\股票分析\\ai_team\\reports\\TASK-20261117-4CEEE3A1\\chatgpt_RPT-20261117-82DB278323.md",
+    "metadata_path": "C:\\Users\\Administrator\\Desktop\\股票分析\\ai_team\\reports\\_metadata\\RPT-20261117-82DB278323.json",
+    "quality": "complete",
+    "validation": {
+        "is_valid": true,
+        "quality": "complete",
+        "total_characters": 1856,
+        "total_words": 190,
+        "found_sections": [
+            "Executive Summary",
+            "Key Findings",
+            "Evidence and Sources",
+            "Analytical Reasoning",
+            "Risks and Limitations",
+            "Independent Conclusion",
+            "Confidence Level"
+        ],
+        "missing_sections": [],
+        "warnings": [],
+        "evidence_contract": {
+            "valid": null,
+            "status": "sources_not_provided"
+        }
+    },
+    "total_characters": 1856,
+    "total_words": 190,
+    "created_at": "2026-11-17T06:36:22.016514+00:00",
+    "source": "manual",
+    "notes": ""
+}

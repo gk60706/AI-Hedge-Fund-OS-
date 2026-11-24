@@ -1,0 +1,768 @@
+{
+    "validation_id": "VAL-20261119-2512CE043C",
+    "task_id": "TASK-20261119-8E6EDBA4",
+    "status": "partial",
+    "created_at": "2026-11-19T08:51:59.068127+00:00",
+    "report_count": 2,
+    "agent_analyses": [
+        {
+            "report_id": "RPT-20261119-A0D7AC3A52",
+            "task_id": "TASK-20261119-8E6EDBA4",
+            "agent_id": "hark",
+            "title": "hark research report (zai-org/GLM-4.5-Air)",
+            "claims": [
+                {
+                    "claim_id": "CLM-hark-f853eba43126",
+                    "agent_id": "hark",
+                    "text": "Revenue Growth: Historical data shows consistent double-digit growth, but recent figures unverified.",
+                    "category": "business",
+                    "direction": "positive",
+                    "section": "extracted",
+                    "evidence_level": "weak",
+                    "confidence": 0.6,
+                    "keywords": [
+                        "revenue",
+                        "growth",
+                        "historical",
+                        "data",
+                        "shows",
+                        "consistent",
+                        "double",
+                        "digit",
+                        "growth",
+                        "but",
+                        "recent",
+                        "figures",
+                        "unverified"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-hark-8d60d133b70a",
+                    "agent_id": "hark",
+                    "text": "Profitability: Historically maintained gross margins above 90%, but current status unverified.",
+                    "category": "financial",
+                    "direction": "neutral",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "profitability",
+                        "historically",
+                        "maintained",
+                        "gross",
+                        "margins",
+                        "above",
+                        "90",
+                        "but",
+                        "current",
+                        "status",
+                        "unverified"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-hark-01c4bb770d36",
+                    "agent_id": "hark",
+                    "text": "Valuation: Historically traded at premium valuations, but current metrics unverified.",
+                    "category": "valuation",
+                    "direction": "neutral",
+                    "section": "extracted",
+                    "evidence_level": "weak",
+                    "confidence": 0.6,
+                    "keywords": [
+                        "valuation",
+                        "historically",
+                        "traded",
+                        "at",
+                        "premium",
+                        "valuations",
+                        "but",
+                        "current",
+                        "metrics",
+                        "unverified"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-hark-90df2d680561",
+                    "agent_id": "hark",
+                    "text": "Cash Flow: Strong historical cash generation, but recent figures unverified.",
+                    "category": "financial",
+                    "direction": "positive",
+                    "section": "extracted",
+                    "evidence_level": "weak",
+                    "confidence": 0.6,
+                    "keywords": [
+                        "cash",
+                        "flow",
+                        "strong",
+                        "historical",
+                        "cash",
+                        "generation",
+                        "but",
+                        "recent",
+                        "figures",
+                        "unverified"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-hark-3f11601ee4d3",
+                    "agent_id": "hark",
+                    "text": "Kweichow Moutai's premium positioning and brand strength have historically enabled consistent premium pricing and margin expansion. The company's strong cash generation has supported sustainable dividend policies. However, counter-evidence suggests that the high valuation multiples may not be sustainable if economic growth slows or if regulatory restrictions on alcohol consumption increase. Additionally, changing demographics may impact long-term demand for traditional baijiu.",
+                    "category": "financial",
+                    "direction": "negative",
+                    "section": "extracted",
+                    "evidence_level": "weak",
+                    "confidence": 0.6,
+                    "keywords": [
+                        "kweichow",
+                        "moutai",
+                        "premium",
+                        "positioning",
+                        "and",
+                        "brand",
+                        "strength",
+                        "have",
+                        "historically",
+                        "enabled",
+                        "consistent",
+                        "premium",
+                        "pricing",
+                        "and",
+                        "margin",
+                        "expansion",
+                        "the",
+                        "company",
+                        "strong",
+                        "cash"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-hark-f7950455986d",
+                    "agent_id": "hark",
+                    "text": "Regulatory risk: Potential restrictions on alcohol consumption could impact demand.",
+                    "category": "industry",
+                    "direction": "negative",
+                    "section": "extracted",
+                    "evidence_level": "weak",
+                    "confidence": 0.6,
+                    "keywords": [
+                        "regulatory",
+                        "risk",
+                        "potential",
+                        "restrictions",
+                        "on",
+                        "alcohol",
+                        "consumption",
+                        "could",
+                        "impact",
+                        "demand"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-hark-fe8c476c4bc7",
+                    "agent_id": "hark",
+                    "text": "Valuation risk: Historical high valuations may not be sustainable.",
+                    "category": "valuation",
+                    "direction": "negative",
+                    "section": "extracted",
+                    "evidence_level": "weak",
+                    "confidence": 0.6,
+                    "keywords": [
+                        "valuation",
+                        "risk",
+                        "historical",
+                        "high",
+                        "valuations",
+                        "may",
+                        "not",
+                        "be",
+                        "sustainable"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-hark-6633e35ad2a2",
+                    "agent_id": "hark",
+                    "text": "Demographic risk: Changing consumer preferences among younger generations.",
+                    "category": "risk",
+                    "direction": "negative",
+                    "section": "extracted",
+                    "evidence_level": "weak",
+                    "confidence": 0.6,
+                    "keywords": [
+                        "demographic",
+                        "risk",
+                        "changing",
+                        "consumer",
+                        "preferences",
+                        "among",
+                        "younger",
+                        "generations"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-hark-e7e0660a6954",
+                    "agent_id": "hark",
+                    "text": "Economic sensitivity: Premium consumption may decline during economic downturns.",
+                    "category": "risk",
+                    "direction": "negative",
+                    "section": "extracted",
+                    "evidence_level": "weak",
+                    "confidence": 0.6,
+                    "keywords": [
+                        "economic",
+                        "sensitivity",
+                        "premium",
+                        "consumption",
+                        "may",
+                        "decline",
+                        "during",
+                        "economic",
+                        "downturns"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-hark-d3092e45cf91",
+                    "agent_id": "hark",
+                    "text": "Data verification: Current financial data requires verification.",
+                    "category": "other",
+                    "direction": "neutral",
+                    "section": "extracted",
+                    "evidence_level": "weak",
+                    "confidence": 0.6,
+                    "keywords": [
+                        "data",
+                        "verification",
+                        "current",
+                        "financial",
+                        "data",
+                        "requires",
+                        "verification"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-hark-24dd52beb1f8",
+                    "agent_id": "hark",
+                    "text": "Kweichow Moutai maintains strong competitive advantages in China's premium baijiu segment with exceptional profitability. However, without verified current financial data, it's difficult to assess the sustainability of growth at current valuation levels. The company faces potential headwinds from regulatory changes and shifting consumer preferences.",
+                    "category": "financial",
+                    "direction": "negative",
+                    "section": "extracted",
+                    "evidence_level": "weak",
+                    "confidence": 0.6,
+                    "keywords": [
+                        "kweichow",
+                        "moutai",
+                        "maintains",
+                        "strong",
+                        "competitive",
+                        "advantages",
+                        "in",
+                        "china",
+                        "premium",
+                        "baijiu",
+                        "segment",
+                        "with",
+                        "exceptional",
+                        "profitability",
+                        "however",
+                        "without",
+                        "verified",
+                        "current",
+                        "financial",
+                        "data"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-hark-d74608b18fec",
+                    "agent_id": "hark",
+                    "text": "50 - Significant data gaps regarding current financial performance and market conditions prevent higher confidence.",
+                    "category": "valuation",
+                    "direction": "neutral",
+                    "section": "extracted",
+                    "evidence_level": "weak",
+                    "confidence": 0.6,
+                    "keywords": [
+                        "50",
+                        "significant",
+                        "data",
+                        "gaps",
+                        "regarding",
+                        "current",
+                        "financial",
+                        "performance",
+                        "and",
+                        "market",
+                        "conditions",
+                        "prevent",
+                        "higher",
+                        "confidence"
+                    ]
+                }
+            ],
+            "sections": {
+                "preamble": "## Executive Summary\nKweichow Moutai (600519.SH) is China's leading premium baijiu producer with strong brand recognition. The company has historically demonstrated exceptional profitability and consistent growth, though faces challenges from changing consumer preferences and potential regulatory changes. Current financial data requires verification.",
+                "key_findings": "1. Revenue Growth: Historical data shows consistent double-digit growth, but recent figures unverified.\n2. Profitability: Historically maintained gross margins above 90%, but current status unverified.\n3. Valuation: Historically traded at premium valuations, but current metrics unverified.\n4. Cash Flow: Strong historical cash generation, but recent figures unverified.",
+                "evidence": "- [Source 1]: Historical company financial reports (company_filing, verified for historical data)\n- [Source 2]: Industry research on Chinese baijiu market (industry_research, unverified for recent trends)\n- [Source 3]: Shanghai Stock Exchange historical listing data (exchange, verified for historical data)",
+                "reasoning": "Kweichow Moutai's premium positioning and brand strength have historically enabled consistent premium pricing and margin expansion. The company's strong cash generation has supported sustainable dividend policies. However, counter-evidence suggests that the high valuation multiples may not be sustainable if economic growth slows or if regulatory restrictions on alcohol consumption increase. Additionally, changing demographics may impact long-term demand for traditional baijiu.",
+                "risks": "1. Regulatory risk: Potential restrictions on alcohol consumption could impact demand.\n2. Valuation risk: Historical high valuations may not be sustainable.\n3. Demographic risk: Changing consumer preferences among younger generations.\n4. Economic sensitivity: Premium consumption may decline during economic downturns.\n5. Data verification: Current financial data requires verification.",
+                "conclusion": "Kweichow Moutai maintains strong competitive advantages in China's premium baijiu segment with exceptional profitability. However, without verified current financial data, it's difficult to assess the sustainability of growth at current valuation levels. The company faces potential headwinds from regulatory changes and shifting consumer preferences.\n\n## Confidence Level\n0.50 - Significant data gaps regarding current financial performance and market conditions prevent higher confidence."
+            },
+            "evidence_references": [
+                "- [Source 1]: Historical company financial reports (company_filing, verified for historical data)",
+                "- [Source 2]: Industry research on Chinese baijiu market (industry_research, unverified for recent trends)",
+                "- [Source 3]: Shanghai Stock Exchange historical listing data (exchange, verified for historical data)"
+            ],
+            "quality_score": 82.13,
+            "evidence_score": 40.42,
+            "warnings": []
+        },
+        {
+            "report_id": "RPT-20261119-ADFA56C7CD",
+            "task_id": "TASK-20261119-8E6EDBA4",
+            "agent_id": "chatgpt",
+            "title": "chatgpt research report (deepseek-ai/DeepSeek-V3.2)",
+            "claims": [
+                {
+                    "claim_id": "CLM-chatgpt-f7a6b0171ac2",
+                    "agent_id": "chatgpt",
+                    "text": "**财务表现稳健**：根据公司2025年第三季度报告，2025年1-9月实现营业收入1,185.76亿元，同比增长14.0%；归母净利润595.31亿元，同比增长15.7%。单季度增长保持稳定。",
+                    "category": "financial",
+                    "direction": "positive",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "财务表现稳健",
+                        "根据公司2025年第三季度报告",
+                        "2025年1",
+                        "9月实现营业收入1",
+                        "185",
+                        "76亿元",
+                        "同比增长14",
+                        "归母净利润595",
+                        "31亿元",
+                        "同比增长15",
+                        "单季度增长保持稳定"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-chatgpt-427dc9862d9b",
+                    "agent_id": "chatgpt",
+                    "text": "**盈利能力强劲且稳定**：2025年前三季度毛利率为92.2%（2024年同期为91.8%），净利率稳定在约50%的高位，显示其极强的定价能力和成本控制力。",
+                    "category": "financial",
+                    "direction": "positive",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "盈利能力强劲且稳定",
+                        "2025年前三季度毛利率为92",
+                        "2024年同期为91",
+                        "净利率稳定在约50",
+                        "的高位",
+                        "显示其极强的定价能力和成本控制力"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-chatgpt-9d05f9462619",
+                    "agent_id": "chatgpt",
+                    "text": "**现金流质量优异**：2025年前三季度经营活动产生的现金流量净额为545.66亿元，与净利润规模匹配度高，销售回款能力极强。应收账款极低，合同负债（预收款项）余额庞大，截至2025年9月30日为138.22亿元，为未来收入提供保障。",
+                    "category": "financial",
+                    "direction": "neutral",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "现金流质量优异",
+                        "2025年前三季度经营活动产生的现金流量净额为545",
+                        "66亿元",
+                        "与净利润规模匹配度高",
+                        "销售回款能力极强",
+                        "应收账款极低",
+                        "合同负债",
+                        "预收款项",
+                        "余额庞大",
+                        "截至2025年9月30日为138",
+                        "22亿元",
+                        "为未来收入提供保障"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-chatgpt-3411c060d408",
+                    "agent_id": "chatgpt",
+                    "text": "**存货结构健康**：截至2025年9月30日，存货账面价值为388.41亿元，主要由基酒和原材料构成，属于生产性存货，减值风险极低，且随时间增值潜力大。",
+                    "category": "risk",
+                    "direction": "neutral",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "存货结构健康",
+                        "截至2025年9月30日",
+                        "存货账面价值为388",
+                        "41亿元",
+                        "主要由基酒和原材料构成",
+                        "属于生产性存货",
+                        "减值风险极低",
+                        "且随时间增值潜力大"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-chatgpt-b0fed1e98a22",
+                    "agent_id": "chatgpt",
+                    "text": "**估值处于历史中枢偏上**：基于2025年一致预期净利润（未核实），当前市盈率（TTM）约28-30倍，高于近五年历史均值（约30倍），但低于2021年高点。相较于白酒行业平均约25倍（TTM，未核实）的估值，存在一定溢价。",
+                    "category": "financial",
+                    "direction": "neutral",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "估值处于历史中枢偏上",
+                        "基于2025年一致预期净利润",
+                        "未核实",
+                        "当前市盈率",
+                        "ttm",
+                        "约28",
+                        "30倍",
+                        "高于近五年历史均值",
+                        "约30倍",
+                        "但低于2021年高点",
+                        "相较于白酒行业平均约25倍",
+                        "ttm",
+                        "未核实",
+                        "的估值",
+                        "存在一定溢价"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-chatgpt-b23b6b5e0157",
+                    "agent_id": "chatgpt",
+                    "text": "核心投资逻辑在于公司强大的品牌护城河和定价权确保了其盈利增长的可持续性。高毛利率和净利率是这一竞争优势的直接财务体现。庞大的合同负债是未来收入的“蓄水池”，提供了业绩可见性。优异的经营现金流印证了利润的真实性和商业模式的高质量。存货是资产而非风险，构成了长期价值的基础。",
+                    "category": "financial",
+                    "direction": "positive",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "核心投资逻辑在于公司强大的品牌护城河和定价权确保了其盈利增长的可持续性",
+                        "高毛利率和净利率是这一竞争优势的直接财务体现",
+                        "庞大的合同负债是未来收入的",
+                        "蓄水池",
+                        "提供了业绩可见性",
+                        "优异的经营现金流印证了利润的真实性和商业模式的高质量",
+                        "存货是资产而非风险",
+                        "构成了长期价值的基础"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-chatgpt-c3b017bd63f0",
+                    "agent_id": "chatgpt",
+                    "text": "*收入与利润增长的可持续性判断**：基于已核实的三季报数据，增长势头稳健。可持续性的核心支撑是：1）高端白酒的消费粘性和社交属性；2）公司对渠道和价格的强大控制力；3）产能的稳步释放（需核实后续资本开支计划）。中期内，在无重大外部冲击下，实现双位数增长是大概率事件。",
+                    "category": "financial",
+                    "direction": "positive",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "收入与利润增长的可持续性判断",
+                        "基于已核实的三季报数据",
+                        "增长势头稳健",
+                        "可持续性的核心支撑是",
+                        "高端白酒的消费粘性和社交属性",
+                        "公司对渠道和价格的强大控制力",
+                        "产能的稳步释放",
+                        "需核实后续资本开支计划",
+                        "中期内",
+                        "在无重大外部冲击下",
+                        "实现双位数增长是大概率事件"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-chatgpt-2009bbda0762",
+                    "agent_id": "chatgpt",
+                    "text": "*财务数据互相印证**：毛利率微升、存货（基酒）增加、应收账款几乎可忽略、经营现金流充沛，这些指标高度协同，描绘出一家产品供不应求、先款后货、资产质量极高的企业画像，财务数据可信度高。",
+                    "category": "financial",
+                    "direction": "neutral",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "财务数据互相印证",
+                        "毛利率微升",
+                        "存货",
+                        "基酒",
+                        "增加",
+                        "应收账款几乎可忽略",
+                        "经营现金流充沛",
+                        "这些指标高度协同",
+                        "描绘出一家产品供不应求",
+                        "先款后货",
+                        "资产质量极高的企业画像",
+                        "财务数据可信度高"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-chatgpt-8f779340efb1",
+                    "agent_id": "chatgpt",
+                    "text": "*估值位置**：当前估值（约28-30倍PE TTM）反映了市场对其确定性的溢价。它处于历史区间内，但并非显著低估。与同业相比的溢价是合理的，因其盈利质量和增长稳定性远超行业平均。",
+                    "category": "industry",
+                    "direction": "negative",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "估值位置",
+                        "当前估值",
+                        "约28",
+                        "30倍pe",
+                        "ttm",
+                        "反映了市场对其确定性的溢价",
+                        "它处于历史区间内",
+                        "但并非显著低估",
+                        "与同业相比的溢价是合理的",
+                        "因其盈利质量和增长稳定性远超行业平均"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-chatgpt-694859e636d1",
+                    "agent_id": "chatgpt",
+                    "text": "**宏观经济严重下滑**：如果出现超出预期的高失业率、居民收入显著下降或消费信心崩溃，将直接冲击高端白酒需求，导致批价下跌、渠道库存积压，从而证伪增长可持续性。",
+                    "category": "business",
+                    "direction": "negative",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "宏观经济严重下滑",
+                        "如果出现超出预期的高失业率",
+                        "居民收入显著下降或消费信心崩溃",
+                        "将直接冲击高端白酒需求",
+                        "导致批价下跌",
+                        "渠道库存积压",
+                        "从而证伪增长可持续性"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-chatgpt-628f632839a3",
+                    "agent_id": "chatgpt",
+                    "text": "**行业政策风险**：若出台远超预期的针对高端消费或白酒行业的限制性政策（如更严格的消费税），将损害盈利能力。",
+                    "category": "industry",
+                    "direction": "positive",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "行业政策风险",
+                        "若出台远超预期的针对高端消费或白酒行业的限制性政策",
+                        "如更严格的消费税",
+                        "将损害盈利能力"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-chatgpt-81ec5c183b33",
+                    "agent_id": "chatgpt",
+                    "text": "**公司治理或产品质量出现重大负面事件**：这将对品牌价值造成不可逆的损害，动摇其根本护城河。",
+                    "category": "business",
+                    "direction": "neutral",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "公司治理或产品质量出现重大负面事件",
+                        "这将对品牌价值造成不可逆的损害",
+                        "动摇其根本护城河"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-chatgpt-577fd66e06ec",
+                    "agent_id": "chatgpt",
+                    "text": "**宏观经济与消费风险**：公司业绩与高端商务和民间消费活动高度相关。经济下行周期可能延迟或削弱需求。**监控指标**：社会消费品零售总额（高端商品）、PMI、茅台酒批价。",
+                    "category": "risk",
+                    "direction": "neutral",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "宏观经济与消费风险",
+                        "公司业绩与高端商务和民间消费活动高度相关",
+                        "经济下行周期可能延迟或削弱需求",
+                        "监控指标",
+                        "社会消费品零售总额",
+                        "高端商品",
+                        "pmi",
+                        "茅台酒批价"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-chatgpt-013a8f53e7ae",
+                    "agent_id": "chatgpt",
+                    "text": "**估值风险**：当前估值已包含较高预期，若未来季度业绩增速不及预期（如低于15%），可能引发估值下调。**监控指标**：季度营收/净利润同比增速、市盈率（PE）Band。",
+                    "category": "financial",
+                    "direction": "neutral",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "估值风险",
+                        "当前估值已包含较高预期",
+                        "若未来季度业绩增速不及预期",
+                        "如低于15",
+                        "可能引发估值下调",
+                        "监控指标",
+                        "季度营收",
+                        "净利润同比增速",
+                        "市盈率",
+                        "pe",
+                        "band"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-chatgpt-20a196be1d4b",
+                    "agent_id": "chatgpt",
+                    "text": "**政策风险**：消费税改革始终是悬在行业头上的潜在风险。**监控指标**：相关财税政策动向。",
+                    "category": "industry",
+                    "direction": "neutral",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "政策风险",
+                        "消费税改革始终是悬在行业头上的潜在风险",
+                        "监控指标",
+                        "相关财税政策动向"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-chatgpt-8f46ac11222f",
+                    "agent_id": "chatgpt",
+                    "text": "**研究局限性**：本报告基于2025年三季报及市场通用估值数据。对于2025年全年及2026年的业绩指引、具体产能规划细节、渠道库存的精确数据等关键信息尚未获取（公司未详细披露或需行业调研），限制了更精确的远期判断。",
+                    "category": "industry",
+                    "direction": "neutral",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "研究局限性",
+                        "本报告基于2025年三季报及市场通用估值数据",
+                        "对于2025年全年及2026年的业绩指引",
+                        "具体产能规划细节",
+                        "渠道库存的精确数据等关键信息尚未获取",
+                        "公司未详细披露或需行业调研",
+                        "限制了更精确的远期判断"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-chatgpt-32484df8d846",
+                    "agent_id": "chatgpt",
+                    "text": "贵州茅台的基本面在A股中堪称典范，其财务质量、竞争壁垒和盈利确定性无可挑剔，是典型的长期核心资产。然而，基于中期（1-6个月）投资期限和当前估值水平，其风险收益比吸引力一般。股价已充分反映了其基本面的优势，短期内缺乏显著的、未被市场认知的向上催化因素。建议等待两种情形之一出现时转为“积极关注”：1）市场系统性调整带来估值更具吸引力的买点；2）公司业绩增速或经营数据（如提价、渠道改革深化）出现超预期的积极信号。",
+                    "category": "financial",
+                    "direction": "positive",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "贵州茅台的基本面在a股中堪称典范",
+                        "其财务质量",
+                        "竞争壁垒和盈利确定性无可挑剔",
+                        "是典型的长期核心资产",
+                        "然而",
+                        "基于中期",
+                        "6个月",
+                        "投资期限和当前估值水平",
+                        "其风险收益比吸引力一般",
+                        "股价已充分反映了其基本面的优势",
+                        "短期内缺乏显著的",
+                        "未被市场认知的向上催化因素",
+                        "建议等待两种情形之一出现时转为",
+                        "积极关注",
+                        "市场系统性调整带来估值更具吸引力的买点",
+                        "公司业绩增速或经营数据",
+                        "如提价",
+                        "渠道改革深化",
+                        "出现超预期的积极信号"
+                    ]
+                },
+                {
+                    "claim_id": "CLM-chatgpt-140efd815139",
+                    "agent_id": "chatgpt",
+                    "text": "75 - 核心财务数据已从官方渠道核实，商业模式和竞争优势逻辑坚实，但对未来季度业绩的精确预测、渠道微观状态及估值情绪变化存在信息缺口。",
+                    "category": "financial",
+                    "direction": "neutral",
+                    "section": "extracted",
+                    "evidence_level": "strong",
+                    "confidence": 0.8,
+                    "keywords": [
+                        "75",
+                        "核心财务数据已从官方渠道核实",
+                        "商业模式和竞争优势逻辑坚实",
+                        "但对未来季度业绩的精确预测",
+                        "渠道微观状态及估值情绪变化存在信息缺口"
+                    ]
+                }
+            ],
+            "sections": {
+                "preamble": "## Executive Summary\n基于可获取的公开信息分析，贵州茅台（600519.SH）在中期（1-6个月）维度展现出强大的基本面和财务韧性。其收入与利润增长具备较高的可持续性，核心逻辑在于其无可比拟的品牌护城河、定价权以及稳健的供需关系。财务数据质量高，现金流与利润高度匹配。当前估值处于历史中枢偏上水平，反映了其确定性溢价。主要风险在于宏观经济波动对高端消费的影响以及估值本身已包含较高预期。结论为“中性观察”，因当前估值已充分反映其优势，需等待更具吸引力的风险收益比时机。",
+                "key_findings": "1.  **财务表现稳健**：根据公司2025年第三季度报告，2025年1-9月实现营业收入1,185.76亿元，同比增长14.0%；归母净利润595.31亿元，同比增长15.7%。单季度增长保持稳定。\n2.  **盈利能力强劲且稳定**：2025年前三季度毛利率为92.2%（2024年同期为91.8%），净利率稳定在约50%的高位，显示其极强的定价能力和成本控制力。\n3.  **现金流质量优异**：2025年前三季度经营活动产生的现金流量净额为545.66亿元，与净利润规模匹配度高，销售回款能力极强。应收账款极低，合同负债（预收款项）余额庞大，截至2025年9月30日为138.22亿元，为未来收入提供保障。\n4.  **存货结构健康**：截至2025年9月30日，存货账面价值为388.41亿元，主要由基酒和原材料构成，属于生产性存货，减值风险极低，且随时间增值潜力大。\n5.  **估值处于历史中枢偏上**：基于2025年一致预期净利润（未核实），当前市盈率（TTM）约28-30倍，高于近五年历史均值（约30倍），但低于2021年高点。相较于白酒行业平均约25倍（TTM，未核实）的估值，存在一定溢价。",
+                "evidence": "```json\n[\n  {\n    \"name\": \"贵州茅台酒股份有限公司2025年第三季度报告\",\n    \"url\": \"http://www.sse.com.cn/disclosure/listedinfo/announcement/c/new/2025-10-26/600519_20251026_1_ZcH8q9J5.pdf\",\n    \"published_at\": \"2025-10-26T00:00:00+08:00\",\n    \"description\": \"公司官方披露的2025年第三季度财务报告，包含截至2025年9月30日的合并利润表、资产负债表、现金流量表及主要财务数据。\",\n    \"data_period\": \"2025-Q3\",\n    \"source_type\": \"company_filing\",\n    \"verification_status\": \"verified\",\n    \"verification_note\": \"数据直接来源于上海证券交易所官网披露的PDF公告，已核对关键财务数字。\"\n  },\n  {\n    \"name\": \"Wind金融终端\",\n    \"url\": \"https://www.wind.com.cn/\",\n    \"published_at\": \"2026-11-19T15:30:00+08:00\",\n    \"description\": \"金融数据服务商，用于查询历史市盈率（TTM）数据及行业对比数据。\",\n    \"data_period\": \"2026-11-19\",\n    \"source_type\": \"financial_data\",\n    \"verification_status\": \"unverified\",\n    \"verification_note\": \"估值数据为实时市场数据，依赖于数据服务商的准确性。行业平均估值数据为概数，未逐一核实成分股。\"\n  }\n]\n```",
+                "reasoning": "核心投资逻辑在于公司强大的品牌护城河和定价权确保了其盈利增长的可持续性。高毛利率和净利率是这一竞争优势的直接财务体现。庞大的合同负债是未来收入的“蓄水池”，提供了业绩可见性。优异的经营现金流印证了利润的真实性和商业模式的高质量。存货是资产而非风险，构成了长期价值的基础。\n\n**收入与利润增长的可持续性判断**：基于已核实的三季报数据，增长势头稳健。可持续性的核心支撑是：1）高端白酒的消费粘性和社交属性；2）公司对渠道和价格的强大控制力；3）产能的稳步释放（需核实后续资本开支计划）。中期内，在无重大外部冲击下，实现双位数增长是大概率事件。\n\n**财务数据互相印证**：毛利率微升、存货（基酒）增加、应收账款几乎可忽略、经营现金流充沛，这些指标高度协同，描绘出一家产品供不应求、先款后货、资产质量极高的企业画像，财务数据可信度高。\n\n**估值位置**：当前估值（约28-30倍PE TTM）反映了市场对其确定性的溢价。它处于历史区间内，但并非显著低估。与同业相比的溢价是合理的，因其盈利质量和增长稳定性远超行业平均。\n\n**反证与可能推翻结论的证据**：\n1.  **宏观经济严重下滑**：如果出现超出预期的高失业率、居民收入显著下降或消费信心崩溃，将直接冲击高端白酒需求，导致批价下跌、渠道库存积压，从而证伪增长可持续性。\n2.  **行业政策风险**：若出台远超预期的针对高端消费或白酒行业的限制性政策（如更严格的消费税），将损害盈利能力。\n3.  **公司治理或产品质量出现重大负面事件**：这将对品牌价值造成不可逆的损害，动摇其根本护城河。",
+                "risks": "1.  **宏观经济与消费风险**：公司业绩与高端商务和民间消费活动高度相关。经济下行周期可能延迟或削弱需求。**监控指标**：社会消费品零售总额（高端商品）、PMI、茅台酒批价。\n2.  **估值风险**：当前估值已包含较高预期，若未来季度业绩增速不及预期（如低于15%），可能引发估值下调。**监控指标**：季度营收/净利润同比增速、市盈率（PE）Band。\n3.  **政策风险**：消费税改革始终是悬在行业头上的潜在风险。**监控指标**：相关财税政策动向。\n4.  **研究局限性**：本报告基于2025年三季报及市场通用估值数据。对于2025年全年及2026年的业绩指引、具体产能规划细节、渠道库存的精确数据等关键信息尚未获取（公司未详细披露或需行业调研），限制了更精确的远期判断。",
+                "conclusion": "**中性观察**。\n贵州茅台的基本面在A股中堪称典范，其财务质量、竞争壁垒和盈利确定性无可挑剔，是典型的长期核心资产。然而，基于中期（1-6个月）投资期限和当前估值水平，其风险收益比吸引力一般。股价已充分反映了其基本面的优势，短期内缺乏显著的、未被市场认知的向上催化因素。建议等待两种情形之一出现时转为“积极关注”：1）市场系统性调整带来估值更具吸引力的买点；2）公司业绩增速或经营数据（如提价、渠道改革深化）出现超预期的积极信号。\n\n## Confidence Level\n0.75 - 核心财务数据已从官方渠道核实，商业模式和竞争优势逻辑坚实，但对未来季度业绩的精确预测、渠道微观状态及估值情绪变化存在信息缺口。"
+            },
+            "evidence_references": [
+                "http://www.sse.com.cn/disclosure/listedinfo/announcement/c/new/2025-10-26/600519_20251026_1_ZcH8q9J5.pdf\",",
+                "https://www.wind.com.cn/\",",
+                "2025",
+                "2026",
+                "\"description\": \"公司官方披露的2025年第三季度财务报告，包含截至2025年9月30日的合并利润表、资产负债表、现金流量表及主要财务数据。\",",
+                "\"data_period\": \"2025-Q3\",",
+                "\"source_type\": \"company_filing\",",
+                "\"verification_note\": \"数据直接来源于上海证券交易所官网披露的PDF公告，已核对关键财务数字。\"",
+                "\"description\": \"金融数据服务商，用于查询历史市盈率（TTM）数据及行业对比数据。\",",
+                "\"data_period\": \"2026-11-19\",",
+                "\"source_type\": \"financial_data\",",
+                "\"verification_note\": \"估值数据为实时市场数据，依赖于数据服务商的准确性。行业平均估值数据为概数，未逐一核实成分股。\""
+            ],
+            "quality_score": 100.0,
+            "evidence_score": 100.0,
+            "warnings": []
+        }
+    ],
+    "comparisons": [],
+    "conflicts": [],
+    "consensus": [],
+    "overall_quality_score": 91.06,
+    "overall_evidence_score": 100.0,
+    "agreement_score": 0.0,
+    "warnings": [
+        "No sufficiently supported common claims detected.",
+        "Seats excluded from consensus (no structured sources): hark",
+        "Seats not reporting: grok"
+    ],
+    "metadata": {
+        "task_title": "V3.10 research: 600519.SH",
+        "task_status": "in_progress",
+        "agents": [
+            "hark",
+            "chatgpt"
+        ],
+        "algorithm": "deterministic_heuristic_v1",
+        "semantic_verification": false,
+        "factual_verification": false,
+        "seats_active": [
+            "hark",
+            "chatgpt"
+        ],
+        "seats_assigned": [
+            "chatgpt",
+            "grok",
+            "hark"
+        ],
+        "seats_missing": [
+            "grok"
+        ],
+        "seats_sourced": [
+            "chatgpt"
+        ],
+        "seats_unsourced": [
+            "hark"
+        ]
+    }
+}

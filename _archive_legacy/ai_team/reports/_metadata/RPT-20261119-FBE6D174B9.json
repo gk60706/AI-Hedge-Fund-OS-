@@ -1,0 +1,46 @@
+{
+    "report_id": "RPT-20261119-FBE6D174B9",
+    "task_id": "TASK-20261119-2EAEE832",
+    "agent_id": "hark",
+    "agent_name": "Hark",
+    "agent_role": "analyst",
+    "title": "hark research report (zai-org/GLM-4.5-Air)",
+    "format": "markdown",
+    "report_path": "C:\\Users\\Administrator\\Desktop\\股票分析\\ai_team\\reports\\TASK-20261119-2EAEE832\\hark_RPT-20261119-FBE6D174B9.md",
+    "metadata_path": "C:\\Users\\Administrator\\Desktop\\股票分析\\ai_team\\reports\\_metadata\\RPT-20261119-FBE6D174B9.json",
+    "quality": "complete",
+    "validation": {
+        "is_valid": true,
+        "quality": "complete",
+        "total_characters": 3204,
+        "total_words": 388,
+        "found_sections": [
+            "Executive Summary",
+            "Key Findings",
+            "Evidence and Sources",
+            "Analytical Reasoning",
+            "Risks and Limitations",
+            "Independent Conclusion",
+            "Confidence Level"
+        ],
+        "missing_sections": [],
+        "warnings": [],
+        "evidence_contract": {
+            "valid": true,
+            "source_count": 2,
+            "verified_count": 0,
+            "unverified_count": 2,
+            "errors": [],
+            "unverified_sources": [
+                0,
+                1
+            ],
+            "status": "validated"
+        }
+    },
+    "total_characters": 3204,
+    "total_words": 388,
+    "created_at": "2026-11-19T08:57:40.039871+00:00",
+    "source": "api:zai-org/GLM-4.5-Air",
+    "notes": "Research only; not investment advice. content_sha256=8f695923234e59e5fc79ec4a89cb0d05b9339de8beb532c50c06e5541665eff0"
+}

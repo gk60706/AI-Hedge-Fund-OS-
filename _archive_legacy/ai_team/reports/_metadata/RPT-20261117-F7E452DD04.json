@@ -1,0 +1,41 @@
+{
+    "report_id": "RPT-20261117-F7E452DD04",
+    "task_id": "TASK-20261117-1E0CC2F2",
+    "agent_id": "hark",
+    "agent_name": "Hark",
+    "agent_role": "analyst",
+    "title": "300394.SZ manual report (hark)",
+    "format": "markdown",
+    "report_path": "C:\\Users\\Administrator\\Desktop\\股票分析\\ai_team\\reports\\TASK-20261117-1E0CC2F2\\hark_RPT-20261117-F7E452DD04.md",
+    "metadata_path": "C:\\Users\\Administrator\\Desktop\\股票分析\\ai_team\\reports\\_metadata\\RPT-20261117-F7E452DD04.json",
+    "quality": "incomplete",
+    "validation": {
+        "is_valid": true,
+        "quality": "incomplete",
+        "total_characters": 577,
+        "total_words": 110,
+        "found_sections": [
+            "Executive Summary",
+            "Key Findings",
+            "Evidence and Sources"
+        ],
+        "missing_sections": [
+            "Analytical Reasoning",
+            "Risks and Limitations",
+            "Independent Conclusion",
+            "Confidence Level"
+        ],
+        "warnings": [
+            "Some required report sections are missing."
+        ],
+        "evidence_contract": {
+            "valid": null,
+            "status": "sources_not_provided"
+        }
+    },
+    "total_characters": 577,
+    "total_words": 110,
+    "created_at": "2026-11-17T04:59:06.858077+00:00",
+    "source": "manual",
+    "notes": "manual seat import for hybrid acceptance"
+}

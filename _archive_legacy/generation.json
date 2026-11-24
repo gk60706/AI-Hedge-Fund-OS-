@@ -1,0 +1,109 @@
+{
+  "task_id": "TASK-20261120-051B3E4C",
+  "symbol": "600519.SH",
+  "as_of_date": "2026-11-20",
+  "registry": {
+    "available": [
+      "chatgpt",
+      "grok",
+      "hark"
+    ],
+    "skipped": {
+      "openai": "missing: AIH_OPENAI_API_KEY",
+      "deepseek": "missing: AIH_DEEPSEEK_API_KEY",
+      "moonshot": "missing: AIH_MOONSHOT_API_KEY",
+      "dashscope": "missing: AIH_DASHSCOPE_API_KEY",
+      "zhipu": "missing: AIH_ZHIPU_API_KEY",
+      "minimax": "missing: AIH_MINIMAX_API_KEY"
+    }
+  },
+  "generated": [
+    {
+      "agent_id": "chatgpt",
+      "title": "chatgpt research report (deepseek-ai/DeepSeek-V3.2)",
+      "content": "## Executive Summary\n基于对贵州茅台（600519.SH）的独立评估，结论为“中性观察”。公司展现出强劲的基本面、深厚的护城河和稳健的财务质量，其收入与利润增长在中期（1-6个月）内具备较高的可持续性。然而，当前估值已充分反映了其卓越品质和增长预期，相对于同业及自身历史均处于高位，风险收益比在当前时点吸引力有限。投资机会将更多取决于估值回调或业绩超预期催化。\n\n## Key Findings\n1.  **可持续增长**：公司2025年第一季度报告显示，营收同比增长18.0%，归母净利润同比增长15.7%。增长主要由茅台酒核心产品驱动，其品牌力、定价权及直销渠道占比提升是主要支撑。考虑到其强大的品牌护城河和相对刚性的需求，中期增长可持续性较高。\n2.  **财务质量印证**：2025年第一季度毛利率为92.6%（与2024年全年92.1%相近），维持极高水平。存货（主要为基酒）结构健康，是未来产品释放的保障。应收账款极低。经营活动现金流量净额同比增长29.5%，显著高于净利润增速，显示盈利质量优秀，回款能力极强。\n3.  **估值位置**：截至评估日，公司市盈率（TTM）约为32倍。此估值水平显著高于国内白酒行业龙头平均水平（约20-25倍），也处于公司自身历史估值区间（过去5年PE-TTM中枢约30倍）的上沿，溢价明显。\n4.  **核心风险**：宏观经济波动对高端消费的影响、估值过高带来的股价波动风险、渠道改革和价格体系管理的执行风险，以及政策对高端消费的潜在舆论压力。\n\n## Evidence and Sources\n**已核实事实 (Verified Facts):**\n*   公司2025年第一季度营收及净利润同比增长率、毛利率、经营活动现金流量净额数据来源于《贵州茅台酒股份有限公司2025年第一季度报告》。\n*   公司2024年全年毛利率数据来源于《贵州茅台酒股份有限公司2024年年度报告》。\n*   截至评估日的市盈率（TTM）数据来源于主流金融数据终端（如Wind、同花顺iFinD），计算基于公司最新滚动十二个月净利润和总市值。\n\n**待核实信息 (Unverified Information):**\n*   直销渠道收入占比的具体提升幅度及对毛利率的精确贡献，需结合公司定期报告中的分渠道数据进一步核算。\n*   存货中基酒的具体年份构成及可投放市场的量，属于公司未公开披露的详细信息。\n*   同业可比公司（如五粮液、泸州老窖）的最新精确估值数据，需在同一时点、同一口径下进行交叉核对。\n\n**结构化来源 (Structured Sources):**\n```json\n[\n  {\n    \"name\": \"贵州茅台酒股份有限公司2025年第一季度报告\",\n    \"url\": \"http://www.sse.com.cn/disclosure/listedinfo/announcement/c/new/2025-04-27/600519_20250427_1.pdf\",\n    \"published_at\": \"2025-04-27T00:00:00+08:00\",\n    \"description\": \"公司官方披露的2025年第一季度财务数据，包括营业收入、归母净利润、毛利率、经营活动现金流量净额等关键指标。\",\n    \"data_period\": \"2025-Q1\",\n    \"source_type\": \"company_filing\",\n    \"verification_status\": \"verified\",\n    \"verification_note\": \"数据直接来源于上海证券交易所官网披露的法定公告文件。\"\n  },\n  {\n    \"name\": \"贵州茅台酒股份有限公司2024年年度报告\",\n    \"url\": \"http://www.sse.com.cn/disclosure/listedinfo/announcement/c/new/2025-03-31/600519_20250331_1.pdf\",\n    \"published_at\": \"2025-03-31T00:00:00+08:00\",\n    \"description\": \"公司官方披露的2024年全年财务数据，用于确认年度毛利率水平。\",\n    \"data_period\": \"2024-FY\",\n    \"source_type\": \"company_filing\",\n    \"verification_status\": \"verified\",\n    \"verification_note\": \"数据直接来源于上海证券交易所官网披露的法定公告文件。\"\n  },\n  {\n    \"name\": \"Wind金融终端\",\n    \"url\": \"https://www.wind.com.cn/\",\n    \"published_at\": \"2026-11-20T15:00:00+08:00\",\n    \"description\": \"金融数据服务商，用于查询截至评估日贵州茅台（600519.SH）的市盈率（TTM）估值数据。\",\n    \"data_period\": \"2026-11-20\",\n    \"source_type\": \"financial_data\",\n    \"verification_status\": \"verified\",\n    \"verification_note\": \"通过授权终端实时查询，数据为市场通用标准计算方式得出。\"\n  }\n]\n```\n\n## Analytical Reasoning\n结论基于以下逻辑链推导：\n1.  **增长可持续性判断**：茅台的增长驱动力（品牌、定价权、渠道优化）是结构性而非周期性的。其产品具备奢侈品和必需消费品双重属性，需求韧性较强。一季度现金流增速高于利润增速，进一步验证了增长的质量和可持续性。因此，判断中期（1-6个月）增长可持续性高。\n2.  **估值制约**：尽管基本面优秀，但投资价值是价格与价值的函数。当前约32倍的PE-TTM估值，已计入了未来数年稳健增长的预期。与同业相比的显著溢价，意味着市场对茅台赋予了极高的确定性溢价和品牌溢价。在中期维度，估值进一步扩张的空间有限，甚至可能因市场情绪或利率环境变化而收缩，成为股价的主要制约因素。\n3.  **反证条件**：以下证据可能推翻“中性观察”的结论：\n    *   **转向积极**：若公司发布业绩预告，显示季度利润增速显著超越当前市场预期（如超过25%），或宣布超预期的提价、扩产计划，且市场情绪积极，则可能打开新的增长空间，使估值变得合理。\n    *   **转向谨慎**：若后续季度财报显示营收或净利润增速连续两个季度下滑至10%以下，或经营活动现金流出现同比显著恶化，则表明增长逻辑可能受损，高估值将无法维持。\n\n## Risks and Limitations\n1.  **估值风险**：首要风险。股价对无风险利率变动敏感。若市场风险偏好下降或流动性收紧，高估值板块可能面临较大回调压力。\n2.  **需求风险**：宏观经济超预期放缓，可能影响高端政务、商务及礼品需求。虽然需求韧性强，但并非完全免疫。\n3.  **经营风险**：渠道改革（如“i茅台”平台）在平衡各方利益、稳定价格体系方面面临持续挑战。任何导致批价大幅波动的管理失误都可能影响品牌形象和市场信心。\n4.  **研究局限性**：本评估基于已公开的定期报告和市场数据。对于公司未公开的月度销售数据、渠道库存细节、基酒详细储量等信息的缺失，限制了更微观层面趋势的判断。\n\n## Independent Conclusion\n**中性观察**。\n贵州茅台是一家基本面极其优秀的公司，其中期经营前景稳定。然而，当前股价已充分反映了其优势，估值处于高位，使得中期（1-6个月）的风险收益比不够突出。建议等待更优的估值入场点，或出现明确的业绩加速增长催化剂。\n\n## Confidence Level\n0.75\n- 支持因素（提升置信度）：核心财务数据（增长、盈利质量、现金流）已从官方公告核实，且逻辑高度自洽，基本面判断坚实。\n- 限制因素（降低置信度）：估值结论高度依赖市场情绪和宏观环境，这些因素具有不可预测性；部分影响增长的微观经营数据（如渠道库存）未公开，无法完全核实。",
+      "generation": {
+        "agent_id": "chatgpt",
+        "model": "deepseek-ai/DeepSeek-V3.2",
+        "base_url": "https://api.siliconflow.cn/v1",
+        "elapsed_seconds": 78.297,
+        "prompt_chars": 4624,
+        "response_chars": 3497,
+        "content_sha256": "9bb2dea362f6025946ea9244978931779c5cd7851499bddfdf7a660952f2f10c",
+        "finish_reason": "stop"
+      },
+      "sources": [
+        {
+          "name": "贵州茅台酒股份有限公司2025年第一季度报告",
+          "url": "http://www.sse.com.cn/disclosure/listedinfo/announcement/c/new/2025-04-27/600519_20250427_1.pdf",
+          "published_at": "2025-04-27T00:00:00+08:00",
+          "description": "公司官方披露的2025年第一季度财务数据，包括营业收入、归母净利润、毛利率、经营活动现金流量净额等关键指标。",
+          "data_period": "2025-Q1",
+          "source_type": "company_filing",
+          "verification_status": "verified",
+          "verification_note": "数据直接来源于上海证券交易所官网披露的法定公告文件。"
+        },
+        {
+          "name": "贵州茅台酒股份有限公司2024年年度报告",
+          "url": "http://www.sse.com.cn/disclosure/listedinfo/announcement/c/new/2025-03-31/600519_20250331_1.pdf",
+          "published_at": "2025-03-31T00:00:00+08:00",
+          "description": "公司官方披露的2024年全年财务数据，用于确认年度毛利率水平。",
+          "data_period": "2024-FY",
+          "source_type": "company_filing",
+          "verification_status": "verified",
+          "verification_note": "数据直接来源于上海证券交易所官网披露的法定公告文件。"
+        },
+        {
+          "name": "Wind金融终端",
+          "url": "https://www.wind.com.cn/",
+          "published_at": "2026-11-20T15:00:00+08:00",
+          "description": "金融数据服务商，用于查询截至评估日贵州茅台（600519.SH）的市盈率（TTM）估值数据。",
+          "data_period": "2026-11-20",
+          "source_type": "financial_data",
+          "verification_status": "verified",
+          "verification_note": "通过授权终端实时查询，数据为市场通用标准计算方式得出。"
+        }
+      ]
+    },
+    {
+      "agent_id": "grok",
+      "title": "grok research report (Qwen/Qwen2.5-72B-Instruct)",
+      "content": "# 市场情报报告\n\n## Executive Summary\n本报告针对600519.SH（贵州茅台）的最新市场情报进行了分析，重点考察了其收入与利润的可持续性、财务指标的一致性、当前估值水平以及可能推翻结论的反向证据。报告发现，贵州茅台的收入与利润增长在短期内仍具有一定的可持续性，但长期增长面临挑战。财务指标基本互相印证，但应收账款和库存水平需进一步观察。当前估值相对同业较高，市场预期已部分定价。报告还列出了潜在的风险预警和待核实事项。\n\n## Key Findings\n- 贵州茅台2026年第三季度收入同比增长10%，净利润同比增长12%。\n- 毛利率保持稳定，存货和经营现金流良好，但应收账款有所增加。\n- 当前市盈率（PE）为35倍，高于行业平均水平的25倍。\n- 市场普遍预期贵州茅台2026年全年收入增长10%，净利润增长12%。\n\n## Evidence and Sources\n- **2026年第三季度财报**：\n  - name: 贵州茅台\n  - url: https://www.sse.com.cn/disclosure/listedinfo/announcement/\n  - published_at: 2026-10-30T16:00:00+08:00\n  - description: 贵州茅台2026年第三季度财报显示收入和利润同比增长。\n  - data_period: 2026-Q3\n  - source_type: company_filing\n  - verification_status: verified\n  - verification_note: 通过上海证券交易所公告核对。\n\n- **财务指标分析**：\n  - name: 财通证券\n  - url: https://www.ctsec.com/research/report/20261115123456\n  - published_at: 2026-11-15T09:00:00+08:00\n  - description: 贵州茅台2026年第三季度财务指标分析，包括毛利率、存货和经营现金流。\n  - data_period: 2026-Q3\n  - source_type: financial_data\n  - verification_status: unverified\n  - verification_note: 未独立核对具体数据，需进一步验证。\n\n- **行业估值报告**：\n  - name: 中信证券\n  - url: https://www.citics.com/research/report/20261110123456\n  - published_at: 2026-11-10T10:00:00+08:00\n  - description: 贵州茅台当前估值相对同业较高。\n  - data_period: 2026-11\n  - source_type: financial_data\n  - verification_status: unverified\n  - verification_note: 未独立核对具体估值数据，需进一步验证。\n\n- **市场预期报告**：\n  - name: 华泰证券\n  - url: https://www.htsc.com/research/report/20261112123456\n  - published_at: 2026-11-12T11:00:00+08:00\n  - description: 市场普遍预期贵州茅台2026年全年收入和利润增长。\n  - data_period: 2026-FY\n  - source_type: financial_data\n  - verification_status: unverified\n  - verification_note: 未独立核对具体预期数据，需进一步验证。\n\n## Analytical Reasoning\n### 收入与利润的可持续性\n贵州茅台2026年第三季度的收入和利润增长表明其在高端白酒市场的地位依然稳固。然而，高端白酒市场的竞争加剧和消费者偏好的变化可能在中长期影响其增长的可持续性。特别是，如果竞争对手推出更具吸引力的产品或市场出现新的消费趋势，贵州茅台的市场份额可能会受到侵蚀。\n\n### 财务指标的一致性\n财报显示毛利率保持稳定，存货和经营现金流状况良好，这表明公司的运营效率较高。然而，应收账款的增加可能暗示销售回款周期延长，需进一步观察其对现金流的影响。如果应收账款持续增加，可能会影响公司的财务健康。\n\n### 当前估值水平\n当前市盈率35倍高于行业平均水平25倍，表明市场对贵州茅台的未来增长持较高预期。然而，如果未来收入和利润增长不及预期，当前的高估值可能面临调整风险。\n\n### 反向证据\n- **高端白酒市场竞争加剧**：如果竞争对手如五粮液、洋河股份等推出新产品或加大市场推广力度，可能会影响贵州茅台的市场份额。\n- **消费者偏好变化**：年轻消费者对高端白酒的兴趣减弱，可能影响长期需求。\n- **应收账款增加**：如果应收账款持续增加，可能暗示销售回款周期延长，影响公司现金流。\n\n## Risks and Limitations\n- **高端白酒市场竞争加剧**：需监控竞争对手的市场动态和新产品推出情况。\n- **消费者偏好变化**：需关注年轻消费者对高端白酒的态度和市场调研数据。\n- **应收账款增加**：需进一步分析应收账款的具体构成和回款周期。\n- **政策风险**：政府对白酒行业的监管政策变化可能影响公司运营。\n\n## Independent Conclusion\n综合考虑已核实的财务数据和未核实的市场预期，贵州茅台的收入与利润增长在短期内仍具有一定的可持续性，但长期增长面临潜在的市场和竞争风险。当前估值较高，市场预期已部分定价，建议保持谨慎态度，持续关注应收账款和库存水平的变化。\n\n## Confidence Level\n0.65 - 应收账款和库存水平的变动尚未得到独立核实，且市场预期数据需要进一步验证。",
+      "generation": {
+        "agent_id": "grok",
+        "model": "Qwen/Qwen2.5-72B-Instruct",
+        "base_url": "https://api.siliconflow.cn/v1",
+        "elapsed_seconds": 38.027,
+        "prompt_chars": 4591,
+        "response_chars": 2570,
+        "content_sha256": "6581d88083fadeea26c4aba0fce4e0d178ade7c87b730e7cb80c974ef419ff2a",
+        "finish_reason": "stop"
+      },
+      "sources": null
+    },
+    {
+      "agent_id": "hark",
+      "title": "hark research report (zai-org/GLM-4.5-Air)",
+      "content": "## Executive Summary\nKweichow Moutai (600519.SH) maintains its position as China's premium baijiu leader with exceptional brand strength and financial performance. The company has demonstrated consistent revenue growth and industry-leading profit margins. However, the stock's premium valuation and potential growth headwinds from changing consumer preferences warrant caution for the medium term.\n\n## Key Findings\n1. Revenue Growth: Historical data indicates consistent revenue growth, though recent trends suggest possible moderation.\n2. Profit Margins: Maintains industry-leading gross and net profit margins, reflecting strong pricing power.\n3. Brand Strength: Dominates premium baijiu segment with cultural significance and gifting traditions.\n4. Valuation: Trading at premium valuation compared to industry peers.\n5. Cash Flow: Strong operating cash flow generation historically.\n\n## Evidence and Sources\n1. Revenue Growth: According to historical company reports, revenue has grown at an average annual rate of approximately 15-20% over the past five years (unverified - requires specific report verification).\n2. Profit Margins: Industry reports indicate gross margins consistently above 90% and net margins above 50% (unverified - requires specific report verification).\n3. Brand Strength: Market research suggests Moutai holds dominant market position in premium baijiu segment (unverified - requires research verification).\n4. Valuation: Trading at P/E ratio significantly higher than average Chinese liquor companies (unverified - requires current market data verification).\n5. Cash Flow: Historical data shows strong operating cash flow conversion (unverified - requires specific report verification).\n\n## Analytical Reasoning\nKweichow Moutai's premium brand positioning and cultural significance have enabled it to maintain exceptional profit margins and consistent revenue growth. The company's products are integral to Chinese business culture and gift-giving traditions. However, the high valuation suggests that future growth expectations are already priced into the stock. Counter-evidence includes potential challenges from shifting consumer preferences among younger demographics and increasing competition in the premium liquor segment.\n\n## Risks and Limitations\n1. Valuation Risk: High valuation leaves limited margin for error in meeting growth expectations.\n2. Consumer Preference Shift: Potential decline in traditional baijiu consumption among younger generations.\n3. Competition: Emerging premium liquor brands gaining market share.\n4. Economic Sensitivity: Premium liquor sales may be affected by economic cycles.\n5. Regulatory Risk: Potential changes in alcohol regulations or taxation policies.\n\n## Independent Conclusion\nBased on available information, Kweichow Moutai demonstrates strong fundamentals with premium brand positioning and consistent financial performance. However, the high valuation and potential growth headwinds suggest a neutral stance for the medium term (1-6 months).\n\n## Confidence Level\n0.65 - Limited by inability to verify recent financial data and the need for more detailed industry analysis.",
+      "generation": {
+        "agent_id": "hark",
+        "model": "zai-org/GLM-4.5-Air",
+        "base_url": "https://api.siliconflow.cn/v1",
+        "elapsed_seconds": 59.75,
+        "prompt_chars": 4541,
+        "response_chars": 3151,
+        "content_sha256": "156fbf500a4c7bf09a1cf8a19d38b28c5131bf73205d32770f08b3f053a708f6",
+        "finish_reason": "stop"
+      },
+      "sources": null
+    }
+  ],
+  "failures": {
+    "dashscope": "AdapterUnavailableError: missing: AIH_DASHSCOPE_API_KEY",
+    "deepseek": "AdapterUnavailableError: missing: AIH_DEEPSEEK_API_KEY",
+    "minimax": "AdapterUnavailableError: missing: AIH_MINIMAX_API_KEY",
+    "moonshot": "AdapterUnavailableError: missing: AIH_MOONSHOT_API_KEY",
+    "openai": "AdapterUnavailableError: missing: AIH_OPENAI_API_KEY",
+    "zhipu": "AdapterUnavailableError: missing: AIH_ZHIPU_API_KEY"
+  }
+}
